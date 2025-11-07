@@ -1,36 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 
-const LOCAL_STORAGE_KEY = 'vr-floor-plan-projects';
+const API_URL = 'http://localhost:3001';
 
 export default function Dashboard({ onViewChange }) {
-  const [projects, setProjects] = useState(() => {
-    // Load projects from local storage on initial render
-    const savedProjects = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedProjects) {
-      return JSON.parse(savedProjects);
-    } else {
-      return [
-        { id: 1, name: 'Modern House', lastModified: '2025-11-07' },
-        { id: 2, name: 'Downtown Office Space', lastModified: '2025-11-06' },
-        { id: 3, name: 'Lakeside Cabin', lastModified: '2025-11-05' },
-      ];
-    }
-  });
+  const [models, setModels] = useState([]);
+  const [error, setError] = useState(null);
 
-  // Save projects to local storage whenever they change
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(projects));
-  }, [projects]);
+    const fetchModels = async () => {
+      try {
+        const response = await fetch(`${API_URL}/models`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch models.');
+        }
+        const data = await response.json();
+        setModels(data);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    fetchModels();
+  }, []);
 
   const handleNewProject = () => {
-    // For now, this will switch to the uploader view.
-    // In the future, it will create a new project entity.
     onViewChange('uploader');
   };
 
-  const handleDeleteProject = (projectId) => {
-    setProjects(projects.filter((p) => p.id !== projectId));
+  const handleDownload = async (filename) => {
+    try {
+      const response = await fetch(`${API_URL}/models/${filename}`, {
+        headers: {
+          'Authorization': 'admin-secret-token'
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Download failed.');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -39,17 +58,23 @@ export default function Dashboard({ onViewChange }) {
         <h1>Projects</h1>
         <button className="new-project-btn" onClick={handleNewProject}>+ New Project</button>
       </header>
+      {error && <p className="error-message">{error}</p>}
       <div className="project-grid">
-        {projects.map((project) => (
-          <div key={project.id} className="project-card">
-            <h2>{project.name}</h2>
-            <p>Last Modified: {project.lastModified}</p>
-            <div className="project-card-actions">
-              <button className="action-btn">View</button>
-              <button className="action-btn delete-btn" onClick={() => handleDeleteProject(project.id)}>Delete</button>
+        {models.length > 0 ? (
+          models.map((modelName, index) => (
+            <div key={index} className="project-card">
+              <h2>{modelName.replace('.json', '')}</h2>
+              <p>Generated Model</p>
+              <div className="project-card-actions">
+                <button className="action-btn">View</button>
+                <button className="action-btn" onClick={() => handleDownload(modelName)}>Download</button>
+                <button className="action-btn delete-btn">Delete</button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p>No models found. Upload a floor plan to get started!</p>
+        )}
       </div>
     </div>
   );

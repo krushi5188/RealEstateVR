@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
-import { VRButton, ARButton, XR } from '@react-three/xr';
-import { Controllers, Hands } from '@react-three/xr';
+import { VRButton, ARButton, XR, Controllers, Hands } from '@react-three/xr';
 import * as THREE from 'three';
 
 // A custom component to render the 3D model from raw geometry data
