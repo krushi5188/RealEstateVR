@@ -3,7 +3,7 @@ import './Dashboard.css';
 
 const LOCAL_STORAGE_KEY = 'vr-floor-plan-projects';
 
-export default function Dashboard() {
+export default function Dashboard({ onViewChange }) {
   const [projects, setProjects] = useState(() => {
     // Load projects from local storage on initial render
     const savedProjects = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -24,12 +24,9 @@ export default function Dashboard() {
   }, [projects]);
 
   const handleNewProject = () => {
-    const newProject = {
-      id: Date.now(), // Use a timestamp for a more unique ID
-      name: `New Project`,
-      lastModified: new Date().toISOString().slice(0, 10),
-    };
-    setProjects([newProject, ...projects]);
+    // For now, this will switch to the uploader view.
+    // In the future, it will create a new project entity.
+    onViewChange('uploader');
   };
 
   const handleDeleteProject = (projectId) => {
