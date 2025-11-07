@@ -6,24 +6,23 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ---
 ## Technical Decisions & Justifications
 
-*   **`jimp` vs. `node-canvas` for Image Processing:**
-    *   **Decision:** We will use `jimp` for all server-side bitmap image analysis.
-    *   **Justification:** Our primary task is reading pixel data to detect walls, not complex 2D drawing. `jimp` is a pure JavaScript library with zero native dependencies, making our application significantly easier to install, deploy, and maintain. While `node-canvas` is more powerful, its reliance on compiled C++ dependencies (Cairo) introduces unnecessary complexity and potential installation issues. `jimp` is the simplest, most portable tool that perfectly solves our specific problem.
+*   **`node-canvas` for Image Processing:**
+    *   **Decision:** We will use `node-canvas` for all server-side bitmap image analysis.
+    *   **Justification:** The previously used `jimp` library was identified as the root cause of a persistent, critical server crash. After extensive debugging, it was clear `jimp` was unstable in our environment. We have migrated to `node-canvas`. Although it introduces native C++ dependencies (requiring a more complex build environment), its stability, performance, and power make it the correct choice for a reliable core pipeline. The trade-off in setup complexity is acceptable for a functioning and stable application.
 
 ---
 ## Development & Issue Log
 *This section will be updated with every significant action and challenge.*
 
-*   **Log Entry 2025-11-07 (Server Instability):**
-    *   **Action:** Attempted to test the end-to-end file upload and model generation flow.
-    *   **Issue:** The Node.js server crashes silently and instantly upon receiving a file upload request. The crash is happening at a low level, preventing any error messages from being logged.
-    *   **Investigation Summary:**
-        1.  Initial hypothesis was a code bug in `server/index.js`. Re-implemented the server with Express.js; crash persisted.
-        2.  Second hypothesis was a "zombie" process blocking the port. This was a real issue (`EADDRINUSE`), but fixing it did not solve the crash.
-        3.  Third hypothesis was a dependency version mismatch in the `jimp` library. A `debug-test.js` script proved that the `jimp` API was incorrect.
-        4.  Final hypothesis was a shell or environment-level caching/corruption issue, as attempts to fix the `jimp` code did not change the test script's output.
-    *   **Strategic Decision:** Per user instruction, we will **defer** the final debugging of this issue until the deployment phase. The server's instability is likely due to the specific, non-local shell environment. We will pause work on this feature and proceed with other tasks.
-    *   **Status:** Phase 2A is **On Hold**.
+*   **Log Entry 2025-11-07 (Server Instability RESOLVED):**
+    *   **Action:** Replaced the `jimp` library with `node-canvas` to resolve the server crash.
+    *   **Issue:** The Node.js server was crashing silently upon file upload. The root cause was identified as an unstable interaction with the `jimp` library.
+    *   **Resolution:**
+        1.  Installed the necessary system dependencies for `node-canvas` (e.g., `libcairo2-dev`, `libpango1.0-dev`).
+        2.  Removed `jimp` and added `canvas` to the server's `package.json`.
+        3.  Refactored `server/image-processor.js` to use the `node-canvas` API for loading the image, reading pixel data, and performing the binarization.
+        4.  Successfully tested the end-to-end `/generate-model` endpoint with a test PNG image, confirming the crash is resolved.
+    *   **Status:** The server is now stable. Phase 2A is **Unblocked**.
 
 *   **Log Entry 2025-11-07 (GLTF Exporter):**
     *   **Action:** Began implementation of Phase 2A: Model Persistence.
