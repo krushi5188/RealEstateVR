@@ -1,4 +1,4 @@
-# PROJECT ROADMAP: The Grand Plan 6.0 (Tactical Edition)
+# PROJECT ROADMAP: The Grand Plan 6.0 (Architectural Blueprint Edition)
 
 ## Vision Statement
 To create the world's most powerful, insightful, and creatively empowering platform for transforming 2D floor plans into immersive, interactive, and intelligent VR experiences. Our strategy is to win by focusing on brilliant, non-AI engineering, sophisticated procedural systems, and a deep, empathetic understanding of the user's design journey. This document is a living blueprint, updated continuously to reflect our progress and challenges.
@@ -40,8 +40,8 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Goal:** Save generated models to persistent files and create secure, accessible APIs.
 *   **Features:**
     *   **Model File Generation:**
-        *   `[ ]` Install `three.js` dependency on the server. - ✅ **Complete**
-        *   `[ ]` Create a new `models/` directory for `.glb` files. - `In Progress`
+        *   **`[X]` Install `three.js` dependency on the server.**
+        *   **`[🎯] Create a new `models/` directory for `.glb` files.** `In Progress`
         *   `[ ]` In the `/generate-model` endpoint, construct a `THREE.Scene` from the generated geometry.
         *   `[ ]` Use `GLTFExporter` to convert the scene to a binary `.glb` buffer.
         *   `[ ]` Save the buffer to a unique file in the `models/` directory.
@@ -73,24 +73,24 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Goal:** Simulate realistic, physically accurate natural lighting and shadows.
 *   **Features:**
     *   **Geospatial Context:**
-        *   `[ ]` Add UI for users to input a latitude/longitude for their project.
+        *   **`[ ]` Add UI for users to input a latitude/longitude for their project.**
     *   **Celestial Algorithm:**
-        *   `[ ]` Implement a library or algorithm to calculate the sun's position for any date/time based on location.
+        *   **`[ ]` Implement a library or algorithm to calculate the sun's position for any date/time based on location.** We will use the `suncalc` library for this.
     *   **Real-Time Rendering:**
-        *   `[ ]` Integrate the sun position with a `DirectionalLight` in the `three.js` scene.
-        *   `[ ]` Configure high-quality, real-time shadow mapping.
+        *   **`[ ]` Integrate the sun position with a `DirectionalLight` in the `three.js` scene.**
+        *   **`[ ]` Configure high-quality, real-time shadow mapping.**
 
 #### **Phase 3B: The Material Physics Simulation**
 *   **Status:** ⏳ Pending
 *   **Goal:** Simulate the real-world physical performance of materials.
 *   **Features:**
     *   **Material Properties System:**
-        *   `[ ]` Build a database of materials with properties (e.g., R-value, density, acoustic absorption).
-        *   `[ ]` Create a UI for users to "paint" these materials onto surfaces in their model.
+        *   **`[ ]` Build a database of materials with properties (e.g., R-value, density, acoustic absorption).**
+        *   **`[ ]` Create a UI for users to "paint" these materials onto surfaces in their model.**
     *   **Thermal Simulation:**
-        *   `[ ]` Develop a simplified FEA algorithm to model heat transfer and generate a real-time heat map visualization.
+        *   **`[ ]` Develop a simplified FEA algorithm to model heat transfer and generate a real-time heat map visualization.**
     *   **Acoustic Simulation:**
-        *   `[ ]` Develop a ray-tracing-based algorithm to simulate sound propagation and reverberation.
+        *   **`[ ]` Develop a ray-tracing-based algorithm to simulate sound propagation and reverberation.**
 
 ---
 
@@ -101,22 +101,22 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Goal:** Provide users with expert feedback based on established architectural principles.
 *   **Features:**
     *   **Expert System Engine:**
-        *   `[ ]` Research and codify a library of architectural heuristics (e.g., from "A Pattern Language").
-        *   `[ ]` Build a rules engine that can analyze the 3D model's geometry against these heuristics.
+        *   **`[ ]` Research and codify a library of architectural heuristics (e.g., from "A Pattern Language").**
+        *   **`[ ]` Build a rules engine that can analyze the 3D model's geometry against these heuristics.**
     *   **Feedback UI:**
-        *   `[ ]` Design and implement a non-intrusive UI to display warnings, suggestions, and analysis to the user.
+        *   **`[ ]` Design and implement a non-intrusive UI to display warnings, suggestions, and analysis to the user.**
 
 #### **Phase 4B: Human Factors & Ergonomics**
 *   **Status:** ⏳ Pending
 *   **Goal:** Simulate the human experience within the design to optimize for comfort and usability.
 *   **Features:**
     *   **Avatar & Animation System:**
-        *   `[ ]` Integrate a simple 3D avatar into the scene.
-        *   `[ ]` Implement an inverse kinematics system for realistic task animation.
+        *   **`[ ]` Integrate a simple 3D avatar into the scene.**
+        *   **`[ ]` Implement an inverse kinematics system for realistic task animation.**
     *   **Ergonomics Database:**
-        *   `[ ]` Create a database of standard ergonomic data (reach distances, turning radii, etc.).
+        *   **`[ ]` Create a database of standard ergonomic data (reach distances, turning radii, etc.).**
     *   **Simulation Engine:**
-        *   `[ ]` Develop a pathfinding and task simulation algorithm to analyze workflows and highlight ergonomic issues.
+        *   **`[ ]` Develop a pathfinding and task simulation algorithm to analyze workflows and highlight ergonomic issues.**
 
 ---
 
@@ -127,25 +127,25 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Goal:** Bridge the gap between the virtual design and its real-world construction and cost.
 *   **Features:**
     *   **Bill of Materials Engine:**
-        *   `[ ]` Develop an algorithm to procedurally calculate material quantities from the 3D model.
-        *   `[ ]` Build and integrate a database of regional material costs.
+        *   **`[ ]` Develop an algorithm to procedurally calculate material quantities from the 3D model.**
+        *   **`[ ]` Build and integrate a database of regional material costs.**
     *   **Live Cost Dashboard:**
-        *   `[ ]` Create a UI to display a real-time, itemized cost estimate.
+        *   **`[ ]` Create a UI to display a real-time, itemized cost estimate.**
 
 #### **Phase 6: Creative & Collaborative Power**
 *   **Status:** ⏳ Pending
 *   **Goal:** Evolve the platform into a tool for limitless creativity and shared experiences.
 *   **Features:**
     *   **Parametric Design Sandbox:**
-        *   `[ ]` Re-architect the core design system to support parametric rules and constraints.
-        *   `[ ]` Build a UI for users to define these rules.
+        *   **`[ ]` Re-architect the core design system to support parametric rules and constraints.**
+        *   **`[ ]` Build a UI for users to define these rules.**
     *   **Multi-User & Sharing:**
-        *   `[ ]` Implement a WebSocket/WebRTC backend for real-time scene synchronization.
-        *   `[ ]` Build collaboration features (avatars, voice chat).
+        *   **`[ ]` Implement a WebSocket/WebRTC backend for real-time scene synchronization.** We will use `Socket.IO` for this.
+        *   **`[ ]` Build collaboration features (avatars, voice chat).**
 
 #### **Phase 7: Future Expansion**
 *   **Status:** ⏳ Pending
 *   **Goal:** Expand to new platforms and secure our position as a market leader.
 *   **Features:**
     *   **Augmented Reality (AR) Integration:**
-        *   `[ ]` Use WebXR to project models into the real world.
+        *   **`[ ]` Use WebXR to project models into the real world.** The `@react-three/xr` package already provides the necessary hooks for this.
