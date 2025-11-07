@@ -4,6 +4,13 @@
 To create the world's most powerful, insightful, and creatively empowering platform for transforming 2D floor plans into immersive, interactive, and intelligent VR experiences. Our strategy is to win by focusing on brilliant, non-AI engineering, sophisticated procedural systems, and a deep, empathetic understanding of the user's design journey. This document is a living blueprint, updated continuously to reflect our progress and challenges.
 
 ---
+## Technical Decisions & Justifications
+
+*   **`jimp` vs. `node-canvas` for Image Processing:**
+    *   **Decision:** We will use `jimp` for all server-side bitmap image analysis.
+    *   **Justification:** Our primary task is reading pixel data to detect walls, not complex 2D drawing. `jimp` is a pure JavaScript library with zero native dependencies, making our application significantly easier to install, deploy, and maintain. While `node-canvas` is more powerful, its reliance on compiled C++ dependencies (Cairo) introduces unnecessary complexity and potential installation issues. `jimp` is the simplest, most portable tool that perfectly solves our specific problem.
+
+---
 ## Development & Issue Log
 *This section will be updated with every significant action and challenge.*
 
