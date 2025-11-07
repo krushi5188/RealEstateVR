@@ -1,100 +1,151 @@
-# PROJECT ROADMAP: The Grand Plan 6.0
+# PROJECT ROADMAP: The Grand Plan 6.0 (Tactical Edition)
 
 ## Vision Statement
-To create the world's most powerful, insightful, and creatively empowering platform for transforming 2D floor plans into immersive, interactive, and intelligent VR experiences. Our strategy is to win by focusing on brilliant, non-AI engineering, sophisticated procedural systems, and a deep, empathetic understanding of the user's design journey.
+To create the world's most powerful, insightful, and creatively empowering platform for transforming 2D floor plans into immersive, interactive, and intelligent VR experiences. Our strategy is to win by focusing on brilliant, non-AI engineering, sophisticated procedural systems, and a deep, empathetic understanding of the user's design journey. This document is a living blueprint, updated continuously to reflect our progress and challenges.
+
+---
+## Development & Issue Log
+*This section will be updated with every significant action and challenge.*
+
+*   **Log Entry 2025-11-07:**
+    *   **Action:** Began implementation of Phase 2A: Model Persistence.
+    *   **Issue:** The initial `npm install` for `node-gltf` failed with a 404 error.
+    *   **Root Cause Analysis:** The `node-gltf` package does not exist or is deprecated in the public NPM registry. The initial assumption for GLB creation was incorrect.
+    *   **Resolution Plan:** Pivot to using the official `three.js` library, which includes the `GLTFExporter` module suitable for use in a Node.js environment. This is a more robust and future-proof solution.
+    *   **Status:** Plan enacted. `three.js` has been successfully installed.
 
 ---
 
-## Phase 1: Foundational Pipeline
+## The Roadmap
+
+### **Part 1: The Core Foundation**
+
+#### **Phase 1: Foundational Pipeline**
 *   **Status:** ✅ **Complete**
 *   **Goal:** Establish the core end-to-end functionality of the application.
-*   **Key Features & Technical Approach:**
+*   **Features:**
     *   **2D Plan Uploader:**
-        *   **Implementation:** A React-based frontend that accepts bitmap (PNG, JPEG) and vector (SVG) file formats.
-        *   **Status:** ✅ Complete
+        *   `[X]` Create React frontend for file upload.
+        *   `[X]` Support bitmap (PNG, JPEG) and vector (SVG) formats.
     *   **Server-Side Image Processing:**
-        *   **Implementation:** A Node.js server using `jimp` for bitmap analysis and `svg-parser` for vector analysis to extract wall data. The core logic is based on algorithmic line detection and shape parsing, not trained ML models.
-        *   **Status:** ✅ Complete
+        *   `[X]` Implement Node.js server with `jimp` and `svg-parser`.
+        *   `[X]` Develop algorithmic wall/line detection.
     *   **3D Model Generation:**
-        *   **Implementation:** An in-memory geometric engine that takes wall data and procedurally generates a 3D mesh (vertices and faces).
-        *   **Status:** ✅ Complete
+        *   `[X]` Create in-memory procedural engine to generate mesh from wall data.
     *   **Client-Side VR Rendering:**
-        *   **Implementation:** A React frontend using the `@react-three/fiber` ecosystem to render the 3D model data in a VR-ready scene with basic navigation.
-        *   **Status:** ✅ Complete
+        *   `[X]` Use `@react-three/fiber` to render the 3D model in a basic VR scene.
 
----
-
-## Phase 2: Core Platform & Security
+#### **Phase 2A: Model Persistence & API**
 *   **Status:** 🎯 **In Progress**
-*   **Goal:** Solidify the foundation, making it robust, secure, and ready for advanced features.
-*   **Key Features & Technical Approach:**
-    *   **Model Persistence & Secure Endpoints:**
-        *   **Implementation:**
-            1.  The Node.js server will be enhanced to convert the in-memory 3D model into a standard `.glb` file using the `three.js` `GLTFExporter`.
-            2.  Generated models will be saved to a persistent `models/` directory.
-            3.  A secure, admin-only `/download-model` endpoint will be created, requiring a simple API key for access (this will be expanded to a full user authentication system in Phase 4).
-            4.  A public `/view-model` endpoint will be created to serve the `.glb` file to the client-side viewer.
-        *   **Status:** 🎯 **In Progress**
-    *   **Premium User Dashboard:**
-        *   **Implementation:** A new section of the React application will be created to serve as a central hub. It will be a client-side implementation that lists and manages projects (initially stored in browser `localStorage`, later moved to a database in Phase 4).
-        *   **Status:** ⏳ Pending
-    *   **Initial UI/UX Polish:**
-        *   **Implementation:** A comprehensive review and refactoring of all CSS and component structures to align with the "premium, modern, and intuitive" design philosophy.
-        *   **Status:** ⏳ Pending
+*   **Goal:** Save generated models to persistent files and create secure, accessible APIs.
+*   **Features:**
+    *   **Model File Generation:**
+        *   `[ ]` Install `three.js` dependency on the server. - ✅ **Complete**
+        *   `[ ]` Create a new `models/` directory for `.glb` files. - `In Progress`
+        *   `[ ]` In the `/generate-model` endpoint, construct a `THREE.Scene` from the generated geometry.
+        *   `[ ]` Use `GLTFExporter` to convert the scene to a binary `.glb` buffer.
+        *   `[ ]` Save the buffer to a unique file in the `models/` directory.
+    *   **API Endpoint Creation:**
+        *   `[ ]` Create a secure, admin-only `/download-model` endpoint for direct file downloads.
+        *   `[ ]` Create a public `/view-model` endpoint to serve the model to the client viewer.
+        *   `[ ]` Update server response to include the new model filename.
+    *   **Client-Side Integration:**
+        *   `[ ]` Update `client/src/App.js` to handle the new server response (model filename).
+        *   `[ ]` Update `client/src/components/VRScene.js` to use the `useGLTF` hook and load the model from the `/view-model` endpoint.
+
+#### **Phase 2B: The User Dashboard**
+*   **Status:** ⏳ Pending
+*   **Goal:** Create the central hub for users to manage their projects.
+*   **Features:**
+    *   **Dashboard UI:**
+        *   `[ ]` Design and build a new React component for the user dashboard.
+        *   `[ ]` Create UI elements for listing, creating, and deleting projects.
+    *   **Project State Management:**
+        *   `[ ]` Implement client-side state management (e.g., React Context or Zustand) for projects.
+        *   `[ ]` Persist project list to the browser's `localStorage` as an initial step.
 
 ---
 
-## Phase 3: Environmental Realism
+### **Part 2: The Simulation Engine**
+
+#### **Phase 3A: The Sun & Shadow Simulation**
 *   **Status:** ⏳ Pending
-*   **Goal:** To simulate the physical reality of the space with unparalleled accuracy.
-*   **Key Features & Technical Approach:**
-    *   **Sun & Shadow Simulation Engine:**
-        *   **Implementation:** An algorithmic engine based on astrodynamics. The user will provide a latitude/longitude for their project. The system will calculate the precise position of the sun for any given date and time. Real-time, physically accurate shadows will be cast in the 3D scene using advanced graphics techniques like shadow mapping.
-    *   **Material Performance & Physics Engine:**
-        *   **Implementation:** A simplified, real-time Finite Element Analysis (FEA) engine. This will be a rule-based system that uses a database of material properties (e.g., R-values for insulation) to run algorithmic simulations for thermal performance, structural loads, and material wear-and-tear.
-    *   **Real-Time Acoustic Simulation:**
-        *   **Implementation:** An engine based on ray-tracing principles to simulate sound wave propagation. The system will calculate reverberation times and acoustic reflections based on room dimensions and the defined properties of surface materials (e.g., carpet absorbs sound, glass reflects it).
+*   **Goal:** Simulate realistic, physically accurate natural lighting and shadows.
+*   **Features:**
+    *   **Geospatial Context:**
+        *   `[ ]` Add UI for users to input a latitude/longitude for their project.
+    *   **Celestial Algorithm:**
+        *   `[ ]` Implement a library or algorithm to calculate the sun's position for any date/time based on location.
+    *   **Real-Time Rendering:**
+        *   `[ ]` Integrate the sun position with a `DirectionalLight` in the `three.js` scene.
+        *   `[ ]` Configure high-quality, real-time shadow mapping.
+
+#### **Phase 3B: The Material Physics Simulation**
+*   **Status:** ⏳ Pending
+*   **Goal:** Simulate the real-world physical performance of materials.
+*   **Features:**
+    *   **Material Properties System:**
+        *   `[ ]` Build a database of materials with properties (e.g., R-value, density, acoustic absorption).
+        *   `[ ]` Create a UI for users to "paint" these materials onto surfaces in their model.
+    *   **Thermal Simulation:**
+        *   `[ ]` Develop a simplified FEA algorithm to model heat transfer and generate a real-time heat map visualization.
+    *   **Acoustic Simulation:**
+        *   `[ ]` Develop a ray-tracing-based algorithm to simulate sound propagation and reverberation.
 
 ---
 
-## Phase 4: Design Intelligence & Optimization
+### **Part 3: The Intelligence Layer**
+
+#### **Phase 4A: Architectural Pattern Analysis**
 *   **Status:** ⏳ Pending
-*   **Goal:** To provide users with expert, data-driven feedback to improve their designs.
-*   **Key Features & Technical Approach:**
-    *   **Architectural Pattern Analysis Engine:**
-        *   **Implementation:** A classic "expert system." We will build a library of architectural heuristics from established works (e.g., "A Pattern Language"). The engine will be a set of algorithms that analyze the 3D model's geometry and metadata against these rules, providing actionable, non-subjective feedback.
-    *   **Human Factors & Ergonomics Simulator:**
-        *   **Implementation:** A simulation engine using pathfinding algorithms and inverse kinematics. It will use a database of ergonomic data to simulate how virtual avatars of different abilities interact with the space, highlighting inefficiencies, accessibility issues, and comfort problems.
+*   **Goal:** Provide users with expert feedback based on established architectural principles.
+*   **Features:**
+    *   **Expert System Engine:**
+        *   `[ ]` Research and codify a library of architectural heuristics (e.g., from "A Pattern Language").
+        *   `[ ]` Build a rules engine that can analyze the 3D model's geometry against these heuristics.
+    *   **Feedback UI:**
+        *   `[ ]` Design and implement a non-intrusive UI to display warnings, suggestions, and analysis to the user.
+
+#### **Phase 4B: Human Factors & Ergonomics**
+*   **Status:** ⏳ Pending
+*   **Goal:** Simulate the human experience within the design to optimize for comfort and usability.
+*   **Features:**
+    *   **Avatar & Animation System:**
+        *   `[ ]` Integrate a simple 3D avatar into the scene.
+        *   `[ ]` Implement an inverse kinematics system for realistic task animation.
+    *   **Ergonomics Database:**
+        *   `[ ]` Create a database of standard ergonomic data (reach distances, turning radii, etc.).
+    *   **Simulation Engine:**
+        *   `[ ]` Develop a pathfinding and task simulation algorithm to analyze workflows and highlight ergonomic issues.
 
 ---
 
-## Phase 5: Construction & Financial Reality
-*   **Status:** ⏳ Pending
-*   **Goal:** To bridge the gap between the virtual design and its real-world construction.
-*   **Key Features & Technical Approach:**
-    *   **Real-Time Bill of Materials & Cost Engine:**
-        *   **Implementation:** A database-driven system. The engine will procedurally calculate the exact quantities of all materials from the 3D model. It will then query a connected database (which we will build and maintain) of regional material costs to generate a live, itemized financial estimate.
+### **Part 4: The Professional Toolkit**
 
----
-
-## Phase 6: Creative Expression & Collaboration
+#### **Phase 5: Financial & Construction Reality**
 *   **Status:** ⏳ Pending
-*   **Goal:** To transform the platform into a tool for limitless creativity and shared experiences.
-*   **Key Features & Technical Approach:**
+*   **Goal:** Bridge the gap between the virtual design and its real-world construction and cost.
+*   **Features:**
+    *   **Bill of Materials Engine:**
+        *   `[ ]` Develop an algorithm to procedurally calculate material quantities from the 3D model.
+        *   `[ ]` Build and integrate a database of regional material costs.
+    *   **Live Cost Dashboard:**
+        *   `[ ]` Create a UI to display a real-time, itemized cost estimate.
+
+#### **Phase 6: Creative & Collaborative Power**
+*   **Status:** ⏳ Pending
+*   **Goal:** Evolve the platform into a tool for limitless creativity and shared experiences.
+*   **Features:**
     *   **Parametric Design Sandbox:**
-        *   **Implementation:** A core architectural change where the design elements are no longer static geometry but objects governed by user-defined rules and relationships. This will require building a dependency graph and a constraint-solving engine to allow for intelligent, procedural reconfiguration of the design.
-    *   **Multi-User VR & Secure Sharing:**
-        *   **Implementation:** This will require a WebSocket or WebRTC backend to synchronize the state of the VR scene (e.g., avatar positions, interactions) across multiple clients in real-time.
-    *   **Community Asset Library:**
-        *   **Implementation:** A simple database and file storage system that allows users to upload, tag, and share 3D assets.
+        *   `[ ]` Re-architect the core design system to support parametric rules and constraints.
+        *   `[ ]` Build a UI for users to define these rules.
+    *   **Multi-User & Sharing:**
+        *   `[ ]` Implement a WebSocket/WebRTC backend for real-time scene synchronization.
+        *   `[ ]` Build collaboration features (avatars, voice chat).
 
----
-
-## Phase 7: The Future of Spatial Computing
+#### **Phase 7: Future Expansion**
 *   **Status:** ⏳ Pending
-*   **Goal:** To secure our position as a market leader by expanding to new platforms.
-*   **Key Features & Technical Approach:**
+*   **Goal:** Expand to new platforms and secure our position as a market leader.
+*   **Features:**
     *   **Augmented Reality (AR) Integration:**
-        *   **Implementation:** The frontend application will be enhanced to use the WebXR API to project the 3D models into the real world on compatible mobile devices and AR headsets.
-    *   **Cross-Platform Expansion:**
-        *   **Implementation:** Ongoing engineering effort to ensure compatibility with all new and emerging VR/AR hardware.
+        *   `[ ]` Use WebXR to project models into the real world.
