@@ -1,58 +1,44 @@
 import React, { useState, useRef } from 'react';
 import './App.css';
+import VRScene from './components/VRScene'; // Import the new VR component
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState(null);
+  const [modelData, setModelData] = useState(null); // State to hold the 3D model data
   const fileInputRef = useRef(null);
 
-  const handleDragEnter = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
+  const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
+  const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(false); };
+  const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); };
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      setSelectedFile(file);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setSelectedFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
     }
   };
 
-  const handleUpload = () => {
+  const handleGenerate = () => {
     if (!selectedFile) return;
 
     setMessage(null);
     setUploadProgress(0);
 
-    const xhr = new XMLHttpRequest();
     const formData = new FormData();
     formData.append('file', selectedFile);
 
-    xhr.open('POST', 'http://localhost:3001/upload', true);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'http://localhost:3001/generate-model', true); // Use the new endpoint
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
@@ -64,29 +50,58 @@ function App() {
     xhr.onload = () => {
       setUploadProgress(100);
       if (xhr.status === 200) {
-        setMessage({ type: 'success', text: 'Floor plan uploaded successfully!' });
+        try {
+          const response = JSON.parse(xhr.responseText);
+          // Reconstruct TypedArrays from the plain array
+          const vertices = new Float32Array(response.model.vertices);
+          const faces = new Uint32Array(response.model.faces);
+          setModelData({ vertices, faces });
+          setMessage({ type: 'success', text: 'Model generated successfully!' });
+        } catch (e) {
+          setMessage({ type: 'error', text: 'Failed to parse model data.' });
+        }
       } else {
-        setMessage({ type: 'error', text: 'Upload failed. Please try again.' });
+        setMessage({ type: 'error', text: 'Model generation failed. Please try again.' });
       }
     };
 
     xhr.onerror = () => {
       setUploadProgress(0);
-      setMessage({ type: 'error', text: 'An error occurred during the upload.' });
+      setMessage({ type: 'error', text: 'An error occurred during the request.' });
     };
 
     xhr.send(formData);
   };
 
-  const triggerFileSelect = () => {
-    fileInputRef.current.click();
+  const triggerFileSelect = () => fileInputRef.current.click();
+  const resetState = () => {
+    setSelectedFile(null);
+    setUploadProgress(0);
+    setMessage(null);
+    setModelData(null);
   };
+
+  // If we have model data, show the VR scene. Otherwise, show the upload UI.
+  if (modelData) {
+    return (
+      <div className="App">
+        <div className="upload-card">
+           <h1>Your VR Experience is Ready</h1>
+           <p>Click the "Enter VR" button to immerse yourself in the floor plan.</p>
+           <VRScene modelData={modelData} />
+           <button className="upload-button" onClick={resetState} style={{marginTop: '1.5rem'}}>
+             Upload Another Plan
+           </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="App">
       <div className="upload-card">
         <h1>Upload Your Floor Plan</h1>
-        <p>Drag & drop or browse to select your 2D floor plan file.</p>
+        <p>Drag & drop or browse to select a 2D floor plan file.</p>
         <div
           className={`drop-zone ${isDragOver ? 'drag-over' : ''}`}
           onDragEnter={handleDragEnter}
@@ -110,16 +125,10 @@ function App() {
         {selectedFile && (
           <div className="file-info">
             <span>{selectedFile.name}</span>
-            <button
-              onClick={() => setSelectedFile(null)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}
-            >
-              &times;
-            </button>
           </div>
         )}
 
-        {uploadProgress > 0 && (
+        {uploadProgress > 0 && uploadProgress < 100 && (
           <div className="progress-bar-container">
             <div className="progress-bar" style={{ width: `${uploadProgress}%` }}></div>
           </div>
@@ -133,7 +142,7 @@ function App() {
 
         <button
           className="upload-button"
-          onClick={handleUpload}
+          onClick={handleGenerate}
           disabled={!selectedFile}
         >
           Generate VR Experience

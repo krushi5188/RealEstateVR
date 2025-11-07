@@ -2,7 +2,8 @@ const http = require('http');
 const multiparty = require('multiparty');
 const path = require('path');
 const fs = require('fs');
-const { processImage } = require('./image-processor');
+const { saveFile, extractWallData } = require('./image-processor');
+const { generateModel } = require('./model-generator');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) {
@@ -10,7 +11,7 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 }
 
 const server = http.createServer((req, res) => {
-  // Set CORS headers
+  // Set CORS headers for all responses
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -21,33 +22,37 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === '/upload' && req.method === 'POST') {
+  if (req.url === '/generate-model' && req.method === 'POST') {
     const form = new multiparty.Form();
 
-    form.parse(req, (err, fields, files) => {
-      if (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Error parsing form data.' }));
-        return;
-      }
-
-      if (!files.file || files.file.length === 0) {
+    form.parse(req, async (err, fields, files) => {
+      if (err || !files.file || files.file.length === 0) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'No file uploaded.' }));
+        res.end(JSON.stringify({ error: 'Invalid or missing file upload.' }));
         return;
       }
 
       const file = files.file[0];
 
-      processImage(file)
-        .then(finalPath => {
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ message: 'File uploaded successfully', path: finalPath }));
-        })
-        .catch(processErr => {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: processErr.message }));
-        });
+      try {
+        const filePath = await saveFile(file);
+        const wallData = await extractWallData(filePath);
+        const model = generateModel(wallData);
+
+        // Convert TypedArrays to regular arrays for JSON serialization
+        const serializedModel = {
+          vertices: Array.from(model.vertices),
+          faces: Array.from(model.faces),
+        };
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Model generated successfully', model: serializedModel }));
+
+      } catch (processErr) {
+        console.error('Processing failed:', processErr);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: processErr.message }));
+      }
     });
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });

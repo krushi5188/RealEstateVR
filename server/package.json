@@ -10,7 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "jimp": "^1.6.0",
     "multiparty": "^4.2.3",
+    "svg-parser": "^2.0.4",
     "uuid": "^13.0.0"
   }
 }
