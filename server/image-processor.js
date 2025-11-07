@@ -115,7 +115,7 @@ async function saveFile(file) {
     const uniqueFilename = `${uuidv4()}-${sanitized}`;
     const finalPath = path.join(UPLOAD_DIR, uniqueFilename);
     await fs.rename(tempPath, finalPath);
-    return finalPath;
+    return { finalPath, uniqueFilename };
 }
 
 module.exports = {

@@ -53,15 +53,23 @@ function App() {
         try {
           const response = JSON.parse(xhr.responseText);
           // Reconstruct TypedArrays from the plain array
-          const vertices = new Float32Array(response.model.vertices);
-          const faces = new Uint32Array(response.model.faces);
-          setModelData({ vertices, faces });
-          setMessage({ type: 'success', text: 'Model generated successfully!' });
+          // The server now sends back a filename instead of raw data
+          if (response.modelFile) {
+            setModelData({ file: response.modelFile }); // Store the filename
+            setMessage({ type: 'success', text: 'Model generated successfully!' });
+          } else {
+            throw new Error('Invalid response from server.');
+          }
         } catch (e) {
-          setMessage({ type: 'error', text: 'Failed to parse model data.' });
+          setMessage({ type: 'error', text: `An error occurred: ${e.message}` });
         }
       } else {
-        setMessage({ type: 'error', text: 'Model generation failed. Please try again.' });
+        try {
+            const response = JSON.parse(xhr.responseText);
+            setMessage({ type: 'error', text: response.error || 'Model generation failed. Please try again.' });
+        } catch (e) {
+            setMessage({ type: 'error', text: 'Model generation failed. Please try again.' });
+        }
       }
     };
 
