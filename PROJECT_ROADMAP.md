@@ -14,12 +14,23 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ## Development & Issue Log
 *This section will be updated with every significant action and challenge.*
 
-*   **Log Entry 2025-11-07:**
+*   **Log Entry 2025-11-07 (Server Instability):**
+    *   **Action:** Attempted to test the end-to-end file upload and model generation flow.
+    *   **Issue:** The Node.js server crashes silently and instantly upon receiving a file upload request. The crash is happening at a low level, preventing any error messages from being logged.
+    *   **Investigation Summary:**
+        1.  Initial hypothesis was a code bug in `server/index.js`. Re-implemented the server with Express.js; crash persisted.
+        2.  Second hypothesis was a "zombie" process blocking the port. This was a real issue (`EADDRINUSE`), but fixing it did not solve the crash.
+        3.  Third hypothesis was a dependency version mismatch in the `jimp` library. A `debug-test.js` script proved that the `jimp` API was incorrect.
+        4.  Final hypothesis was a shell or environment-level caching/corruption issue, as attempts to fix the `jimp` code did not change the test script's output.
+    *   **Strategic Decision:** Per user instruction, we will **defer** the final debugging of this issue until the deployment phase. The server's instability is likely due to the specific, non-local shell environment. We will pause work on this feature and proceed with other tasks.
+    *   **Status:** Phase 2A is **On Hold**.
+
+*   **Log Entry 2025-11-07 (GLTF Exporter):**
     *   **Action:** Began implementation of Phase 2A: Model Persistence.
     *   **Issue:** The initial `npm install` for `node-gltf` failed with a 404 error.
-    *   **Root Cause Analysis:** The `node-gltf` package does not exist or is deprecated in the public NPM registry. The initial assumption for GLB creation was incorrect.
-    *   **Resolution Plan:** Pivot to using the official `three.js` library, which includes the `GLTFExporter` module suitable for use in a Node.js environment. This is a more robust and future-proof solution.
-    *   **Status:** Plan enacted. `three.js` has been successfully installed.
+    *   **Root Cause Analysis:** The `node-gltf` package does not exist or is deprecated. The `three.js` `GLTFExporter` was attempted, but it is not compatible with the Node.js environment and caused silent crashes.
+    *   **Resolution Plan:** Abandoned server-side `.glb` generation in favor of sending raw model data to the client. This issue is now superseded by the larger server instability issue.
+    *   **Status:** Closed.
 
 ---
 
@@ -30,38 +41,21 @@ To create the world's most powerful, insightful, and creatively empowering platf
 #### **Phase 1: Foundational Pipeline**
 *   **Status:** ✅ **Complete**
 *   **Goal:** Establish the core end-to-end functionality of the application.
-*   **Features:**
-    *   **2D Plan Uploader:**
-        *   `[X]` Create React frontend for file upload.
-        *   `[X]` Support bitmap (PNG, JPEG) and vector (SVG) formats.
-    *   **Server-Side Image Processing:**
-        *   `[X]` Implement Node.js server with `jimp` and `svg-parser`.
-        *   `[X]` Develop algorithmic wall/line detection.
-    *   **3D Model Generation:**
-        *   `[X]` Create in-memory procedural engine to generate mesh from wall data.
-    *   **Client-Side VR Rendering:**
-        *   `[X]` Use `@react-three/fiber` to render the 3D model in a basic VR scene.
 
 #### **Phase 2A: Model Persistence & API**
-*   **Status:** 🎯 **In Progress**
+*   **Status:** 🧊 **On Hold**
 *   **Goal:** Save generated models to persistent files and create secure, accessible APIs.
+*   **Reason for Hold:** Blocked by a persistent, environment-related server crash. Debugging is deferred until the deployment phase.
 *   **Features:**
     *   **Model File Generation:**
-        *   **`[X]` Install `three.js` dependency on the server.**
-        *   **`[🎯] Create a new `models/` directory for `.glb` files.** `In Progress`
-        *   `[ ]` In the `/generate-model` endpoint, construct a `THREE.Scene` from the generated geometry.
-        *   `[ ]` Use `GLTFExporter` to convert the scene to a binary `.glb` buffer.
-        *   `[ ]` Save the buffer to a unique file in the `models/` directory.
+        *   `[ ]` Task deferred.
     *   **API Endpoint Creation:**
-        *   `[ ]` Create a secure, admin-only `/download-model` endpoint for direct file downloads.
-        *   `[ ]` Create a public `/view-model` endpoint to serve the model to the client viewer.
-        *   `[ ]` Update server response to include the new model filename.
+        *   `[ ]` Task deferred.
     *   **Client-Side Integration:**
-        *   `[ ]` Update `client/src/App.js` to handle the new server response (model filename).
-        *   `[ ]` Update `client/src/components/VRScene.js` to use the `useGLTF` hook and load the model from the `/view-model` endpoint.
+        *   `[ ]` Task deferred.
 
 #### **Phase 2B: The User Dashboard**
-*   **Status:** ⏳ Pending
+*   **Status:** ⏳ **Pending - NEXT UP**
 *   **Goal:** Create the central hub for users to manage their projects.
 *   **Features:**
     *   **Dashboard UI:**
@@ -74,30 +68,15 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ---
 
 ### **Part 2: The Simulation Engine**
+*(All subsequent phases are pending the completion of Part 1)*
 
 #### **Phase 3A: The Sun & Shadow Simulation**
 *   **Status:** ⏳ Pending
 *   **Goal:** Simulate realistic, physically accurate natural lighting and shadows.
-*   **Features:**
-    *   **Geospatial Context:**
-        *   **`[ ]` Add UI for users to input a latitude/longitude for their project.**
-    *   **Celestial Algorithm:**
-        *   **`[ ]` Implement a library or algorithm to calculate the sun's position for any date/time based on location.** We will use the `suncalc` library for this.
-    *   **Real-Time Rendering:**
-        *   **`[ ]` Integrate the sun position with a `DirectionalLight` in the `three.js` scene.**
-        *   **`[ ]` Configure high-quality, real-time shadow mapping.**
 
 #### **Phase 3B: The Material Physics Simulation**
 *   **Status:** ⏳ Pending
 *   **Goal:** Simulate the real-world physical performance of materials.
-*   **Features:**
-    *   **Material Properties System:**
-        *   **`[ ]` Build a database of materials with properties (e.g., R-value, density, acoustic absorption).**
-        *   **`[ ]` Create a UI for users to "paint" these materials onto surfaces in their model.**
-    *   **Thermal Simulation:**
-        *   **`[ ]` Develop a simplified FEA algorithm to model heat transfer and generate a real-time heat map visualization.**
-    *   **Acoustic Simulation:**
-        *   **`[ ]` Develop a ray-tracing-based algorithm to simulate sound propagation and reverberation.**
 
 ---
 
@@ -106,24 +85,10 @@ To create the world's most powerful, insightful, and creatively empowering platf
 #### **Phase 4A: Architectural Pattern Analysis**
 *   **Status:** ⏳ Pending
 *   **Goal:** Provide users with expert feedback based on established architectural principles.
-*   **Features:**
-    *   **Expert System Engine:**
-        *   **`[ ]` Research and codify a library of architectural heuristics (e.g., from "A Pattern Language").**
-        *   **`[ ]` Build a rules engine that can analyze the 3D model's geometry against these heuristics.**
-    *   **Feedback UI:**
-        *   **`[ ]` Design and implement a non-intrusive UI to display warnings, suggestions, and analysis to the user.**
 
 #### **Phase 4B: Human Factors & Ergonomics**
 *   **Status:** ⏳ Pending
 *   **Goal:** Simulate the human experience within the design to optimize for comfort and usability.
-*   **Features:**
-    *   **Avatar & Animation System:**
-        *   **`[ ]` Integrate a simple 3D avatar into the scene.**
-        *   **`[ ]` Implement an inverse kinematics system for realistic task animation.**
-    *   **Ergonomics Database:**
-        *   **`[ ]` Create a database of standard ergonomic data (reach distances, turning radii, etc.).**
-    *   **Simulation Engine:**
-        *   **`[ ]` Develop a pathfinding and task simulation algorithm to analyze workflows and highlight ergonomic issues.**
 
 ---
 
@@ -132,27 +97,11 @@ To create the world's most powerful, insightful, and creatively empowering platf
 #### **Phase 5: Financial & Construction Reality**
 *   **Status:** ⏳ Pending
 *   **Goal:** Bridge the gap between the virtual design and its real-world construction and cost.
-*   **Features:**
-    *   **Bill of Materials Engine:**
-        *   **`[ ]` Develop an algorithm to procedurally calculate material quantities from the 3D model.**
-        *   **`[ ]` Build and integrate a database of regional material costs.**
-    *   **Live Cost Dashboard:**
-        *   **`[ ]` Create a UI to display a real-time, itemized cost estimate.**
 
 #### **Phase 6: Creative & Collaborative Power**
 *   **Status:** ⏳ Pending
 *   **Goal:** Evolve the platform into a tool for limitless creativity and shared experiences.
-*   **Features:**
-    *   **Parametric Design Sandbox:**
-        *   **`[ ]` Re-architect the core design system to support parametric rules and constraints.**
-        *   **`[ ]` Build a UI for users to define these rules.**
-    *   **Multi-User & Sharing:**
-        *   **`[ ]` Implement a WebSocket/WebRTC backend for real-time scene synchronization.** We will use `Socket.IO` for this.
-        *   **`[ ]` Build collaboration features (avatars, voice chat).**
 
 #### **Phase 7: Future Expansion**
 *   **Status:** ⏳ Pending
 *   **Goal:** Expand to new platforms and secure our position as a market leader.
-*   **Features:**
-    *   **Augmented Reality (AR) Integration:**
-        *   **`[ ]` Use WebXR to project models into the real world.** The `@react-three/xr` package already provides the necessary hooks for this.

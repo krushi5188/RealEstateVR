@@ -3,7 +3,6 @@ import './App.css';
 import Dashboard from './components/Dashboard';
 
 function App() {
-  console.log('Rendering App component');
   // For now, we will just render the Dashboard.
   // We will add back the routing and state management for the uploader and VR scene later.
   return (
