@@ -24,6 +24,11 @@ To create the world's most powerful, insightful, and creatively empowering platf
         4.  Successfully tested the end-to-end `/generate-model` endpoint with a test PNG image, confirming the crash is resolved.
     *   **Status:** The server is now stable. Phase 2A is **Unblocked**.
 
+*   **Log Entry 2025-11-07 (Simulation Engine Kickoff):**
+    *   **Action:** Began implementation of Part 2: The Simulation Engine, starting with Phase 3A.
+    *   **Details:** Implemented a realistic lighting and shadow system in the `VRScene` component. Replaced the basic `pointLight` with a `directionalLight` to simulate sunlight, and configured both the model and a new ground plane to cast and receive shadows, respectively.
+    *   **Status:** Phase 3A is **In Progress**.
+
 *   **Log Entry 2025-11-07 (Core Foundation Complete):**
     *   **Action:** Completed Part 1: The Core Foundation.
     *   **Details:** Implemented `localStorage` caching for the model list in the dashboard, providing an instant loading experience. This completes all features for Phase 2B. The core pipeline is now feature-complete and stable.
@@ -82,7 +87,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *(All subsequent phases are pending the completion of Part 1)*
 
 #### **Phase 3A: The Sun & Shadow Simulation**
-*   **Status:** ⏳ Pending
+*   **Status:** 🎯 **In Progress**
 *   **Goal:** Simulate realistic, physically accurate natural lighting and shadows.
 
 #### **Phase 3B: The Material Physics Simulation**

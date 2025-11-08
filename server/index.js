@@ -1,3 +1,4 @@
+require('dotenv').config();
 const http = require('http');
 const multiparty = require('multiparty');
 const path = require('path');
