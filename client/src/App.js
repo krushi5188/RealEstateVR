@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import './App.css';
 import VRScene from './components/VRScene';
 import Dashboard from './components/Dashboard';
+import MaterialLibrary from './components/MaterialLibrary';
 
 function App() {
   const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', or 'vr'
@@ -10,6 +11,7 @@ function App() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState(null);
   const [modelData, setModelData] = useState(null);
+  const [selectedMaterial, setSelectedMaterial] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
@@ -131,8 +133,9 @@ function App() {
   const renderVRScene = () => (
     <div className="upload-card">
        <h1>Your VR Experience is Ready</h1>
-       <p>Click the "Enter VR" button to immerse yourself in the floor plan.</p>
-       <VRScene modelData={modelData} />
+       <p>Select a material below to change the appearance of the model.</p>
+       <VRScene modelData={modelData} material={selectedMaterial} />
+       <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
        <button className="upload-button" onClick={resetToDashboard} style={{marginTop: '1.5rem'}}>
          Back to Dashboard
        </button>

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "default_concrete",
+    "name": "Default Concrete",
+    "color": "#c0c0c0",
+    "roughness": 0.8,
+    "metalness": 0.1
+  },
+  {
+    "id": "polished_metal",
+    "name": "Polished Metal",
+    "color": "#a0a0a0",
+    "roughness": 0.1,
+    "metalness": 0.9
+  },
+  {
+    "id": "matte_plastic",
+    "name": "Matte Plastic",
+    "color": "#f0f0f0",
+    "roughness": 0.9,
+    "metalness": 0.0
+  },
+  {
+    "id": "glossy_wood",
+    "name": "Glossy Wood",
+    "color": "#8B4513",
+    "roughness": 0.3,
+    "metalness": 0.0
+  }
+]
