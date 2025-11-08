@@ -4,7 +4,16 @@ import { OrbitControls, Grid } from '@react-three/drei';
 import { VRButton, ARButton, XR, Controllers, Hands } from '@react-three/xr';
 import * as THREE from 'three';
 
-// A custom component to render the 3D model from raw geometry data
+/**
+ * Render a mesh from raw vertex and index arrays and prepare it for shadowed rendering.
+ *
+ * Creates a BufferGeometry from the provided modelData, computes vertex normals for correct shading,
+ * and renders a white, double-sided MeshStandardMaterial mesh that casts shadows. If modelData is missing
+ * or lacks required arrays, nothing is rendered.
+ *
+ * @param {{vertices: TypedArray, faces: TypedArray}} props.modelData - Geometry source where `vertices` is a flat XYZ float array (e.g., Float32Array) and `faces` is an index array (e.g., Uint16Array/Uint32Array).
+ * @returns {JSX.Element|null} A mesh React element ready for inclusion in a three.js canvas, or `null` when geometry cannot be constructed.
+ */
 function Model({ modelData }) {
     const geometry = useMemo(() => {
         if (!modelData || !modelData.vertices || !modelData.faces) return null;
@@ -25,7 +34,12 @@ function Model({ modelData }) {
     );
 }
 
-// The main VR Scene component
+/**
+ * Render a VR/AR-capable 3D scene that displays a provided model with lighting, shadows, and XR controls.
+ *
+ * @param {Object} modelData - Geometry data for the scene model; expected to include `vertices` and `faces` arrays consumed by the Model component.
+ * @returns {JSX.Element} The VR/AR scene element containing a VR entry button, a shadow-enabled Canvas wrapped in XR, scene lighting, input controllers and hands, the provided Model, a shadow-receiving ground plane, OrbitControls, and an infinite grid.
+ */
 export default function VRScene({ modelData }) {
     return (
         <div style={{ position: 'relative', width: '100%', height: '500px', borderRadius: '8px', overflow: 'hidden' }}>
