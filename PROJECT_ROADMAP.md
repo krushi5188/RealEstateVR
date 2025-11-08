@@ -65,11 +65,60 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **Technical Approach:** Users will be able to define simple "scripts" for virtual agents (e.g., "Wake up, go to kitchen, make coffee, go to office"). The system will then animate these agents moving through the 3D model, following the calculated circulation paths.
         *   **UI/UX:** A timeline interface will allow the user to scrub through the simulated day. The animated agents will be visible in the VR scene, revealing how different activities might interact or conflict.
 
+#### **Phase 4C: Design Philosophy Analysis (Vastu Shastra & Feng Shui)**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To provide automated analysis based on ancient and modern design philosophies, transforming the platform into a virtual design consultant.
+*   **Features:**
+    *   **Vastu & Feng Shui Module:**
+        *   **Concept:** The system will analyze the floor plan against the core principles of a user-selected design philosophy (e.g., Vastu Shastra).
+        *   **Technical Approach:** This will be a rule-based system. The user will be required to provide two inputs: the cardinal direction North (e.g., by rotating a compass overlay on the 2D plan) and the intended purpose of each room (e.g., selecting from a dropdown list like "Kitchen," "Master Bedroom"). The server will then process a set of logical rules, such as `IF room_purpose IS 'Kitchen' AND location IS 'Southeast' THEN compliance IS 'High'`. The system will parse the plan's geometry to determine room locations relative to the overall layout and the designated North.
+        *   **UI/UX:** The analysis will be presented as a "Compliance Score" and a detailed report. A visual overlay on the 2D plan will highlight areas of concern and compliance. For example: `🟢 In Compliance: Kitchen is located in the Southeast, which is ideal.` `🟡 Recommendation: The main entrance directly faces the back door. Consider adding a decorative screen to slow the flow of energy (Qi/Prana).`
+
+#### **Phase 4D: Wellness & Biophilic Design Analysis**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To computationally score a design's positive impact on human well-being by analyzing its connection to nature.
+*   **Features:**
+    *   **Biophilic Design Score:**
+        *   **Concept:** The system will analyze and score the design based on biophilic principles (the human need to connect with nature).
+        *   **Technical Approach:** This feature will build upon the existing sun simulation. The server will calculate the total "lumen-hours" for each room (from the Natural Light Analysis). It will also perform a line-of-sight analysis by casting rays from the center of each room to all windows, calculating the "View Quality Score" based on the percentage of unobstructed window area visible.
+        *   **UI/UX:** The results will be presented as an overall "Biophilic Score" for the project and individual scores for each room. The UI will provide actionable suggestions like, "The living room has a low View Quality Score. Consider repositioning the sofa to face the main window."
+
+#### **Phase 4E: Acoustic Separation Analysis**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To analyze and mitigate noise pollution between rooms, ensuring a functional and peaceful living environment.
+*   **Features:**
+    *   **Noise Path Highlighting:**
+        *   **Concept:** The system will identify potential areas of noise transmission between "noisy" rooms (e.g., Living Room, Kitchen) and "quiet" rooms (e.g., Bedroom, Office).
+        *   **Technical Approach:** The user will first categorize each room's expected noise level (e.g., "High," "Medium," "Low"). The server will then perform an adjacency analysis, identifying all walls shared between rooms. For each shared wall, it will calculate a "Sound Transmission Score" based on the noise levels of the adjoining rooms and the acoustic properties of the wall's assigned material (this will require adding an `acoustic_dampening` property to our material library).
+        *   **UI/UX:** A visual overlay on the 2D plan will show potential "sound leak" paths. The system will offer recommendations like, "The wall between the Living Room and Master Bedroom has a high Sound Transmission Score. Consider using a material with better acoustic dampening or adding a closet to act as a sound buffer."
+
 ---
 
-### **Part 4: The Professional Toolkit & Future Vision**
+### **Part 4: The Creative Engine**
 
-#### **Phase 5: Financial & Construction Reality**
+#### **Phase 5A: Procedural Layout Suggestions**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To inspire users and help them overcome "designer's block" by automatically generating optimized furniture layouts.
+*   **Features:**
+    *   **Automated Arrangement:**
+        *   **Concept:** The system will suggest multiple valid furniture arrangements based on user-selected items and established interior design principles.
+        *   **Technical Approach:** The user will select a room and a list of furniture items from a library (e.g., "1 sofa, 2 armchairs, 1 coffee table"). The server will then run a placement algorithm. This algorithm will be rule-based, considering factors like clearance zones (e.g., `3ft` of walking space), conversation areas (e.g., seating arranged in a `U-shape`), and focal points (e.g., aligning seating towards a fireplace or window). It will generate several valid layouts and send them to the client.
+        *   **UI/UX:** The user will be presented with 3-4 "layout cards" showing miniature 2D representations of the suggested arrangements. Clicking on a card will apply that layout to the main VR scene, which the user can then accept or customize further.
+
+#### **Phase 5B: Mood Board Integration & Style Analysis**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To help users create a stylistically coherent design by analyzing their inspirational images.
+*   **Features:**
+    *   **Color Palette Extraction:**
+        *   **Concept:** Users will be able to upload a "mood board" or a single inspirational image, and the system will extract its dominant color palette.
+        *   **Technical Approach:** The uploaded image will be processed on the server using `node-canvas`. The system will iterate through the image's pixels, clustering the colors using a k-means algorithm to identify the 5-6 most dominant colors. This color palette will be sent back to the client.
+        *   **UI/UX:** The extracted color palette will be displayed in the UI. The "Material Library" will then automatically filter or suggest materials that match this palette, providing the user with a curated list of stylistically appropriate options to start their design.
+
+---
+
+### **Part 5: The Professional Toolkit & Future Vision**
+
+#### **Phase 6: Financial & Construction Reality**
 *   **Status:** ⏳ **Pending**
 *   **Goal:** To bridge the gap between the virtual design and its real-world construction and cost implications.
 *   **Features:**
@@ -77,7 +126,16 @@ To create the world's most powerful, insightful, and creatively empowering platf
     *   **Bill of Materials Generation:** Users will be able to export a detailed list of all materials and their quantities, ready to be taken to a supplier.
     *   **Constructability Analysis:** The system will perform a basic check for common construction issues (e.g., identifying load-bearing walls that have been removed, checking for sufficient structural support based on simplified rules).
 
-#### **Phase 6: Creative & Collaborative Power**
+#### **Phase 6B: Automated Dimensioning & 2D Plan Export**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To save users significant time by automatically generating professional, dimensioned 2D plans.
+*   **Features:**
+    *   **Automated Dimensioning:**
+        *   **Concept:** The system will automatically calculate and draw all necessary dimension lines on the 2D floor plan.
+        *   **Technical Approach:** After the initial wall data is extracted, the server will perform a geometry analysis to identify all wall segments, rooms, windows, and doors. It will calculate their lengths, widths, and positions. This data will be used to generate a new SVG or PDF layer containing standard architectural dimension lines (e.g., lines, arrows, and text labels).
+        *   **UI/UX:** In the 2D view, the user will be able to toggle a "Show Dimensions" overlay. They will also have a button to "Export as PDF," which will generate a clean, professionally formatted 2D technical drawing, complete with a title block and the dimensioned floor plan.
+
+#### **Phase 7: Creative & Collaborative Power**
 *   **Status:** ⏳ **Pending**
 *   **Goal:** To evolve the platform into a tool for limitless creativity and shared experiences.
 *   **Features:**
@@ -85,7 +143,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
     *   **Procedural Content Generation:** Add tools for procedurally generating interior design elements (e.g., shelving layouts, tiling patterns) based on user-defined parameters.
     *   **Augmented Reality (AR) Overlay:** Develop a mobile app that allows users to project their 3D model into their real-world space using AR, providing a powerful sense of scale and context.
 
-#### **Phase 7: Future Expansion & Market Leadership**
+#### **Phase 8: Future Expansion & Market Leadership**
 *   **Status:** ⏳ **Pending**
 *   **Goal:** To expand the platform's reach and secure its position as an indispensable tool for the entire architecture, engineering, and construction (AEC) industry.
 *   **Features:**
@@ -95,7 +153,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 
 ---
 
-### **Part 5: Optional Future Simulations**
+### **Part 6: Optional Future Simulations**
 
 *   **Note:** The following features are considered optional and are not part of the primary development roadmap. Their implementation will be decided upon at a later date, as they are not deemed essential for the core product.
 
