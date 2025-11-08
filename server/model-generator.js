@@ -77,21 +77,6 @@ function generateModel(wallData) {
         vertexIndex += 8;
     }
 
-    // Add a ground plane
-    const groundSize = Math.max(width, height) * 0.1;
-    const groundVertices = [
-        -groundSize, -0.1, -groundSize,
-         groundSize, -0.1, -groundSize,
-         groundSize, -0.1,  groundSize,
-        -groundSize, -0.1,  groundSize,
-    ];
-    vertices.push(...groundVertices);
-    const groundBase = vertexIndex;
-    faces.push(
-        groundBase, groundBase + 1, groundBase + 2,
-        groundBase, groundBase + 2, groundBase + 3
-    );
-
     return {
         vertices: new Float32Array(vertices),
         faces: new Uint32Array(faces),

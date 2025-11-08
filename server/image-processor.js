@@ -121,7 +121,12 @@ async function extractWallsFromBitmap(filePath) {
 // --- File Saving Logic (Unchanged) ---
 
 function sanitizeFilename(filename) {
-  return filename.replace(/[^a-zA-Z0-9._-]/g, '');
+    // Prevent directory traversal attacks.
+    if (filename.includes('..')) {
+        throw new Error('Invalid filename.');
+    }
+    // Allow a restricted set of characters.
+    return filename.replace(/[^a-zA-Z0-9._-]/g, '');
 }
 
 async function saveFile(file) {

@@ -40,7 +40,7 @@ function App() {
     formData.append('file', selectedFile);
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'http://localhost:3001/generate-model', true);
+    xhr.open('POST', `${process.env.REACT_APP_API_URL}/generate-model`, true);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
@@ -58,6 +58,13 @@ function App() {
           const faces = new Uint32Array(response.model.faces);
           setModelData({ vertices, faces });
           setMessage({ type: 'success', text: 'Model generated successfully!' });
+
+          // Update localStorage with the new model
+          const modelFilename = response.modelPath.split('/').pop();
+          const cachedModels = JSON.parse(localStorage.getItem('models') || '[]');
+          cachedModels.push(modelFilename);
+          localStorage.setItem('models', JSON.stringify(cachedModels));
+
           setView('vr'); // Switch to VR view on success
         } catch (e) {
           setMessage({ type: 'error', text: 'Failed to parse model data.' });
@@ -132,6 +139,14 @@ function App() {
     </div>
   );
 
+  const handleViewModel = (data) => {
+    // Ensure the data is in the correct format (TypedArrays) for the VRScene
+    const vertices = new Float32Array(data.vertices);
+    const faces = new Uint32Array(data.faces);
+    setModelData({ vertices, faces });
+    setView('vr');
+  };
+
   const renderContent = () => {
     switch (view) {
       case 'uploader':
@@ -140,7 +155,7 @@ function App() {
         return renderVRScene();
       case 'dashboard':
       default:
-        return <Dashboard onViewChange={setView} />;
+        return <Dashboard onViewChange={setView} onViewModel={handleViewModel} />;
     }
   };
 

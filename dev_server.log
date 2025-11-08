@@ -1,3 +1,0 @@
-
-> vr-floor-plan@1.0.0 dev
-> concurrently --names "SERVER,CLIENT" -c "bgBlue.bold,bgGreen.bold" "npm start --prefix server" "npm start --prefix client"
