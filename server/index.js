@@ -5,7 +5,6 @@ const path = require('path');
 const fs = require('fs');
 const { saveFile, extractWallData } = require('./image-processor');
 const { generateModel } = require('./model-generator');
-const { analyzeArchitecture } = require('./architectural-analyzer');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 const MODELS_DIR = path.join(__dirname, 'models');
@@ -40,7 +39,6 @@ const server = http.createServer((req, res) => {
         const filePath = await saveFile(file);
         const wallData = await extractWallData(filePath);
         const model = generateModel(wallData);
-        const analysis = analyzeArchitecture(wallData);
 
         // Convert TypedArrays to regular arrays for JSON serialization
         const serializedModel = {
@@ -57,8 +55,7 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({
           message: 'Model generated and saved successfully',
           modelPath: `/models/${modelFilename}`,
-          model: serializedModel,
-          analysis,
+          model: serializedModel
         }));
 
       } catch (processErr) {

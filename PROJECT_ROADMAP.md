@@ -24,38 +24,6 @@ To create the world's most powerful, insightful, and creatively empowering platf
         4.  Successfully tested the end-to-end `/generate-model` endpoint with a test PNG image, confirming the crash is resolved.
     *   **Status:** The server is now stable. Phase 2A is **Unblocked**.
 
-*   **Log Entry 2025-11-07 (Ergonomics Simulation Kickoff):**
-    *   **Action:** Began implementation of Phase 4B: Human Factors & Ergonomics.
-    *   **Details:** Implemented a VR teleportation system in the `VRScene` component, allowing users to move freely through the generated space for a more immersive ergonomic analysis.
-    *   **Status:** Phase 4B is **In Progress**.
-
-*   **Log Entry 2025-11-07 (Intelligence Layer Kickoff):**
-    *   **Action:** Began implementation of Part 3: The Intelligence Layer, starting with Phase 4A.
-    *   **Details:** Implemented an end-to-end architectural analysis feature. Created a new server-side module to analyze wall data and integrated it into the `/generate-model` endpoint. Created a new frontend component to display the feedback in the VR scene.
-    *   **Status:** Phase 4A is **In Progress**.
-
-*   **Log Entry 2025-11-07 (PBR Implementation):**
-    *   **Action:** Began implementation of Phase 3B: The Material Physics Simulation.
-    *   **Details:** Implemented PBR materials for the walls and floor in the `VRScene` component, using placeholder textures. This will allow for a significant increase in visual realism once the final textures are added.
-    *   **Status:** Phase 3B is **In Progress**.
-
-*   **Log Entry 2025-11-07 (Simulation Engine Kickoff):**
-    *   **Action:** Began implementation of Part 2: The Simulation Engine, starting with Phase 3A.
-    *   **Details:** Implemented a realistic lighting and shadow system in the `VRScene` component. Replaced the basic `pointLight` with a `directionalLight` to simulate sunlight, and configured both the model and a new ground plane to cast and receive shadows, respectively.
-    *   **Status:** Phase 3A is **In Progress**.
-
-*   **Log Entry 2025-11-07 (Core Foundation Complete):**
-    *   **Action:** Completed Part 1: The Core Foundation.
-    *   **Details:** Implemented `localStorage` caching for the model list in the dashboard, providing an instant loading experience. This completes all features for Phase 2B. The core pipeline is now feature-complete and stable.
-    *   **Status:** Part 1 is **Complete**. Part 2 is **Unblocked**.
-
-*   **Log Entry 2025-11-07 (Dashboard Functionality):**
-    *   **Action:** Completed interactive features for the user dashboard.
-    *   **Details:**
-        1.  **View Model:** Implemented `handleView` in `Dashboard.js` to fetch model data and switch to the VR scene.
-        2.  **Delete Model:** Added a `DELETE /models/:filename` endpoint to the server and implemented the corresponding `handleDelete` function in the client to remove models.
-    *   **Status:** "View" and "Delete" features are complete. Phase 2B is nearly finished.
-
 *   **Log Entry 2025-11-07 (GLTF Exporter):**
     *   **Action:** Began implementation of Phase 2A: Model Persistence.
     *   **Issue:** The initial `npm install` for `node-gltf` failed with a 404 error.
@@ -74,7 +42,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Goal:** Establish the core end-to-end functionality of the application.
 
 #### **Phase 2A: Model Persistence & API**
-*   **Status:** ✅ **Complete**
+*   **Status:** 🎯 **In Progress**
 *   **Goal:** Save generated models to persistent files and create secure, accessible APIs.
 *   **Features:**
     *   **Model File Generation:**
@@ -86,7 +54,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   `[X]` Integrate model listing and download into the dashboard.
 
 #### **Phase 2B: The User Dashboard**
-*   **Status:** ✅ **Complete**
+*   **Status:** 🎯 **In Progress**
 *   **Goal:** Create the central hub for users to manage their projects.
 *   **Features:**
     *   **Dashboard UI:**
@@ -102,11 +70,11 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *(All subsequent phases are pending the completion of Part 1)*
 
 #### **Phase 3A: The Sun & Shadow Simulation**
-*   **Status:** 🎯 **In Progress**
+*   **Status:** ⏳ Pending
 *   **Goal:** Simulate realistic, physically accurate natural lighting and shadows.
 
 #### **Phase 3B: The Material Physics Simulation**
-*   **Status:** ✅ **Complete**
+*   **Status:** ⏳ Pending
 *   **Goal:** Simulate the real-world physical performance of materials.
 
 ---
@@ -114,11 +82,11 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ### **Part 3: The Intelligence Layer**
 
 #### **Phase 4A: Architectural Pattern Analysis**
-*   **Status:** 🎯 **In Progress**
+*   **Status:** ⏳ Pending
 *   **Goal:** Provide users with expert feedback based on established architectural principles.
 
 #### **Phase 4B: Human Factors & Ergonomics**
-*   **Status:** 🎯 **In Progress**
+*   **Status:** ⏳ Pending
 *   **Goal:** Simulate the human experience within the design to optimize for comfort and usability.
 
 ---

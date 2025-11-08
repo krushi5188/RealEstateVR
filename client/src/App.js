@@ -10,7 +10,6 @@ function App() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState(null);
   const [modelData, setModelData] = useState(null);
-  const [analysisData, setAnalysisData] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
@@ -41,7 +40,7 @@ function App() {
     formData.append('file', selectedFile);
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'http://localhost:3001/generate-model', true);
+    xhr.open('POST', `${process.env.REACT_APP_API_URL}/generate-model`, true);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
@@ -58,7 +57,6 @@ function App() {
           const vertices = new Float32Array(response.model.vertices);
           const faces = new Uint32Array(response.model.faces);
           setModelData({ vertices, faces });
-          setAnalysisData(response.analysis);
           setMessage({ type: 'success', text: 'Model generated successfully!' });
 
           // Update localStorage with the new model
@@ -90,7 +88,6 @@ function App() {
     setUploadProgress(0);
     setMessage(null);
     setModelData(null);
-    setAnalysisData(null);
     setView('dashboard');
   };
 
@@ -135,7 +132,7 @@ function App() {
     <div className="upload-card">
        <h1>Your VR Experience is Ready</h1>
        <p>Click the "Enter VR" button to immerse yourself in the floor plan.</p>
-       <VRScene modelData={modelData} analysis={analysisData} />
+       <VRScene modelData={modelData} />
        <button className="upload-button" onClick={resetToDashboard} style={{marginTop: '1.5rem'}}>
          Back to Dashboard
        </button>
@@ -147,7 +144,6 @@ function App() {
     const vertices = new Float32Array(data.vertices);
     const faces = new Uint32Array(data.faces);
     setModelData({ vertices, faces });
-    setAnalysisData(null); // Analysis is not available when viewing a saved model
     setView('vr');
   };
 

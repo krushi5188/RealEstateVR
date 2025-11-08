@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = process.env.REACT_APP_API_URL;
+const ADMIN_TOKEN = process.env.REACT_APP_ADMIN_SECRET_TOKEN;
 
 export default function Dashboard({ onViewChange, onViewModel }) {
   const [models, setModels] = useState([]);
@@ -45,7 +46,7 @@ export default function Dashboard({ onViewChange, onViewModel }) {
     try {
       const response = await fetch(`${API_URL}/models/${filename}`, {
         headers: {
-          'Authorization': 'admin-secret-token'
+          'Authorization': ADMIN_TOKEN
         }
       });
       if (!response.ok) {
@@ -69,7 +70,7 @@ export default function Dashboard({ onViewChange, onViewModel }) {
     try {
       const response = await fetch(`${API_URL}/models/${filename}`, {
         headers: {
-          'Authorization': 'admin-secret-token'
+          'Authorization': ADMIN_TOKEN
         }
       });
       if (!response.ok) {
@@ -87,7 +88,7 @@ export default function Dashboard({ onViewChange, onViewModel }) {
       const response = await fetch(`${API_URL}/models/${filename}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': 'admin-secret-token'
+          'Authorization': ADMIN_TOKEN
         }
       });
       if (!response.ok) {
