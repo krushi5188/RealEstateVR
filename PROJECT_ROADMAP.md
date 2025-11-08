@@ -14,6 +14,11 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ## Development & Issue Log
 *This section will be updated with every significant action and challenge.*
 
+*   **Log Entry 2025-11-08 (Simulation Engine Kickoff):**
+    *   **Action:** Began implementation of Part 2: The Simulation Engine, starting with Phase 3A.
+    *   **Details:** Implemented a realistic lighting and shadow system in the `VRScene` component. Replaced the basic `pointLight` with a `directionalLight` to simulate sunlight, and configured both the model and a new ground plane to cast and receive shadows, respectively.
+    *   **Status:** Phase 3A is **In Progress**.
+
 *   **Log Entry 2025-11-08 (Audit & Remediation):**
     *   **Action:** Performed a full codebase audit and remediated high-priority issues.
     *   **Details:**
@@ -66,7 +71,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Goal:** Establish the core end-to-end functionality of the application.
 
 #### **Phase 2A: Model Persistence & API**
-*   **Status:** 🎯 **In Progress**
+*   **Status:** ✅ **Complete**
 *   **Goal:** Save generated models to persistent files and create secure, accessible APIs.
 *   **Features:**
     *   **Model File Generation:**
@@ -78,7 +83,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   `[X]` Integrate model listing and download into the dashboard.
 
 #### **Phase 2B: The User Dashboard**
-*   **Status:** 🎯 **In Progress**
+*   **Status:** ✅ **Complete**
 *   **Goal:** Create the central hub for users to manage their projects.
 *   **Features:**
     *   **Dashboard UI:**
@@ -94,7 +99,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *(All subsequent phases are pending the completion of Part 1)*
 
 #### **Phase 3A: The Sun & Shadow Simulation**
-*   **Status:** ⏳ Pending
+*   **Status:** 🎯 **In Progress**
 *   **Goal:** Simulate realistic, physically accurate natural lighting and shadows.
 
 #### **Phase 3B: The Material Physics Simulation**

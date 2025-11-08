@@ -19,7 +19,7 @@ function Model({ modelData }) {
     if (!geometry) return null;
 
     return (
-        <mesh geometry={geometry}>
+        <mesh castShadow geometry={geometry}>
             <meshStandardMaterial color="white" side={THREE.DoubleSide} />
         </mesh>
     );
@@ -30,15 +30,31 @@ export default function VRScene({ modelData }) {
     return (
         <div style={{ position: 'relative', width: '100%', height: '500px', borderRadius: '8px', overflow: 'hidden' }}>
             <VRButton />
-            <Canvas camera={{ position: [0, 5, 15] }}>
+            <Canvas shadows camera={{ position: [0, 5, 15], fov: 50 }}>
                 <XR>
                     <ambientLight intensity={0.5} />
-                    <pointLight position={[10, 15, 10]} />
+                    <directionalLight
+                        castShadow
+                        position={[10, 20, 15]}
+                        intensity={1.5}
+                        shadow-mapSize-width={2048}
+                        shadow-mapSize-height={2048}
+                        shadow-camera-far={50}
+                        shadow-camera-left={-10}
+                        shadow-camera-right={10}
+                        shadow-camera-top={10}
+                        shadow-camera-bottom={-10}
+                    />
 
                     <Controllers />
                     <Hands />
 
                     <Model modelData={modelData} />
+
+                    <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+                        <planeGeometry args={[500, 500]} />
+                        <shadowMaterial opacity={0.5} />
+                    </mesh>
 
                     <OrbitControls />
                     <Grid infiniteGrid cellSize={1} cellThickness={1} />
