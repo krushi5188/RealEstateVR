@@ -58,6 +58,13 @@ function App() {
           const faces = new Uint32Array(response.model.faces);
           setModelData({ vertices, faces });
           setMessage({ type: 'success', text: 'Model generated successfully!' });
+
+          // Update localStorage with the new model
+          const modelFilename = response.modelPath.split('/').pop();
+          const cachedModels = JSON.parse(localStorage.getItem('models') || '[]');
+          cachedModels.push(modelFilename);
+          localStorage.setItem('models', JSON.stringify(cachedModels));
+
           setView('vr'); // Switch to VR view on success
         } catch (e) {
           setMessage({ type: 'error', text: 'Failed to parse model data.' });

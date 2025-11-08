@@ -8,6 +8,17 @@ export default function Dashboard({ onViewChange, onViewModel }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Load models from localStorage for an instant UI update
+    try {
+      const cachedModels = localStorage.getItem('models');
+      if (cachedModels) {
+        setModels(JSON.parse(cachedModels));
+      }
+    } catch (err) {
+      // If parsing fails, just ignore the cached version
+      console.error("Failed to parse cached models:", err);
+    }
+
     const fetchModels = async () => {
       try {
         const response = await fetch(`${API_URL}/models`);
@@ -16,6 +27,8 @@ export default function Dashboard({ onViewChange, onViewModel }) {
         }
         const data = await response.json();
         setModels(data);
+        // Cache the fresh data in localStorage
+        localStorage.setItem('models', JSON.stringify(data));
       } catch (err) {
         setError(err.message);
       }
@@ -73,12 +86,18 @@ export default function Dashboard({ onViewChange, onViewModel }) {
     try {
       const response = await fetch(`${API_URL}/models/${filename}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': 'admin-secret-token'
+        }
       });
       if (!response.ok) {
         throw new Error('Failed to delete model.');
       }
-      // Refresh the model list after deletion
-      setModels(models.filter(model => model !== filename));
+
+      const updatedModels = models.filter(model => model !== filename);
+      setModels(updatedModels);
+      localStorage.setItem('models', JSON.stringify(updatedModels));
+
     } catch (err) {
       setError(err.message);
     }

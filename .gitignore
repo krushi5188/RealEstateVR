@@ -7,11 +7,15 @@
 /client/build
 /client/npm_output.log
 /server/uploads
+/server/.env
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+app_output.log
+dev_server.log
+server_output.log
 
 # Other
 .DS_Store

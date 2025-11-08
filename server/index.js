@@ -82,7 +82,7 @@ const server = http.createServer((req, res) => {
     }
 
     const authToken = req.headers['authorization'];
-    if (authToken !== 'admin-secret-token') {
+    if (authToken !== process.env.ADMIN_SECRET_TOKEN) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Forbidden' }));
         return;
@@ -108,7 +108,7 @@ const server = http.createServer((req, res) => {
     }
 
     const authToken = req.headers['authorization'];
-    if (authToken !== 'admin-secret-token') {
+    if (authToken !== process.env.ADMIN_SECRET_TOKEN) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Forbidden' }));
         return;
