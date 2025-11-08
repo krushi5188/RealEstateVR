@@ -1,0 +1,49 @@
+.material-library {
+  padding: 1rem;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.material-library h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.5rem;
+}
+
+.material-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+}
+
+.material-card {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+}
+
+.material-card:hover {
+  border-color: #007bff;
+  background-color: #e9ecef;
+}
+
+.material-card.selected {
+  border-color: #007bff;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
+
+.material-preview {
+  width: 100%;
+  height: 60px;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.material-card p {
+  margin: 0;
+  font-size: 0.9rem;
+}

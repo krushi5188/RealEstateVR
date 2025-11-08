@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import './App.css';
 import VRScene from './components/VRScene';
 import Dashboard from './components/Dashboard';
+import MaterialLibrary from './components/MaterialLibrary';
+import CirculationAnalysis from './components/CirculationAnalysis';
 
 function App() {
   const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', or 'vr'
@@ -10,6 +12,8 @@ function App() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState(null);
   const [modelData, setModelData] = useState(null);
+  const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [circulationData, setCirculationData] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
@@ -128,14 +132,38 @@ function App() {
     </div>
   );
 
+  const handleAnalyzeCirculation = async () => {
+    // We need a model filename to analyze. For now, we'll pass a dummy one.
+    const modelFilename = "dummy-model.json"; 
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/analyze-circulation/${modelFilename}`);
+      if (!response.ok) {
+        throw new Error('Analysis request failed.');
+      }
+      const data = await response.json();
+      setCirculationData(data);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    }
+  };
+
   const renderVRScene = () => (
     <div className="upload-card">
        <h1>Your VR Experience is Ready</h1>
-       <p>Click the "Enter VR" button to immerse yourself in the floor plan.</p>
-       <VRScene modelData={modelData} />
-       <button className="upload-button" onClick={resetToDashboard} style={{marginTop: '1.5rem'}}>
-         Back to Dashboard
-       </button>
+       <p>Select a material or run an analysis.</p>
+       <div className="vr-scene-container">
+         <VRScene modelData={modelData} material={selectedMaterial} />
+         <CirculationAnalysis analysisData={circulationData} width={500} height={500} />
+       </div>
+       <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
+       <div className="button-container">
+         <button className="analysis-button" onClick={handleAnalyzeCirculation}>
+           Analyze Circulation
+         </button>
+         <button className="upload-button" onClick={resetToDashboard} style={{marginTop: '1.5rem'}}>
+           Back to Dashboard
+         </button>
+       </div>
     </div>
   );
 

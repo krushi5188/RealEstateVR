@@ -1,0 +1,43 @@
+.circulation-analysis-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none; /* Allows clicks to pass through to elements underneath */
+}
+
+.circulation-path {
+  fill: none;
+  stroke: rgba(255, 0, 0, 0.7);
+  stroke-width: 3;
+  stroke-dasharray: 10, 5;
+  animation: dash 1s linear infinite;
+}
+
+.key-node {
+  fill: rgba(0, 0, 255, 0.8);
+  stroke: white;
+  stroke-width: 2;
+}
+
+#arrowhead polygon {
+  fill: rgba(255, 0, 0, 0.7);
+}
+
+.analysis-placeholder,
+.analysis-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  text-align: center;
+  pointer-events: all; /* Make the placeholder clickable if needed */
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -15;
+  }
+}

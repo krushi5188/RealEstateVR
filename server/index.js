@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { saveFile, extractWallData } = require('./image-processor');
 const { generateModel } = require('./model-generator');
+const { analyzeCirculation } = require('./path-analyzer');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 const MODELS_DIR = path.join(__dirname, 'models');
@@ -130,6 +131,46 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Model deleted successfully.' }));
     });
+  } else if (req.url.startsWith('/analyze-circulation/') && req.method === 'GET') {
+    const filename = req.url.split('/')[2];
+    if (!filename) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Filename is required for analysis.' }));
+        return;
+    }
+
+    // In the future, we would load the model, extract wallData, and pass it.
+    // For now, we use dummy data that matches the structure.
+    const dummyWallData = {
+        width: 500,
+        height: 500,
+        walls: [
+            { x1: 0, y1: 0, x2: 500, y2: 0 },       // Top border
+            { x1: 0, y1: 499, x2: 500, y2: 499 }, // Bottom border
+            { x1: 0, y1: 0, x2: 0, y2: 500 },       // Left border
+            { x1: 499, y1: 0, x2: 499, y2: 500 }, // Right border
+            { x1: 100, y1: 100, x2: 300, y2: 100 }, // Inner wall
+        ]
+    };
+
+    try {
+        const analysisResults = analyzeCirculation({ wallData: dummyWallData });
+        
+        // The result can be large, so we simplify it for the client.
+        const simplifiedResults = {
+            paths: analysisResults.paths.map(path => path.map(node => ({ x: node.x, y: node.y }))),
+            keyNodes: analysisResults.keyNodes.map(node => ({ x: node.x, y: node.y })),
+            gridWidth: analysisResults.grid.length > 0 ? analysisResults.grid[0].length : 0,
+            gridHeight: analysisResults.grid.length
+        };
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(simplifiedResults));
+    } catch (analysisErr) {
+        console.error('Analysis failed:', analysisErr);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to analyze circulation paths.' }));
+    }
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not Found' }));

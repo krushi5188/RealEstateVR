@@ -19,33 +19,19 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   *(For a full, exhaustive breakdown of this phase, please see the previous version of this document. The log has been condensed to improve readability.)*
 
 ### **Phase 3A: The Sun & Shadow Simulation**
-*   **Status:** 🎯 **In Progress (Implementation Complete, Verification Blocked)**
+*   **Status:** ✅ **Complete**
 *   **Objective:** To introduce a realistic lighting model by simulating a dynamic sun and casting physically plausible shadows, enhancing the sense of realism and immersion in the VR scene.
 *   *(For a full, exhaustive breakdown of this phase, please see the previous version of this document. The log has been condensed to improve readability.)*
 
+### **Phase 3B: Foundational Material Library**
+*   **Status:** ✅ **Complete**
+*   **Objective:** To create the foundational system for applying different materials to 3D models, allowing for visual customization.
+*   **Implementation Details:**
+    *   **Files Created:** `client/public/materials.json`, `client/src/components/MaterialLibrary.js`, `client/src/components/MaterialLibrary.css`
+    *   **Functionality:** A new UI component was created to fetch material definitions from a JSON file. This library is displayed in the VR view, allowing the user to select a material. The selected material's properties (color, roughness, metalness) are then dynamically applied to the entire 3D model in the `VRScene` component.
+
 ---
 ## The Roadmap: Future Phases Detailed Blueprint
-
-### **Part 2: The Simulation Engine (Continued)**
-
-#### **Phase 3B: The Material Physics Simulation**
-*   **Status:** ⏳ **Pending**
-*   **Goal:** To simulate the real-world physical performance of materials, allowing users to understand not just the look, but the *feel* and *function* of their design choices. This moves the platform from a simple visualizer to a true simulation tool.
-*   **Features:**
-    *   **Material Library:**
-        *   **UI:** A new tab or panel in the VR scene interface will allow users to browse and apply materials to different surfaces (walls, floors, ceilings).
-        *   **Data Model:** We will create a JSON-based material definition library. Each material will have properties like: `name`, `texture_map`, `normal_map`, `roughness`, `metalness`, and two new custom properties: `acoustic_absorption_coefficient` and `thermal_conductivity`.
-        *   **Implementation:** The user will be able to select a surface in the VR scene and apply a material from the library. This will update the `three.js` `MeshStandardMaterial` on the client side.
-    *   **Acoustic Simulation:**
-        *   **Concept:** The system will simulate how sound propagates through the designed space. Users will be able to place a virtual sound source (e.g., a conversation, a stereo) and "hear" how it sounds from another point in the room.
-        *   **Technical Approach:** This will be a non-trivial engineering challenge. We will use a simplified ray-tracing algorithm. From the sound source, we'll cast a number of "sound rays." When a ray hits a surface, its energy will be reduced based on the material's `acoustic_absorption_coefficient`. We will simulate a few bounces. The final "loudness" at the listener's position will be an aggregate of the energy from all rays that reach it.
-        *   **UI/UX:** In the VR scene, the user will be able to drop a "speaker" icon and a "microphone" icon. The UI will then display a simple decibel level or a qualitative description (e.g., "Clear," "Muffled," "Echoey").
-    *   **Thermal Simulation:**
-        *   **Concept:** The system will provide a basic simulation of heat flow, showing how material choices affect energy efficiency.
-        *   **Technical Approach:** This will be a simplified 2D heat-flow simulation. We will define an "outside" temperature and an "inside" temperature. The server will run a simplified finite-difference simulation on the 2D floor plan grid. Each wall segment will have a thermal resistance calculated from its material's `thermal_conductivity`. The simulation will calculate the heat loss/gain through the building envelope over a simulated 24-hour period.
-        *   **UI/UX:** The UI will display a simple "Energy Performance Score" (e.g., A+ to F) and a visualization of heat loss on the 2D floor plan, with "hot" and "cold" spots highlighted in red and blue.
-
----
 
 ### **Part 3: The Intelligence Layer**
 
@@ -79,11 +65,122 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **Technical Approach:** Users will be able to define simple "scripts" for virtual agents (e.g., "Wake up, go to kitchen, make coffee, go to office"). The system will then animate these agents moving through the 3D model, following the calculated circulation paths.
         *   **UI/UX:** A timeline interface will allow the user to scrub through the simulated day. The animated agents will be visible in the VR scene, revealing how different activities might interact or conflict.
 
+#### **Phase 4C: Design Philosophy Analysis (Vastu Shastra & Feng Shui)**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To provide automated analysis based on ancient and modern design philosophies, transforming the platform into a virtual design consultant.
+*   **Features:**
+    *   **Vastu & Feng Shui Module:**
+        *   **Concept:** The system will analyze the floor plan against the core principles of a user-selected design philosophy (e.g., Vastu Shastra).
+        *   **Technical Approach:** This will be a rule-based system. The user will be required to provide two inputs: the cardinal direction North (e.g., by rotating a compass overlay on the 2D plan) and the intended purpose of each room (e.g., selecting from a dropdown list like "Kitchen," "Master Bedroom"). The server will then process a set of logical rules, such as `IF room_purpose IS 'Kitchen' AND location IS 'Southeast' THEN compliance IS 'High'`. The system will parse the plan's geometry to determine room locations relative to the overall layout and the designated North.
+        *   **UI/UX:** The analysis will be presented as a "Compliance Score" and a detailed report. A visual overlay on the 2D plan will highlight areas of concern and compliance. For example: `🟢 In Compliance: Kitchen is located in the Southeast, which is ideal.` `🟡 Recommendation: The main entrance directly faces the back door. Consider adding a decorative screen to slow the flow of energy (Qi/Prana).`
+
+#### **Phase 4D: Wellness & Biophilic Design Analysis**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To computationally score a design's positive impact on human well-being by analyzing its connection to nature.
+*   **Features:**
+    *   **Biophilic Design Score:**
+        *   **Concept:** The system will analyze and score the design based on biophilic principles (the human need to connect with nature).
+        *   **Technical Approach:** This feature will build upon the existing sun simulation. The server will calculate the total "lumen-hours" for each room (from the Natural Light Analysis). It will also perform a line-of-sight analysis by casting rays from the center of each room to all windows, calculating the "View Quality Score" based on the percentage of unobstructed window area visible.
+        *   **UI/UX:** The results will be presented as an overall "Biophilic Score" for the project and individual scores for each room. The UI will provide actionable suggestions like, "The living room has a low View Quality Score. Consider repositioning the sofa to face the main window."
+
+#### **Phase 4E: Acoustic Separation Analysis**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To analyze and mitigate noise pollution between rooms, ensuring a functional and peaceful living environment.
+*   **Features:**
+    *   **Noise Path Highlighting:**
+        *   **Concept:** The system will identify potential areas of noise transmission between "noisy" rooms (e.g., Living Room, Kitchen) and "quiet" rooms (e.g., Bedroom, Office).
+        *   **Technical Approach:** The user will first categorize each room's expected noise level (e.g., "High," "Medium," "Low"). The server will then perform an adjacency analysis, identifying all walls shared between rooms. For each shared wall, it will calculate a "Sound Transmission Score" based on the noise levels of the adjoining rooms and the acoustic properties of the wall's assigned material (this will require adding an `acoustic_dampening` property to our material library).
+        *   **UI/UX:** A visual overlay on the 2D plan will show potential "sound leak" paths. The system will offer recommendations like, "The wall between the Living Room and Master Bedroom has a high Sound Transmission Score. Consider using a material with better acoustic dampening or adding a closet to act as a sound buffer."
+
 ---
 
-### **Part 4: The Professional Toolkit & Future Vision**
+### **Part 4: The Creative Engine**
 
-#### **Phase 5: Financial & Construction Reality**
+#### **Phase 5A: Procedural Layout Suggestions**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To inspire users and help them overcome "designer's block" by automatically generating optimized furniture layouts.
+*   **Features:**
+    *   **Automated Arrangement:**
+        *   **Concept:** The system will suggest multiple valid furniture arrangements based on user-selected items and established interior design principles.
+        *   **Technical Approach:** The user will select a room and a list of furniture items from a library (e.g., "1 sofa, 2 armchairs, 1 coffee table"). The server will then run a placement algorithm. This algorithm will be rule-based, considering factors like clearance zones (e.g., `3ft` of walking space), conversation areas (e.g., seating arranged in a `U-shape`), and focal points (e.g., aligning seating towards a fireplace or window). It will generate several valid layouts and send them to the client.
+        *   **UI/UX:** The user will be presented with 3-4 "layout cards" showing miniature 2D representations of the suggested arrangements. Clicking on a card will apply that layout to the main VR scene, which the user can then accept or customize further.
+
+#### **Phase 5B: Mood Board Integration & Style Analysis**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To help users create a stylistically coherent design by analyzing their inspirational images.
+*   **Features:**
+    *   **Color Palette Extraction:**
+        *   **Concept:** Users will be able to upload a "mood board" or a single inspirational image, and the system will extract its dominant color palette.
+        *   **Technical Approach:** The uploaded image will be processed on the server using `node-canvas`. The system will iterate through the image's pixels, clustering the colors using a k-means algorithm to identify the 5-6 most dominant colors. This color palette will be sent back to the client.
+        *   **UI/UX:** The extracted color palette will be displayed in the UI. The "Material Library" will then automatically filter or suggest materials that match this palette, providing the user with a curated list of stylistically appropriate options to start their design.
+
+---
+
+### **Part 5: Multi-Floor & Structure**
+
+#### **Phase 6A: Multi-Floor Support**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To enable the creation and visualization of multi-story buildings, a critical feature for professional use cases.
+*   **Features:**
+    *   **Multi-File Upload:**
+        *   **Concept:** The system will be updated to support the upload of multiple floor plan images within a single project.
+        *   **Technical Approach:** The frontend uploader will be redesigned to accept multiple files. Each file will be assigned a level (e.g., "Ground Floor," "First Floor"). On the server, the `generate-model` endpoint will be updated to process a batch of images. It will generate a separate 3D model for each floor, then stack them vertically at a standard height (e.g., 9ft) to create a single, unified 3D model data structure.
+        *   **UI/UX:** The user will be able to drag and drop multiple images and label them. In the VR scene, a new UI element (e.g., a simple level selector) will allow the user to instantly teleport between the different floors.
+
+#### **Phase 6B: Staircase and Elevator Tool**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To provide a realistic and interactive method for navigating between floors in a multi-story building.
+*   **Features:**
+    *   **Interactive Placement Tool:**
+        *   **Concept:** Users will be able to place staircases and elevators to connect the different levels of their project.
+        *   **Technical Approach:** This will be a client-side tool. After a multi-floor model is loaded, the user will activate the "Staircase Tool." They will then click a point on the floor of the lower level and a corresponding point on the ceiling. The tool will then procedurally generate the 3D geometry for a staircase and automatically cut the required opening in the upper floor's model data.
+        *   **UI/UX:** A simple tool in the VR interface will allow users to select "Add Stairs." The interface will guide them to select a start and end point. The staircase will appear instantly, and the user will be able to walk up and down it in the VR scene.
+
+#### **Phase 6C: Automatic Roof Generator**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To allow users to easily add a roof to their building, completing the exterior structure.
+*   **Features:**
+    *   **Roof Generation Tool:**
+        *   **Concept:** A simple tool to automatically generate a roof that fits the top floor of the building.
+        *   **Technical Approach:** The server will analyze the perimeter of the top-most floor plan. The user will select a roof type (e.g., "Flat," "Pitched"). The server will then generate the corresponding 3D geometry for the roof, sized and positioned to fit the building perfectly.
+        *   **UI/UX:** A simple "Add Roof" button will appear after a multi-story project is created. The user can select a style, and the roof will be added to the model.
+
+#### **Phase 6D: Simple Exterior Environment**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To improve the sense of realism and immersion by placing the building in a simple environment.
+*   **Features:**
+    *   **Ground Plane & Skybox:**
+        *   **Concept:** Users can place their building on a ground plane and select a skybox for the environment.
+        *   **Technical Approach:** In the `VRScene` component, we will add a larger, textured ground plane (e.g., with a grass texture) and a `<Sky>` component from `@react-three/drei`. The user will be able to select from a predefined list of skybox images.
+        *   **UI/UX:** A new "Environment" tab in the VR interface will allow the user to toggle the ground plane and choose a sky (e.g., "Sunny Day," "Night Sky"). This will be especially impactful when looking out of the windows of the model.
+
+---
+
+### **Part 6: Advanced Customization & Workflow**
+
+#### **Phase 7A: Window and Door Customization**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To increase the realism and detail of the model by allowing users to place custom window and door models.
+*   **Features:**
+    *   **Component Library:**
+        *   **Concept:** A new library of 3D models for various types of windows and doors will be available.
+        *   **Technical Approach:** We will create a library of pre-made 3D models for windows and doors in a format like `.glb`. The server-side image processing will be updated to not just identify openings, but to mark their location and size. In the client, the user will be able to select a window/door from the new library and "place" it into one of these marked openings.
+        *   **UI/UX:** A new "Doors & Windows" tab will appear in the UI. The user can select an opening in the model, which will then show a list of compatible window/door models from the library that can be inserted.
+
+#### **Phase 7B: Saved Project "Snapshots"**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To allow users to experiment with different design ideas without losing their original work.
+*   **Features:**
+    *   **Versioning System:**
+        *   **Concept:** Users can save different versions, or "snapshots," of their project at any time.
+        *   **Technical Approach:** This will require a change on the server. When a user saves a "snapshot," instead of overwriting the existing model file, the server will save a new version with a timestamp or a user-provided name (e.g., `project_a_snapshot_kitchen_idea_b.json`). The dashboard will be updated to show these snapshots grouped under the main project.
+        *   **UI/UX:** A "Save Snapshot" button will be added to the VR view. The dashboard will be redesigned to show a primary project card, which can be expanded to show all the saved snapshots for that project. Users can then load, view, or delete any snapshot.
+
+---
+
+### **Part 7: The Professional Toolkit & Future Vision**
+
+#### **Phase 8A: Financial & Construction Reality**
 *   **Status:** ⏳ **Pending**
 *   **Goal:** To bridge the gap between the virtual design and its real-world construction and cost implications.
 *   **Features:**
@@ -91,7 +188,16 @@ To create the world's most powerful, insightful, and creatively empowering platf
     *   **Bill of Materials Generation:** Users will be able to export a detailed list of all materials and their quantities, ready to be taken to a supplier.
     *   **Constructability Analysis:** The system will perform a basic check for common construction issues (e.g., identifying load-bearing walls that have been removed, checking for sufficient structural support based on simplified rules).
 
-#### **Phase 6: Creative & Collaborative Power**
+#### **Phase 8B: Automated Dimensioning & 2D Plan Export**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To save users significant time by automatically generating professional, dimensioned 2D plans.
+*   **Features:**
+    *   **Automated Dimensioning:**
+        *   **Concept:** The system will automatically calculate and draw all necessary dimension lines on the 2D floor plan.
+        *   **Technical Approach:** After the initial wall data is extracted, the server will perform a geometry analysis to identify all wall segments, rooms, windows, and doors. It will calculate their lengths, widths, and positions. This data will be used to generate a new SVG or PDF layer containing standard architectural dimension lines (e.g., lines, arrows, and text labels).
+        *   **UI/UX:** In the 2D view, the user will be able to toggle a "Show Dimensions" overlay. They will also have a button to "Export as PDF," which will generate a clean, professionally formatted 2D technical drawing, complete with a title block and the dimensioned floor plan.
+
+#### **Phase 9: Creative & Collaborative Power**
 *   **Status:** ⏳ **Pending**
 *   **Goal:** To evolve the platform into a tool for limitless creativity and shared experiences.
 *   **Features:**
@@ -99,10 +205,28 @@ To create the world's most powerful, insightful, and creatively empowering platf
     *   **Procedural Content Generation:** Add tools for procedurally generating interior design elements (e.g., shelving layouts, tiling patterns) based on user-defined parameters.
     *   **Augmented Reality (AR) Overlay:** Develop a mobile app that allows users to project their 3D model into their real-world space using AR, providing a powerful sense of scale and context.
 
-#### **Phase 7: Future Expansion & Market Leadership**
+#### **Phase 10: Future Expansion & Market Leadership**
 *   **Status:** ⏳ **Pending**
 *   **Goal:** To expand the platform's reach and secure its position as an indispensable tool for the entire architecture, engineering, and construction (AEC) industry.
 *   **Features:**
     *   **Plugin Architecture & Marketplace:** Develop a plugin system that allows third-party developers to create and sell their own analysis tools, material packs, and furniture libraries.
     *   **Integration with Professional CAD Software:** Create import/export plugins for industry-standard tools like Revit and AutoCAD, allowing seamless workflow integration.
     *   **Enterprise Licensing & Support:** Develop a tiered pricing model for professional firms, offering features like team management, advanced security, and dedicated technical support.
+
+---
+
+### **Part 8: Optional Future Simulations**
+
+*   **Note:** The following features are considered optional and are not part of the primary development roadmap. Their implementation will be decided upon at a later date, as they are not deemed essential for the core product.
+
+#### **Acoustic Simulation**
+*   **Status:**  shelved **Shelved**
+*   **Concept:** The system will simulate how sound propagates through the designed space. Users will be able to place a virtual sound source (e.g., a conversation, a stereo) and "hear" how it sounds from another point in the room.
+*   **Technical Approach:** This will be a non-trivial engineering challenge. We will use a simplified ray-tracing algorithm. From the sound source, we'll cast a number of "sound rays." When a ray hits a surface, its energy will be reduced based on the material's `acoustic_absorption_coefficient`. We will simulate a few bounces. The final "loudness" at the listener's position will be an aggregate of the energy from all rays that reach it.
+*   **UI/UX:** In the VR scene, the user will be able to drop a "speaker" icon and a "microphone" icon. The UI will then display a simple decibel level or a qualitative description (e.g., "Clear," "Muffled," "Echoey").
+
+#### **Thermal Simulation**
+*   **Status:**  shelved **Shelved**
+*   **Concept:** The system will provide a basic simulation of heat flow, showing how material choices affect energy efficiency.
+*   **Technical Approach:** This will be a simplified 2D heat-flow simulation. We will define an "outside" temperature and an "inside" temperature. The server will run a simplified finite-difference simulation on the 2D floor plan grid. Each wall segment will have a thermal resistance calculated from its material's `thermal_conductivity`. The simulation will calculate the heat loss/gain through the building envelope over a simulated 24-hour period.
+*   **UI/UX:** The UI will display a simple "Energy Performance Score" (e.g., A+ to F) and a visualization of heat loss on the 2D floor plan, with "hot" and "cold" spots highlighted in red and blue.
