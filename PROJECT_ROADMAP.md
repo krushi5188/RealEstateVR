@@ -116,9 +116,71 @@ To create the world's most powerful, insightful, and creatively empowering platf
 
 ---
 
-### **Part 5: The Professional Toolkit & Future Vision**
+### **Part 5: Multi-Floor & Structure**
 
-#### **Phase 6: Financial & Construction Reality**
+#### **Phase 6A: Multi-Floor Support**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To enable the creation and visualization of multi-story buildings, a critical feature for professional use cases.
+*   **Features:**
+    *   **Multi-File Upload:**
+        *   **Concept:** The system will be updated to support the upload of multiple floor plan images within a single project.
+        *   **Technical Approach:** The frontend uploader will be redesigned to accept multiple files. Each file will be assigned a level (e.g., "Ground Floor," "First Floor"). On the server, the `generate-model` endpoint will be updated to process a batch of images. It will generate a separate 3D model for each floor, then stack them vertically at a standard height (e.g., 9ft) to create a single, unified 3D model data structure.
+        *   **UI/UX:** The user will be able to drag and drop multiple images and label them. In the VR scene, a new UI element (e.g., a simple level selector) will allow the user to instantly teleport between the different floors.
+
+#### **Phase 6B: Staircase and Elevator Tool**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To provide a realistic and interactive method for navigating between floors in a multi-story building.
+*   **Features:**
+    *   **Interactive Placement Tool:**
+        *   **Concept:** Users will be able to place staircases and elevators to connect the different levels of their project.
+        *   **Technical Approach:** This will be a client-side tool. After a multi-floor model is loaded, the user will activate the "Staircase Tool." They will then click a point on the floor of the lower level and a corresponding point on the ceiling. The tool will then procedurally generate the 3D geometry for a staircase and automatically cut the required opening in the upper floor's model data.
+        *   **UI/UX:** A simple tool in the VR interface will allow users to select "Add Stairs." The interface will guide them to select a start and end point. The staircase will appear instantly, and the user will be able to walk up and down it in the VR scene.
+
+#### **Phase 6C: Automatic Roof Generator**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To allow users to easily add a roof to their building, completing the exterior structure.
+*   **Features:**
+    *   **Roof Generation Tool:**
+        *   **Concept:** A simple tool to automatically generate a roof that fits the top floor of the building.
+        *   **Technical Approach:** The server will analyze the perimeter of the top-most floor plan. The user will select a roof type (e.g., "Flat," "Pitched"). The server will then generate the corresponding 3D geometry for the roof, sized and positioned to fit the building perfectly.
+        *   **UI/UX:** A simple "Add Roof" button will appear after a multi-story project is created. The user can select a style, and the roof will be added to the model.
+
+#### **Phase 6D: Simple Exterior Environment**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To improve the sense of realism and immersion by placing the building in a simple environment.
+*   **Features:**
+    *   **Ground Plane & Skybox:**
+        *   **Concept:** Users can place their building on a ground plane and select a skybox for the environment.
+        *   **Technical Approach:** In the `VRScene` component, we will add a larger, textured ground plane (e.g., with a grass texture) and a `<Sky>` component from `@react-three/drei`. The user will be able to select from a predefined list of skybox images.
+        *   **UI/UX:** A new "Environment" tab in the VR interface will allow the user to toggle the ground plane and choose a sky (e.g., "Sunny Day," "Night Sky"). This will be especially impactful when looking out of the windows of the model.
+
+---
+
+### **Part 6: Advanced Customization & Workflow**
+
+#### **Phase 7A: Window and Door Customization**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To increase the realism and detail of the model by allowing users to place custom window and door models.
+*   **Features:**
+    *   **Component Library:**
+        *   **Concept:** A new library of 3D models for various types of windows and doors will be available.
+        *   **Technical Approach:** We will create a library of pre-made 3D models for windows and doors in a format like `.glb`. The server-side image processing will be updated to not just identify openings, but to mark their location and size. In the client, the user will be able to select a window/door from the new library and "place" it into one of these marked openings.
+        *   **UI/UX:** A new "Doors & Windows" tab will appear in the UI. The user can select an opening in the model, which will then show a list of compatible window/door models from the library that can be inserted.
+
+#### **Phase 7B: Saved Project "Snapshots"**
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To allow users to experiment with different design ideas without losing their original work.
+*   **Features:**
+    *   **Versioning System:**
+        *   **Concept:** Users can save different versions, or "snapshots," of their project at any time.
+        *   **Technical Approach:** This will require a change on the server. When a user saves a "snapshot," instead of overwriting the existing model file, the server will save a new version with a timestamp or a user-provided name (e.g., `project_a_snapshot_kitchen_idea_b.json`). The dashboard will be updated to show these snapshots grouped under the main project.
+        *   **UI/UX:** A "Save Snapshot" button will be added to the VR view. The dashboard will be redesigned to show a primary project card, which can be expanded to show all the saved snapshots for that project. Users can then load, view, or delete any snapshot.
+
+---
+
+### **Part 7: The Professional Toolkit & Future Vision**
+
+#### **Phase 8A: Financial & Construction Reality**
 *   **Status:** ⏳ **Pending**
 *   **Goal:** To bridge the gap between the virtual design and its real-world construction and cost implications.
 *   **Features:**
@@ -126,7 +188,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
     *   **Bill of Materials Generation:** Users will be able to export a detailed list of all materials and their quantities, ready to be taken to a supplier.
     *   **Constructability Analysis:** The system will perform a basic check for common construction issues (e.g., identifying load-bearing walls that have been removed, checking for sufficient structural support based on simplified rules).
 
-#### **Phase 6B: Automated Dimensioning & 2D Plan Export**
+#### **Phase 8B: Automated Dimensioning & 2D Plan Export**
 *   **Status:** ⏳ **Pending**
 *   **Goal:** To save users significant time by automatically generating professional, dimensioned 2D plans.
 *   **Features:**
@@ -135,7 +197,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **Technical Approach:** After the initial wall data is extracted, the server will perform a geometry analysis to identify all wall segments, rooms, windows, and doors. It will calculate their lengths, widths, and positions. This data will be used to generate a new SVG or PDF layer containing standard architectural dimension lines (e.g., lines, arrows, and text labels).
         *   **UI/UX:** In the 2D view, the user will be able to toggle a "Show Dimensions" overlay. They will also have a button to "Export as PDF," which will generate a clean, professionally formatted 2D technical drawing, complete with a title block and the dimensioned floor plan.
 
-#### **Phase 7: Creative & Collaborative Power**
+#### **Phase 9: Creative & Collaborative Power**
 *   **Status:** ⏳ **Pending**
 *   **Goal:** To evolve the platform into a tool for limitless creativity and shared experiences.
 *   **Features:**
@@ -143,7 +205,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
     *   **Procedural Content Generation:** Add tools for procedurally generating interior design elements (e.g., shelving layouts, tiling patterns) based on user-defined parameters.
     *   **Augmented Reality (AR) Overlay:** Develop a mobile app that allows users to project their 3D model into their real-world space using AR, providing a powerful sense of scale and context.
 
-#### **Phase 8: Future Expansion & Market Leadership**
+#### **Phase 10: Future Expansion & Market Leadership**
 *   **Status:** ⏳ **Pending**
 *   **Goal:** To expand the platform's reach and secure its position as an indispensable tool for the entire architecture, engineering, and construction (AEC) industry.
 *   **Features:**
@@ -153,7 +215,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 
 ---
 
-### **Part 6: Optional Future Simulations**
+### **Part 8: Optional Future Simulations**
 
 *   **Note:** The following features are considered optional and are not part of the primary development roadmap. Their implementation will be decided upon at a later date, as they are not deemed essential for the core product.
 
