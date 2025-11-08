@@ -14,6 +14,15 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ## Development & Issue Log
 *This section will be updated with every significant action and challenge.*
 
+*   **Log Entry 2025-11-08 (Audit & Remediation):**
+    *   **Action:** Performed a full codebase audit and remediated high-priority issues.
+    *   **Details:**
+        1.  **Security:** Moved hardcoded client-side secrets (`API_URL`, `ADMIN_SECRET_TOKEN`) to a `.env` file.
+        2.  **Security:** Hardened server-side filename sanitization to prevent path traversal attacks.
+        3.  **Bugfix:** Removed redundant ground plane generation from the `model-generator` module.
+        4.  **Investigation:** Identified 9 dependency vulnerabilities in the client, but the standard `npm audit fix` was not viable. This remains an open issue.
+    *   **Status:** High-priority remediation is **Complete**.
+
 *   **Log Entry 2025-11-07 (Server Instability RESOLVED):**
     *   **Action:** Replaced the `jimp` library with `node-canvas` to resolve the server crash.
     *   **Issue:** The Node.js server was crashing silently upon file upload. The root cause was identified as an unstable interaction with the `jimp` library.
@@ -32,6 +41,21 @@ To create the world's most powerful, insightful, and creatively empowering platf
     *   **Status:** Closed.
 
 ---
+
+### **Phase 0: Audit & Remediation**
+*   **Status:** ✅ **Complete**
+*   **Goal:** Address critical issues discovered during a full codebase audit.
+*   **High-Priority Issues:**
+    *   `[ ]` **Client Vulnerabilities:** Fix 9 vulnerabilities by updating `react-scripts`. (Attempted, but unresolved)
+    *   `[X]` **Hardcoded Secrets:** Move client-side API URL and admin token to a `.env` file.
+    *   `[X]` **Path Traversal:** Implement robust filename sanitization on the server.
+    *   `[X]` **Redundant Geometry:** Remove the server-side ground plane generation.
+*   **Medium-Priority (Future Work):**
+    *   `[ ]` Migrate server from native `http` to Express.js.
+    *   `[ ]` Improve SVG processing to handle more than just `<rect>` elements.
+    *   `[ ]` Enhance wall detection to support diagonal lines.
+*   **Low-Priority (Future Work):**
+    *   `[ ]` Refactor `XMLHttpRequest` in `App.js` to use `fetch`.
 
 ## The Roadmap
 
