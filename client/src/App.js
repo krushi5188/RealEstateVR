@@ -3,6 +3,13 @@ import './App.css';
 import VRScene from './components/VRScene';
 import Dashboard from './components/Dashboard';
 
+/**
+ * Root React component that manages a multi-view interface for uploading a 2D floor plan, generating a 3D model, and viewing it in VR.
+ *
+ * Manages UI state (current view, selected file, drag state, upload progress, feedback messages, and model data), handles drag-and-drop and file selection, performs the model-generation upload request, persists generated model filenames to localStorage, and navigates to the VR view when a model becomes available.
+ *
+ * @returns {JSX.Element} The rendered App component tree for the active view ('dashboard', 'uploader', or 'vr').
+ */
 function App() {
   const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', or 'vr'
   const [selectedFile, setSelectedFile] = useState(null);

@@ -3,6 +3,14 @@ import './Dashboard.css';
 
 const API_URL = 'http://localhost:3001';
 
+/**
+ * Render the Projects dashboard that lists available model files and exposes actions to view, download, delete, or create a project.
+ *
+ * @param {Object} props
+ * @param {(view: string) => void} props.onViewChange - Callback invoked to request a view change; receives the target view identifier (e.g., `'uploader'`).
+ * @param {(modelData: Object) => void} props.onViewModel - Callback invoked with a model's parsed data when a model is requested for viewing.
+ * @returns {JSX.Element} The dashboard UI element.
+ */
 export default function Dashboard({ onViewChange, onViewModel }) {
   const [models, setModels] = useState([]);
   const [error, setError] = useState(null);
