@@ -1,11 +1,18 @@
 import React, { useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Grid } from '@react-three/drei';
+import { OrbitControls, Grid, useTexture } from '@react-three/drei';
 import { VRButton, ARButton, XR, Controllers, Hands } from '@react-three/xr';
 import * as THREE from 'three';
 
 // A custom component to render the 3D model from raw geometry data
 function Model({ modelData }) {
+    const [colorMap, roughnessMap, normalMap, aoMap] = useTexture([
+        '/textures/wall/color.jpg',
+        '/textures/wall/roughness.jpg',
+        '/textures/wall/normal.jpg',
+        '/textures/wall/ao.jpg',
+      ]);
+
     const geometry = useMemo(() => {
         if (!modelData || !modelData.vertices || !modelData.faces) return null;
 
@@ -20,10 +27,37 @@ function Model({ modelData }) {
 
     return (
         <mesh castShadow geometry={geometry}>
-            <meshStandardMaterial color="white" side={THREE.DoubleSide} />
+            <meshStandardMaterial
+                map={colorMap}
+                roughnessMap={roughnessMap}
+                normalMap={normalMap}
+                aoMap={aoMap}
+                side={THREE.DoubleSide}
+            />
         </mesh>
     );
 }
+
+function Ground() {
+    const [colorMap, roughnessMap, normalMap, aoMap] = useTexture([
+      '/textures/floor/color.jpg',
+      '/textures/floor/roughness.jpg',
+      '/textures/floor/normal.jpg',
+      '/textures/floor/ao.jpg',
+    ]);
+
+    return (
+      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+        <planeGeometry args={[500, 500]} />
+        <meshStandardMaterial
+          map={colorMap}
+          roughnessMap={roughnessMap}
+          normalMap={normalMap}
+          aoMap={aoMap}
+        />
+      </mesh>
+    );
+  }
 
 // The main VR Scene component
 export default function VRScene({ modelData }) {
@@ -51,10 +85,7 @@ export default function VRScene({ modelData }) {
 
                     <Model modelData={modelData} />
 
-                    <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-                        <planeGeometry args={[500, 500]} />
-                        <shadowMaterial opacity={0.5} />
-                    </mesh>
+                    <Ground />
 
                     <OrbitControls />
                     <Grid infiniteGrid cellSize={1} cellThickness={1} />

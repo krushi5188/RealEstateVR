@@ -24,6 +24,11 @@ To create the world's most powerful, insightful, and creatively empowering platf
         4.  Successfully tested the end-to-end `/generate-model` endpoint with a test PNG image, confirming the crash is resolved.
     *   **Status:** The server is now stable. Phase 2A is **Unblocked**.
 
+*   **Log Entry 2025-11-07 (PBR Implementation):**
+    *   **Action:** Began implementation of Phase 3B: The Material Physics Simulation.
+    *   **Details:** Implemented PBR materials for the walls and floor in the `VRScene` component, using placeholder textures. This will allow for a significant increase in visual realism once the final textures are added.
+    *   **Status:** Phase 3B is **In Progress**.
+
 *   **Log Entry 2025-11-07 (Simulation Engine Kickoff):**
     *   **Action:** Began implementation of Part 2: The Simulation Engine, starting with Phase 3A.
     *   **Details:** Implemented a realistic lighting and shadow system in the `VRScene` component. Replaced the basic `pointLight` with a `directionalLight` to simulate sunlight, and configured both the model and a new ground plane to cast and receive shadows, respectively.
@@ -91,7 +96,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Goal:** Simulate realistic, physically accurate natural lighting and shadows.
 
 #### **Phase 3B: The Material Physics Simulation**
-*   **Status:** ⏳ Pending
+*   **Status:** 🎯 **In Progress**
 *   **Goal:** Simulate the real-world physical performance of materials.
 
 ---
