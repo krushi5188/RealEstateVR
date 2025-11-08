@@ -24,6 +24,13 @@ To create the world's most powerful, insightful, and creatively empowering platf
         4.  Successfully tested the end-to-end `/generate-model` endpoint with a test PNG image, confirming the crash is resolved.
     *   **Status:** The server is now stable. Phase 2A is **Unblocked**.
 
+*   **Log Entry 2025-11-07 (Dashboard Functionality):**
+    *   **Action:** Completed interactive features for the user dashboard.
+    *   **Details:**
+        1.  **View Model:** Implemented `handleView` in `Dashboard.js` to fetch model data and switch to the VR scene.
+        2.  **Delete Model:** Added a `DELETE /models/:filename` endpoint to the server and implemented the corresponding `handleDelete` function in the client to remove models.
+    *   **Status:** "View" and "Delete" features are complete. Phase 2B is nearly finished.
+
 *   **Log Entry 2025-11-07 (GLTF Exporter):**
     *   **Action:** Began implementation of Phase 2A: Model Persistence.
     *   **Issue:** The initial `npm install` for `node-gltf` failed with a 404 error.

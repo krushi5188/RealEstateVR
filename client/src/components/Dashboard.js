@@ -3,7 +3,7 @@ import './Dashboard.css';
 
 const API_URL = 'http://localhost:3001';
 
-export default function Dashboard({ onViewChange }) {
+export default function Dashboard({ onViewChange, onViewModel }) {
   const [models, setModels] = useState([]);
   const [error, setError] = useState(null);
 
@@ -52,6 +52,38 @@ export default function Dashboard({ onViewChange }) {
     }
   };
 
+  const handleView = async (filename) => {
+    try {
+      const response = await fetch(`${API_URL}/models/${filename}`, {
+        headers: {
+          'Authorization': 'admin-secret-token'
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch model data.');
+      }
+      const data = await response.json();
+      onViewModel(data); // Pass the data to the parent component
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDelete = async (filename) => {
+    try {
+      const response = await fetch(`${API_URL}/models/${filename}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete model.');
+      }
+      // Refresh the model list after deletion
+      setModels(models.filter(model => model !== filename));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -66,9 +98,9 @@ export default function Dashboard({ onViewChange }) {
               <h2>{modelName.replace('.json', '')}</h2>
               <p>Generated Model</p>
               <div className="project-card-actions">
-                <button className="action-btn">View</button>
+                <button className="action-btn" onClick={() => handleView(modelName)}>View</button>
                 <button className="action-btn" onClick={() => handleDownload(modelName)}>Download</button>
-                <button className="action-btn delete-btn">Delete</button>
+                <button className="action-btn delete-btn" onClick={() => handleDelete(modelName)}>Delete</button>
               </div>
             </div>
           ))

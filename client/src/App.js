@@ -132,6 +132,14 @@ function App() {
     </div>
   );
 
+  const handleViewModel = (data) => {
+    // Ensure the data is in the correct format (TypedArrays) for the VRScene
+    const vertices = new Float32Array(data.vertices);
+    const faces = new Uint32Array(data.faces);
+    setModelData({ vertices, faces });
+    setView('vr');
+  };
+
   const renderContent = () => {
     switch (view) {
       case 'uploader':
@@ -140,7 +148,7 @@ function App() {
         return renderVRScene();
       case 'dashboard':
       default:
-        return <Dashboard onViewChange={setView} />;
+        return <Dashboard onViewChange={setView} onViewModel={handleViewModel} />;
     }
   };
 

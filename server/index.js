@@ -13,8 +13,8 @@ if (!fs.existsSync(MODELS_DIR)) fs.mkdirSync(MODELS_DIR);
 const server = http.createServer((req, res) => {
   // Set CORS headers for all responses
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -63,12 +63,7 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: processErr.message }));
       }
     });
-  } else {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Not Found' }));
-  }
-
-  if (req.url === '/models' && req.method === 'GET') {
+  } else if (req.url === '/models' && req.method === 'GET') {
     fs.readdir(MODELS_DIR, (err, files) => {
       if (err) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -78,10 +73,7 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(files));
     });
-    return;
-  }
-
-  if (req.url.startsWith('/models/') && req.method === 'GET') {
+  } else if (req.url.startsWith('/models/') && req.method === 'GET') {
     const filename = req.url.split('/')[2];
     if (!filename) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -107,7 +99,39 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(data);
     });
-    return;
+  } else if (req.url.startsWith('/models/') && req.method === 'DELETE') {
+    const filename = req.url.split('/')[2];
+    if (!filename) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Filename is required.' }));
+        return;
+    }
+
+    const authToken = req.headers['authorization'];
+    if (authToken !== 'admin-secret-token') {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Forbidden' }));
+        return;
+    }
+
+    const filePath = path.join(MODELS_DIR, filename);
+    fs.unlink(filePath, (err) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Model not found.' }));
+            } else {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Failed to delete the model.' }));
+            }
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Model deleted successfully.' }));
+    });
+  } else {
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Not Found' }));
   }
 });
 
