@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid, useTexture } from '@react-three/drei';
-import { VRButton, ARButton, XR, Controllers, Hands } from '@react-three/xr';
+import { VRButton, ARButton, XR, Controllers, Hands, TeleportationPlane, useHitTest } from '@react-three/xr';
 import * as THREE from 'three';
 import AnalysisFeedback from './AnalysisFeedback';
 
@@ -89,6 +89,11 @@ export default function VRScene({ modelData, analysis }) {
 
                     <Ground />
 
+                    <TeleportationPlane
+                        leftHand
+                        rightHand
+                        onSelect={(e) => console.log(e.intersection.point)}
+                    />
                     <OrbitControls />
                     <Grid infiniteGrid cellSize={1} cellThickness={1} />
                 </XR>
