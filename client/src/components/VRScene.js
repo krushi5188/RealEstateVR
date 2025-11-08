@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid, useTexture } from '@react-three/drei';
 import { VRButton, ARButton, XR, Controllers, Hands } from '@react-three/xr';
 import * as THREE from 'three';
+import AnalysisFeedback from './AnalysisFeedback';
 
 // A custom component to render the 3D model from raw geometry data
 function Model({ modelData }) {
@@ -60,9 +61,10 @@ function Ground() {
   }
 
 // The main VR Scene component
-export default function VRScene({ modelData }) {
+export default function VRScene({ modelData, analysis }) {
     return (
         <div style={{ position: 'relative', width: '100%', height: '500px', borderRadius: '8px', overflow: 'hidden' }}>
+            <AnalysisFeedback analysis={analysis} />
             <VRButton />
             <Canvas shadows camera={{ position: [0, 5, 15], fov: 50 }}>
                 <XR>
