@@ -19,33 +19,19 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   *(For a full, exhaustive breakdown of this phase, please see the previous version of this document. The log has been condensed to improve readability.)*
 
 ### **Phase 3A: The Sun & Shadow Simulation**
-*   **Status:** 🎯 **In Progress (Implementation Complete, Verification Blocked)**
+*   **Status:** ✅ **Complete**
 *   **Objective:** To introduce a realistic lighting model by simulating a dynamic sun and casting physically plausible shadows, enhancing the sense of realism and immersion in the VR scene.
 *   *(For a full, exhaustive breakdown of this phase, please see the previous version of this document. The log has been condensed to improve readability.)*
 
+### **Phase 3B: Foundational Material Library**
+*   **Status:** ✅ **Complete**
+*   **Objective:** To create the foundational system for applying different materials to 3D models, allowing for visual customization.
+*   **Implementation Details:**
+    *   **Files Created:** `client/public/materials.json`, `client/src/components/MaterialLibrary.js`, `client/src/components/MaterialLibrary.css`
+    *   **Functionality:** A new UI component was created to fetch material definitions from a JSON file. This library is displayed in the VR view, allowing the user to select a material. The selected material's properties (color, roughness, metalness) are then dynamically applied to the entire 3D model in the `VRScene` component.
+
 ---
 ## The Roadmap: Future Phases Detailed Blueprint
-
-### **Part 2: The Simulation Engine (Continued)**
-
-#### **Phase 3B: The Material Physics Simulation**
-*   **Status:** ⏳ **Pending**
-*   **Goal:** To simulate the real-world physical performance of materials, allowing users to understand not just the look, but the *feel* and *function* of their design choices. This moves the platform from a simple visualizer to a true simulation tool.
-*   **Features:**
-    *   **Material Library:**
-        *   **UI:** A new tab or panel in the VR scene interface will allow users to browse and apply materials to different surfaces (walls, floors, ceilings).
-        *   **Data Model:** We will create a JSON-based material definition library. Each material will have properties like: `name`, `texture_map`, `normal_map`, `roughness`, `metalness`, and two new custom properties: `acoustic_absorption_coefficient` and `thermal_conductivity`.
-        *   **Implementation:** The user will be able to select a surface in the VR scene and apply a material from the library. This will update the `three.js` `MeshStandardMaterial` on the client side.
-    *   **Acoustic Simulation:**
-        *   **Concept:** The system will simulate how sound propagates through the designed space. Users will be able to place a virtual sound source (e.g., a conversation, a stereo) and "hear" how it sounds from another point in the room.
-        *   **Technical Approach:** This will be a non-trivial engineering challenge. We will use a simplified ray-tracing algorithm. From the sound source, we'll cast a number of "sound rays." When a ray hits a surface, its energy will be reduced based on the material's `acoustic_absorption_coefficient`. We will simulate a few bounces. The final "loudness" at the listener's position will be an aggregate of the energy from all rays that reach it.
-        *   **UI/UX:** In the VR scene, the user will be able to drop a "speaker" icon and a "microphone" icon. The UI will then display a simple decibel level or a qualitative description (e.g., "Clear," "Muffled," "Echoey").
-    *   **Thermal Simulation:**
-        *   **Concept:** The system will provide a basic simulation of heat flow, showing how material choices affect energy efficiency.
-        *   **Technical Approach:** This will be a simplified 2D heat-flow simulation. We will define an "outside" temperature and an "inside" temperature. The server will run a simplified finite-difference simulation on the 2D floor plan grid. Each wall segment will have a thermal resistance calculated from its material's `thermal_conductivity`. The simulation will calculate the heat loss/gain through the building envelope over a simulated 24-hour period.
-        *   **UI/UX:** The UI will display a simple "Energy Performance Score" (e.g., A+ to F) and a visualization of heat loss on the 2D floor plan, with "hot" and "cold" spots highlighted in red and blue.
-
----
 
 ### **Part 3: The Intelligence Layer**
 
@@ -106,3 +92,21 @@ To create the world's most powerful, insightful, and creatively empowering platf
     *   **Plugin Architecture & Marketplace:** Develop a plugin system that allows third-party developers to create and sell their own analysis tools, material packs, and furniture libraries.
     *   **Integration with Professional CAD Software:** Create import/export plugins for industry-standard tools like Revit and AutoCAD, allowing seamless workflow integration.
     *   **Enterprise Licensing & Support:** Develop a tiered pricing model for professional firms, offering features like team management, advanced security, and dedicated technical support.
+
+---
+
+### **Part 5: Optional Future Simulations**
+
+*   **Note:** The following features are considered optional and are not part of the primary development roadmap. Their implementation will be decided upon at a later date, as they are not deemed essential for the core product.
+
+#### **Acoustic Simulation**
+*   **Status:**  shelved **Shelved**
+*   **Concept:** The system will simulate how sound propagates through the designed space. Users will be able to place a virtual sound source (e.g., a conversation, a stereo) and "hear" how it sounds from another point in the room.
+*   **Technical Approach:** This will be a non-trivial engineering challenge. We will use a simplified ray-tracing algorithm. From the sound source, we'll cast a number of "sound rays." When a ray hits a surface, its energy will be reduced based on the material's `acoustic_absorption_coefficient`. We will simulate a few bounces. The final "loudness" at the listener's position will be an aggregate of the energy from all rays that reach it.
+*   **UI/UX:** In the VR scene, the user will be able to drop a "speaker" icon and a "microphone" icon. The UI will then display a simple decibel level or a qualitative description (e.g., "Clear," "Muffled," "Echoey").
+
+#### **Thermal Simulation**
+*   **Status:**  shelved **Shelved**
+*   **Concept:** The system will provide a basic simulation of heat flow, showing how material choices affect energy efficiency.
+*   **Technical Approach:** This will be a simplified 2D heat-flow simulation. We will define an "outside" temperature and an "inside" temperature. The server will run a simplified finite-difference simulation on the 2D floor plan grid. Each wall segment will have a thermal resistance calculated from its material's `thermal_conductivity`. The simulation will calculate the heat loss/gain through the building envelope over a simulated 24-hour period.
+*   **UI/UX:** The UI will display a simple "Energy Performance Score" (e.g., A+ to F) and a visualization of heat loss on the 2D floor plan, with "hot" and "cold" spots highlighted in red and blue.
