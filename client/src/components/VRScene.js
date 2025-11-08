@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useMemo, useRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
 import { VRButton, XR, DefaultXRController } from '@react-three/xr';
 import * as THREE from 'three';
@@ -33,27 +33,47 @@ function Model({ modelData, material }) {
     );
 }
 
+function Sun({ isCycling }) {
+    const lightRef = useRef();
+
+    useFrame(({ clock }) => {
+        if (isCycling && lightRef.current) {
+            // Animate the sun in a circular path over, for example, a 60-second cycle
+            const elapsedTime = clock.getElapsedTime();
+            const angle = (elapsedTime % 60) / 60 * 2 * Math.PI; // Full circle every 60s
+            lightRef.current.position.x = 20 * Math.cos(angle);
+            lightRef.current.position.z = 20 * Math.sin(angle);
+            lightRef.current.position.y = 15 + 5 * Math.sin(angle); // Sun rises and sets
+        }
+    });
+
+    return (
+        <directionalLight
+            ref={lightRef}
+            castShadow
+            position={[10, 20, 15]}
+            intensity={1.5}
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+            shadow-camera-near={0.5}
+            shadow-camera-far={50}
+            shadow-camera-left={-20}
+            shadow-camera-right={20}
+            shadow-camera-top={20}
+            shadow-camera-bottom={-20}
+        />
+    );
+}
+
 // The main VR Scene component
-export default function VRScene({ modelData, material }) {
+export default function VRScene({ modelData, material, sunCycle = false }) {
     return (
         <div style={{ position: 'relative', width: '100%', height: '500px', borderRadius: '8px', overflow: 'hidden' }}>
             <VRButton />
             <Canvas shadows camera={{ position: [0, 5, 15] }}>
                 <XR>
                     <ambientLight intensity={0.5} />
-                    <directionalLight
-                        castShadow
-                        position={[10, 20, 15]}
-                        intensity={1.5}
-                        shadow-mapSize-width={2048}
-                        shadow-mapSize-height={2048}
-                        shadow-camera-near={0.5}
-                        shadow-camera-far={50}
-                        shadow-camera-left={-20}
-                        shadow-camera-right={20}
-                        shadow-camera-top={20}
-                        shadow-camera-bottom={-20}
-                    />
+                    <Sun isCycling={sunCycle} />
 
                     <DefaultXRController />
 

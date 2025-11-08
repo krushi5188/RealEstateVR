@@ -3,15 +3,21 @@ import './App.css';
 import VRScene from './components/VRScene';
 import Dashboard from './components/Dashboard';
 import MaterialLibrary from './components/MaterialLibrary';
+import CirculationAnalysis from './components/CirculationAnalysis';
+import NaturalLightAnalysis from './components/NaturalLightAnalysis';
+import { analyzeNaturalLight } from './analysis/light-analyzer';
 
 function App() {
-  const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', or 'vr'
+  const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', 'or 'vr'
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState(null);
   const [modelData, setModelData] = useState(null);
   const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [circulationData, setCirculationData] = useState(null);
+  const [lightAnalysisResult, setLightAnalysisResult] = useState(null);
+  const [isSunCycling, setIsSunCycling] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
@@ -130,15 +136,54 @@ function App() {
     </div>
   );
 
+  const handleAnalyzeCirculation = async () => {
+    // We need a model filename to analyze. For now, we'll pass a dummy one.
+    const modelFilename = "dummy-model.json";
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/analyze-circulation/${modelFilename}`);
+      if (!response.ok) {
+        throw new Error('Analysis request failed.');
+      }
+      const data = await response.json();
+      setCirculationData(data);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    }
+  };
+
+  const handleNaturalLightAnalysis = async () => {
+    if (!modelData) return;
+
+    setIsSunCycling(true); // Start the sun animation
+
+    // Run the analysis
+    const results = await analyzeNaturalLight(modelData);
+    setLightAnalysisResult(results);
+
+    // Stop the animation after a brief period to show the cycle
+    setTimeout(() => {
+      setIsSunCycling(false);
+    }, 2000); // Let it run for 2 seconds for visual effect
+  };
+
   const renderVRScene = () => (
     <div className="upload-card">
        <h1>Your VR Experience is Ready</h1>
-       <p>Select a material below to change the appearance of the model.</p>
-       <VRScene modelData={modelData} material={selectedMaterial} />
+       <p>Select a material or run an analysis.</p>
+       <div className="vr-scene-container">
+         <VRScene modelData={modelData} material={selectedMaterial} sunCycle={isSunCycling} />
+         <CirculationAnalysis analysisData={circulationData} width={500} height={500} />
+         <NaturalLightAnalysis analysisResult={lightAnalysisResult} onStartAnalysis={handleNaturalLightAnalysis} />
+       </div>
        <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
-       <button className="upload-button" onClick={resetToDashboard} style={{marginTop: '1.5rem'}}>
-         Back to Dashboard
-       </button>
+       <div className="button-container">
+         <button className="analysis-button" onClick={handleAnalyzeCirculation}>
+           Analyze Circulation
+         </button>
+         <button className="upload-button" onClick={resetToDashboard} style={{marginTop: '1.5rem'}}>
+           Back to Dashboard
+         </button>
+       </div>
     </div>
   );
 
