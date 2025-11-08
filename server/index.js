@@ -6,9 +6,9 @@ const { saveFile, extractWallData } = require('./image-processor');
 const { generateModel } = require('./model-generator');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR);
-}
+const MODELS_DIR = path.join(__dirname, 'models');
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
+if (!fs.existsSync(MODELS_DIR)) fs.mkdirSync(MODELS_DIR);
 
 const server = http.createServer((req, res) => {
   // Set CORS headers for all responses
@@ -45,8 +45,17 @@ const server = http.createServer((req, res) => {
           faces: Array.from(model.faces),
         };
 
+        const modelFilename = `${path.basename(filePath, path.extname(filePath))}.json`;
+        const modelPath = path.join(MODELS_DIR, modelFilename);
+
+        await fs.promises.writeFile(modelPath, JSON.stringify(serializedModel, null, 2));
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ message: 'Model generated successfully', model: serializedModel }));
+        res.end(JSON.stringify({
+          message: 'Model generated and saved successfully',
+          modelPath: `/models/${modelFilename}`,
+          model: serializedModel
+        }));
 
       } catch (processErr) {
         console.error('Processing failed:', processErr);
@@ -57,6 +66,48 @@ const server = http.createServer((req, res) => {
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not Found' }));
+  }
+
+  if (req.url === '/models' && req.method === 'GET') {
+    fs.readdir(MODELS_DIR, (err, files) => {
+      if (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to read models directory.' }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(files));
+    });
+    return;
+  }
+
+  if (req.url.startsWith('/models/') && req.method === 'GET') {
+    const filename = req.url.split('/')[2];
+    if (!filename) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Filename is required.' }));
+        return;
+    }
+
+    const authToken = req.headers['authorization'];
+    if (authToken !== 'admin-secret-token') {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Forbidden' }));
+        return;
+    }
+
+    const filePath = path.join(MODELS_DIR, filename);
+
+    fs.readFile(filePath, (err, data) => {
+        if (err) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Model not found.' }));
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(data);
+    });
+    return;
   }
 });
 

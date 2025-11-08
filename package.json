@@ -4,7 +4,7 @@
   "description": "A web application that converts 2D floor plans into interactive VR experiences.",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \\"npm start --prefix server\\" \\"npm start --prefix client\\"",
+    "dev": "concurrently --names \"SERVER,CLIENT\" -c \"bgBlue.bold,bgGreen.bold\" \"npm start --prefix server\" \"npm start --prefix client\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

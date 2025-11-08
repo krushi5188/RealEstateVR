@@ -42,7 +42,7 @@
   },
   "jest": {
     "transformIgnorePatterns": [
-      "/node_modules/(?!(@react-three/xr|@react-three/drei|three)/)"
+      "node_modules/(?!@react-three/xr)/"
     ],
     "moduleNameMapper": {
       "^@pmndrs/xr/internals$": "<rootDir>/node_modules/@pmndrs/xr/dist/internals.js"

@@ -1,7 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const Jimp = require('jimp');
+const { createCanvas, loadImage } = require('canvas');
 const { parse } = require('svg-parser');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
@@ -54,27 +54,45 @@ async function extractWallsFromSVG(filePath) {
     return { width, height, walls };
 }
 
-// --- Bitmap (Jimp) Processing Pipeline ---
+// --- Bitmap (Canvas) Processing Pipeline ---
 
 const THRESHOLD = 128;
 const MIN_WALL_LENGTH = 10;
 
 async function extractWallsFromBitmap(filePath) {
-    const image = await Jimp.read(filePath);
-    image.greyscale().contrast(1).binarize(THRESHOLD);
+    const image = await loadImage(filePath);
+    const { width, height } = image;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(image, 0, 0, width, height);
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const { data } = imageData;
 
-    const { width, height } = image.bitmap;
-    const visited = Array(width * height).fill(false);
+    // Binarize the image data in-place
+    for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        const color = avg > THRESHOLD ? 255 : 0;
+        data[i] = data[i + 1] = data[i + 2] = color;
+    }
+
+    const visited = new Array(width * height).fill(false);
     const walls = [];
+
+    const isBlack = (x, y) => data[(y * width + x) * 4] === 0;
 
     // Horizontal scan
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            if (isBlack(image, x, y) && !isVisited(visited, x, y, width)) {
-                const endX = traceLine(image, x, y, 1, 0, width, height);
-                if ((endX - x) >= MIN_WALL_LENGTH) {
+            if (isBlack(x, y) && !visited[y * width + x]) {
+                let endX = x;
+                while (endX + 1 < width && isBlack(endX + 1, y)) {
+                    endX++;
+                }
+                if (endX - x >= MIN_WALL_LENGTH) {
                     walls.push({ x1: x, y1: y, x2: endX, y2: y });
-                    markVisited(visited, x, y, endX, y, 1, 0, width);
+                    for (let i = x; i <= endX; i++) {
+                        visited[y * width + i] = true;
+                    }
                 }
             }
         }
@@ -83,24 +101,22 @@ async function extractWallsFromBitmap(filePath) {
     // Vertical scan
     for (let x = 0; x < width; x++) {
         for (let y = 0; y < height; y++) {
-            if (isBlack(image, x, y) && !isVisited(visited, x, y, width)) {
-                const endY = traceLine(image, x, y, 0, 1, width, height);
-                if ((endY - y) >= MIN_WALL_LENGTH) {
+            if (isBlack(x, y) && !visited[y * width + x]) {
+                let endY = y;
+                while (endY + 1 < height && isBlack(x, endY + 1)) {
+                    endY++;
+                }
+                if (endY - y >= MIN_WALL_LENGTH) {
                     walls.push({ x1: x, y1: y, x2: x, y2: endY });
-                    markVisited(visited, x, y, x, endY, 0, 1, width);
+                    for (let i = y; i <= endY; i++) {
+                        visited[i * width + x] = true;
+                    }
                 }
             }
         }
     }
-
     return { width, height, walls };
 }
-
-// Bitmap helper functions
-const isBlack = (image, x, y) => (image.getPixelColor(x, y) & 0xff) === 0;
-const isVisited = (visited, x, y, width) => visited[y * width + x];
-function traceLine(image, x, y, dx, dy, w, h) { let cx=x, cy=y; while(cx>=0&&cx<w&&cy>=0&&cy<h&&isBlack(image,cx,cy)){cx+=dx;cy+=dy;} return dx===1?cx-1:cy-1; }
-function markVisited(v,x1,y1,x2,y2,dx,dy,w) { let x=x1,y=y1;const e=dx===1?x2:y2;const p=()=>dx===1?x:y; while(p()<=e){v[y*w+x]=true;x+=dx;y+=dy;}}
 
 // --- File Saving Logic (Unchanged) ---
 
