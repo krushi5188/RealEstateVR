@@ -3,6 +3,40 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
 import { VRButton, XR, DefaultXRController } from '@react-three/xr';
 import * as THREE from 'three';
+import { CSG } from 'three-csg-ts';
+
+// --- Staircase Tool ---
+function StaircaseTool({ onAddStaircase }) {
+  const [isPlacing, setIsPlacing] = useState(false);
+  const [points, setPoints] = useState([]);
+
+  const handleTogglePlacement = () => {
+    setIsPlacing(!isPlacing);
+    setPoints([]);
+  };
+
+  const handlePointSelect = (point) => {
+    if (!isPlacing) return;
+    const newPoints = [...points, point];
+    setPoints(newPoints);
+    if (newPoints.length === 2) {
+      onAddStaircase(newPoints[0], newPoints[1]);
+      setIsPlacing(false);
+      setPoints([]);
+    }
+  };
+
+  // This is a placeholder for the UI. We'll add the 3D interaction later.
+  return (
+    <div style={{ position: 'absolute', top: '80px', right: '20px', zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.7)', padding: '10px', borderRadius: '5px' }}>
+      <button onClick={handleTogglePlacement}>
+        {isPlacing ? 'Cancel' : 'Add Staircase'}
+      </button>
+      {isPlacing && <p style={{color: 'white'}}>Click to select start and end points.</p>}
+    </div>
+  );
+}
+
 
 // --- Furniture Components ---
 
@@ -130,43 +164,122 @@ function Sun({ isCycling }) {
     );
 }
 
+// --- Floor Teleporter UI ---
+function FloorTeleporter({ floorLabels, onTeleport }) {
+  if (!floorLabels || floorLabels.length <= 1) return null;
+
+  const buttonStyle = {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: 'white',
+    border: '1px solid white',
+    borderRadius: '5px',
+    padding: '10px',
+    cursor: 'pointer',
+    margin: '5px',
+  };
+
+  return (
+    <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
+      {floorLabels.map((label, index) => (
+        <button key={index} style={buttonStyle} onClick={() => onTeleport(index)}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+
+function SceneContent({ modelData, material, sunCycle, heldFurniture, handlePlaceFurniture, allFurniture, children, onTeleport }) {
+    const { camera } = useThree();
+
+    const handleTeleport = (floorIndex) => {
+        const WALL_HEIGHT = 10; // Must match server
+        const targetY = (WALL_HEIGHT + 0.1) * floorIndex + 5; // +5 for a good viewing height
+
+        // Simple animation
+        const start = camera.position.clone();
+        const end = new THREE.Vector3(camera.position.x, targetY, camera.position.z);
+        let t = 0;
+        const duration = 0.5; // seconds
+
+        const animate = () => {
+            t += 0.05 / duration;
+            camera.position.lerpVectors(start, end, Math.min(t, 1));
+            camera.lookAt(0, targetY - 5, 0); // Look at the floor level
+            if (t < 1) requestAnimationFrame(animate);
+        };
+        animate();
+    };
+
+    // We lift the teleporter UI outside the canvas, but we need the teleport logic inside.
+    // A better approach would be to use a state management library, but for now, we pass the function down.
+    React.useEffect(() => {
+        onTeleport.current = handleTeleport;
+    }, [handleTeleport, onTeleport]);
+
+    return (
+        <>
+            <ambientLight intensity={0.5} />
+            <Sun isCycling={sunCycle} />
+            <DefaultXRController />
+            <Model modelData={modelData} material={material} />
+            <PlacedFurniture items={allFurniture} />
+            <FurniturePlacer heldFurniture={heldFurniture} onPlace={handlePlaceFurniture} placedItems={allFurniture} />
+            {children}
+            <mesh name="floorPlane" rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} visible={false}>
+                <planeGeometry args={[100, 100]} />
+            </mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+                <planeGeometry args={[100, 100]} />
+                <shadowMaterial opacity={0.3} />
+            </mesh>
+            <OrbitControls />
+            <Grid infiniteGrid cellSize={1} cellThickness={1} />
+        </>
+    );
+}
+
+
 // The main VR Scene component
-export default function VRScene({ modelData, material, sunCycle = false, heldFurniture, setHeldFurniture, children }) {
-    const [placedFurniture, setPlacedFurniture] = useState([]);
+export default function VRScene({ modelData, material, sunCycle = false, heldFurniture, setHeldFurniture, placedFurniture = [], floorLabels = [], children }) {
+    const [internalPlacedFurniture, setInternalPlacedFurniture] = useState([]);
+    const [staircases, setStaircases] = useState([]);
+    const teleportRef = useRef(null);
+
+    const handleAddStaircase = (start, end) => {
+        // For now, we'll just store the points.
+        // The actual geometry generation will happen in a separate component.
+        setStaircases([...staircases, { start, end }]);
+    };
 
     const handlePlaceFurniture = (position) => {
         if (heldFurniture) {
-            setPlacedFurniture([...placedFurniture, { ...heldFurniture, position }]);
+            setInternalPlacedFurniture([...internalPlacedFurniture, { ...heldFurniture, position }]);
             setHeldFurniture(null); // Clear the held item
         }
     };
 
+    const allFurniture = useMemo(() => [...placedFurniture, ...internalPlacedFurniture], [placedFurniture, internalPlacedFurniture]);
+
     return (
         <div style={{ position: 'relative', width: '100%', height: '500px', borderRadius: '8px', overflow: 'hidden' }}>
             <VRButton />
+            <FloorTeleporter floorLabels={floorLabels} onTeleport={(index) => teleportRef.current(index)} />
+            <StaircaseTool onAddStaircase={handleAddStaircase} />
             <Canvas shadows camera={{ position: [0, 5, 15] }}>
                 <XR>
-                    <ambientLight intensity={0.5} />
-                    <Sun isCycling={sunCycle} />
-
-                    <DefaultXRController />
-
-                    <Model modelData={modelData} material={material} />
-                    <PlacedFurniture items={placedFurniture} />
-                    <FurniturePlacer heldFurniture={heldFurniture} onPlace={handlePlaceFurniture} placedItems={placedFurniture} />
-                    {children}
-
-                    <mesh name="floorPlane" rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} visible={false}>
-                        <planeGeometry args={[100, 100]} />
-                    </mesh>
-
-                    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-                        <planeGeometry args={[100, 100]} />
-                        <shadowMaterial opacity={0.3} />
-                    </mesh>
-
-                    <OrbitControls />
-                    <Grid infiniteGrid cellSize={1} cellThickness={1} />
+                    <SceneContent
+                        modelData={modelData}
+                        material={material}
+                        sunCycle={sunCycle}
+                        heldFurniture={heldFurniture}
+                        handlePlaceFurniture={handlePlaceFurniture}
+                        allFurniture={allFurniture}
+                        onTeleport={teleportRef}
+                    >
+                        {children}
+                    </SceneContent>
                 </XR>
             </Canvas>
         </div>

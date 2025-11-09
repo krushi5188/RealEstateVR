@@ -8,6 +8,9 @@ const { generateModel } = require('./model-generator');
 const { analyzeCirculation, createGrid, findPath } = require('./path-analyzer');
 const { auditAccessibility } = require('./accessibility-auditor');
 const { analyzeDesignPhilosophy } = require('./design-philosophy-analyzer');
+const { analyzeAcousticSeparation } = require('./acoustic-separation-analyzer');
+const { generateLayouts } = require('./layout-generator');
+const { extractColorPalette } = require('./mood-board-analyzer');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 const MODELS_DIR = path.join(__dirname, 'models');
@@ -30,18 +33,25 @@ const server = http.createServer((req, res) => {
     const form = new multiparty.Form();
 
     form.parse(req, async (err, fields, files) => {
-      if (err || !files.file || files.file.length === 0) {
+      if (err || !files.floors || files.floors.length === 0) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Invalid or missing file upload.' }));
+        res.end(JSON.stringify({ error: 'Invalid or missing floor plan uploads.' }));
         return;
       }
 
-      const file = files.file[0];
+      const floorFiles = files.floors;
+      const floorLabels = JSON.parse(fields.floorLabels[0]); // Labels sent as a JSON string
 
       try {
-        const filePath = await saveFile(file);
-        const wallData = await extractWallData(filePath);
-        const model = generateModel(wallData);
+        const floorData = [];
+        for (const file of floorFiles) {
+            const filePath = await saveFile(file);
+            const wallData = await extractWallData(filePath);
+            floorData.push(wallData);
+        }
+
+        // The model generator will now take an array of wall data objects
+        const model = generateModel(floorData);
 
         // Convert TypedArrays to regular arrays for JSON serialization
         const serializedModel = {
@@ -244,6 +254,74 @@ const server = http.createServer((req, res) => {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Failed to run design philosophy analysis.' }));
         }
+    });
+  } else if (req.url === '/analyze-acoustic-separation' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+        body += chunk.toString();
+    });
+    req.on('end', () => {
+        try {
+            const layoutData = JSON.parse(body);
+            // A more robust implementation would fetch this from the saved model data
+            if (!layoutData || !layoutData.rooms || !layoutData.adjacencies) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Room and adjacency data are required.' }));
+                return;
+            }
+            const report = analyzeAcousticSeparation(layoutData);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(report));
+        } catch (e) {
+            console.error('Acoustic separation analysis failed:', e);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to run acoustic separation analysis.' }));
+        }
+    });
+  } else if (req.url === '/generate-layouts' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+        body += chunk.toString();
+    });
+    req.on('end', () => {
+        try {
+            const layoutRequest = JSON.parse(body);
+            if (!layoutRequest || !layoutRequest.room || !layoutRequest.furniture) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Room and furniture data are required.' }));
+                return;
+            }
+            const layouts = generateLayouts(layoutRequest);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(layouts));
+        } catch (e) {
+            console.error('Layout generation failed:', e);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to generate layouts.' }));
+        }
+    });
+  } else if (req.url === '/analyze-mood-board' && req.method === 'POST') {
+    const form = new multiparty.Form();
+
+    form.parse(req, async (err, fields, files) => {
+      if (err || !files.file || files.file.length === 0) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid or missing file upload.' }));
+        return;
+      }
+
+      const file = files.file[0];
+      const imageBuffer = await fs.promises.readFile(file.path);
+
+      try {
+        const palette = await extractColorPalette(imageBuffer, 5);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ palette }));
+      } catch (analysisErr) {
+        console.error('Mood board analysis failed:', analysisErr);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: analysisErr.message }));
+      }
     });
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });

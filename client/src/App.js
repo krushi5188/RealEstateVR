@@ -12,10 +12,15 @@ import AgentScheduler from './components/AgentScheduler';
 import VirtualAgent from './components/VirtualAgent';
 import DesignPhilosophyInput from './components/DesignPhilosophyInput';
 import DesignPhilosophyReport from './components/DesignPhilosophyReport';
+import BiophilicDesignReport from './components/BiophilicDesignReport';
+import { analyzeBiophilicDesign } from './analysis/biophilic-analyzer';
+import AcousticAnalysisReport from './components/AcousticAnalysisReport';
+import LayoutSuggester from './components/LayoutSuggester';
+import MoodBoardUploader from './components/MoodBoardUploader';
 
 function App() {
   const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', 'or 'vr'
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [floorFiles, setFloorFiles] = useState([]); // { file: File, label: string }
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState(null);
@@ -28,7 +33,34 @@ function App() {
   const [heldFurniture, setHeldFurniture] = useState(null); // The furniture item being placed
   const [agentPath, setAgentPath] = useState([]); // Path for the virtual agent
   const [designPhilosophyReport, setDesignPhilosophyReport] = useState(null);
+  const [biophilicReport, setBiophilicReport] = useState(null);
+  const [acousticReport, setAcousticReport] = useState(null);
+  const [furnitureLibrary, setFurnitureLibrary] = useState([]);
+  const [furnitureLibrary, setFurnitureLibrary] = useState([]);
+  const [placedFurniture, setPlacedFurniture] = useState([]); // New state for placed items
+  const [moodBoardPalette, setMoodBoardPalette] = useState(null);
   const fileInputRef = useRef(null);
+
+  const handlePaletteExtracted = (palette) => {
+    setMoodBoardPalette(palette);
+    // Here, you could also trigger filtering the material library
+    // based on the extracted palette.
+    console.log("Extracted Palette:", palette);
+  };
+
+  useEffect(() => {
+    // Fetch the furniture library on component mount
+    const fetchFurniture = async () => {
+      try {
+        const response = await fetch('/furniture.json');
+        const data = await response.json();
+        setFurnitureLibrary(data);
+      } catch (err) {
+        console.error("Failed to fetch furniture library:", err);
+      }
+    };
+    fetchFurniture();
+  }, []);
 
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
   const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(false); };
@@ -37,25 +69,39 @@ function App() {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setSelectedFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files) {
+      const newFiles = Array.from(e.dataTransfer.files).map(file => ({ file, label: `Floor ${floorFiles.length + 1}` }));
+      setFloorFiles(prevFiles => [...prevFiles, ...newFiles]);
     }
   };
 
   const handleFileSelect = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files).map(file => ({ file, label: `Floor ${floorFiles.length + 1}` }));
+      setFloorFiles(prevFiles => [...prevFiles, ...newFiles]);
     }
   };
 
+  const handleLabelChange = (index, newLabel) => {
+    setFloorFiles(prevFiles => {
+      const updatedFiles = [...prevFiles];
+      updatedFiles[index].label = newLabel;
+      return updatedFiles;
+    });
+  };
+
   const handleGenerate = () => {
-    if (!selectedFile) return;
+    if (floorFiles.length === 0) return;
 
     setMessage(null);
     setUploadProgress(0);
 
     const formData = new FormData();
-    formData.append('file', selectedFile);
+    const labels = floorFiles.map(f => f.label);
+    formData.append('floorLabels', JSON.stringify(labels));
+    floorFiles.forEach((floorFile, index) => {
+        formData.append('floors', floorFile.file, floorFile.file.name);
+    });
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `${process.env.REACT_APP_API_URL}/generate-model`, true);
@@ -102,7 +148,7 @@ function App() {
 
   const triggerFileSelect = () => fileInputRef.current.click();
   const resetToDashboard = () => {
-    setSelectedFile(null);
+    setFloorFiles([]);
     setUploadProgress(0);
     setMessage(null);
     setModelData(null);
@@ -112,8 +158,8 @@ function App() {
   const renderUploader = () => (
     <div className="upload-card">
       <button className="back-btn" onClick={() => setView('dashboard')}>← Back to Projects</button>
-      <h1>Upload Your Floor Plan</h1>
-      <p>Drag & drop or browse to select a 2D floor plan file.</p>
+      <h1>Upload Floor Plans</h1>
+      <p>Drag & drop or browse to select one or more files. Label each floor in order from bottom to top.</p>
       <div
         className={`drop-zone ${isDragOver ? 'drag-over' : ''}`}
         onDragEnter={handleDragEnter}
@@ -123,7 +169,7 @@ function App() {
         onClick={triggerFileSelect}
       >
         <p className="drop-zone-text">
-          Drag your file here or <span className="browse-link">browse</span>
+          Drag files here or <span className="browse-link">browse</span>
         </p>
         <input
           type="file"
@@ -131,17 +177,30 @@ function App() {
           onChange={handleFileSelect}
           style={{ display: 'none' }}
           accept="image/*"
+          multiple
         />
       </div>
-      {selectedFile && <div className="file-info"><span>{selectedFile.name}</span></div>}
+      <div className="file-list">
+        {floorFiles.map((floor, index) => (
+          <div key={index} className="file-item">
+            <span>{floor.file.name}</span>
+            <input
+              type="text"
+              value={floor.label}
+              onChange={(e) => handleLabelChange(index, e.target.value)}
+              className="floor-label-input"
+            />
+          </div>
+        ))}
+      </div>
       {uploadProgress > 0 && uploadProgress < 100 && (
         <div className="progress-bar-container">
           <div className="progress-bar" style={{ width: `${uploadProgress}%` }}></div>
         </div>
       )}
       {message && <div className={`message ${message.type}`}>{message.text}</div>}
-      <button className="upload-button" onClick={handleGenerate} disabled={!selectedFile}>
-        Generate VR Experience
+      <button className="upload-button" onClick={handleGenerate} disabled={floorFiles.length === 0}>
+        Generate Multi-Floor VR Experience
       </button>
     </div>
   );
@@ -220,23 +279,88 @@ function App() {
     }
   };
 
+  const handleBiophilicAnalysis = async () => {
+    if (!modelData) return;
+    const results = await analyzeBiophilicDesign(modelData);
+    setBiophilicReport(results);
+  };
+
+  const handleAcousticAnalysis = async () => {
+    // Placeholder for the data that would be derived from the model
+    const dummyLayoutData = {
+      rooms: [
+        { id: 1, label: 'LivingRoom' },
+        { id: 2, label: 'Bedroom' },
+      ],
+      adjacencies: [
+        { roomA: 1, roomB: 2, wallMaterial: { acoustic_dampening: 0.4 } }
+      ]
+    };
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/analyze-acoustic-separation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dummyLayoutData),
+      });
+      if (!response.ok) {
+        throw new Error('Acoustic analysis failed.');
+      }
+      const data = await response.json();
+      setAcousticReport(data.report);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    }
+  };
+
   const renderVRScene = () => (
     <div className="upload-card">
        <h1>Your VR Experience is Ready</h1>
        <p>Select a material, run an analysis, or simulate a day in the life.</p>
        <div className="vr-scene-container">
-         <VRScene modelData={modelData} material={selectedMaterial} sunCycle={isSunCycling} heldFurniture={heldFurniture} setHeldFurniture={setHeldFurniture}>
+         <VRScene
+            modelData={modelData}
+            material={selectedMaterial}
+            sunCycle={isSunCycling}
+            heldFurniture={heldFurniture}
+            setHeldFurniture={setHeldFurniture}
+            placedFurniture={placedFurniture}
+            floorLabels={floorFiles.map(f => f.label)}
+         >
            <VirtualAgent path={agentPath} />
          </VRScene>
          <CirculationAnalysis analysisData={circulationData} width={500} height={500} />
          <NaturalLightAnalysis analysisResult={lightAnalysisResult} onStartAnalysis={handleNaturalLightAnalysis} />
          <AccessibilityReport report={accessibilityReport} onRunAudit={handleAccessibilityAudit} />
          <DesignPhilosophyReport report={designPhilosophyReport} />
+         <BiophilicDesignReport report={biophilicReport} onRunAnalysis={handleBiophilicAnalysis} />
+         <AcousticAnalysisReport report={acousticReport} onRunAnalysis={handleAcousticAnalysis} />
        </div>
        <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
        <FurnitureLibrary onFurnitureSelect={setHeldFurniture} />
+       <LayoutSuggester model={modelData} onLayoutSelect={setPlacedFurniture} />
        <AgentScheduler onScheduleRun={handleRunSimulation} />
        <DesignPhilosophyInput onAnalyze={handleDesignPhilosophyAnalysis} />
+       <MoodBoardUploader onPaletteExtracted={handlePaletteExtracted} />
+       {moodBoardPalette && (
+         <div className="palette-display">
+           <h4>Extracted Palette:</h4>
+           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+             {moodBoardPalette.map((color, index) => (
+               <div
+                 key={index}
+                 style={{
+                   backgroundColor: color,
+                   width: '40px',
+                   height: '40px',
+                   borderRadius: '50%',
+                   border: '2px solid white'
+                 }}
+                 title={color}
+               />
+             ))}
+           </div>
+         </div>
+       )}
        <div className="button-container">
          <button className="analysis-button" onClick={handleAnalyzeCirculation}>
            Analyze Circulation
