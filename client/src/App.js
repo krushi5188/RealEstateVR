@@ -10,6 +10,8 @@ import AccessibilityReport from './components/AccessibilityReport';
 import FurnitureLibrary from './components/FurnitureLibrary';
 import AgentScheduler from './components/AgentScheduler';
 import VirtualAgent from './components/VirtualAgent';
+import DesignPhilosophyInput from './components/DesignPhilosophyInput';
+import DesignPhilosophyReport from './components/DesignPhilosophyReport';
 
 function App() {
   const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', 'or 'vr'
@@ -25,6 +27,7 @@ function App() {
   const [accessibilityReport, setAccessibilityReport] = useState(null);
   const [heldFurniture, setHeldFurniture] = useState(null); // The furniture item being placed
   const [agentPath, setAgentPath] = useState([]); // Path for the virtual agent
+  const [designPhilosophyReport, setDesignPhilosophyReport] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
@@ -200,6 +203,23 @@ function App() {
     setAgentPath(dummyPath);
   };
 
+  const handleDesignPhilosophyAnalysis = async (layoutData) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/analyze-design-philosophy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(layoutData),
+      });
+      if (!response.ok) {
+        throw new Error('Design philosophy analysis failed.');
+      }
+      const data = await response.json();
+      setDesignPhilosophyReport(data.report);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    }
+  };
+
   const renderVRScene = () => (
     <div className="upload-card">
        <h1>Your VR Experience is Ready</h1>
@@ -211,10 +231,12 @@ function App() {
          <CirculationAnalysis analysisData={circulationData} width={500} height={500} />
          <NaturalLightAnalysis analysisResult={lightAnalysisResult} onStartAnalysis={handleNaturalLightAnalysis} />
          <AccessibilityReport report={accessibilityReport} onRunAudit={handleAccessibilityAudit} />
+         <DesignPhilosophyReport report={designPhilosophyReport} />
        </div>
        <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
        <FurnitureLibrary onFurnitureSelect={setHeldFurniture} />
        <AgentScheduler onScheduleRun={handleRunSimulation} />
+       <DesignPhilosophyInput onAnalyze={handleDesignPhilosophyAnalysis} />
        <div className="button-container">
          <button className="analysis-button" onClick={handleAnalyzeCirculation}>
            Analyze Circulation

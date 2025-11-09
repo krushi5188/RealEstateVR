@@ -7,6 +7,7 @@ const { saveFile, extractWallData } = require('./image-processor');
 const { generateModel } = require('./model-generator');
 const { analyzeCirculation, createGrid, findPath } = require('./path-analyzer');
 const { auditAccessibility } = require('./accessibility-auditor');
+const { analyzeDesignPhilosophy } = require('./design-philosophy-analyzer');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 const MODELS_DIR = path.join(__dirname, 'models');
@@ -220,6 +221,28 @@ const server = http.createServer((req, res) => {
         } catch (e) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Failed to find path.' }));
+        }
+    });
+  } else if (req.url === '/analyze-design-philosophy' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+        body += chunk.toString();
+    });
+    req.on('end', () => {
+        try {
+            const layoutData = JSON.parse(body);
+            if (!layoutData || !layoutData.philosophy || !layoutData.rooms) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Philosophy and rooms data are required.' }));
+                return;
+            }
+            const report = analyzeDesignPhilosophy(layoutData);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(report));
+        } catch (e) {
+            console.error('Design philosophy analysis failed:', e);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to run design philosophy analysis.' }));
         }
     });
   } else {
