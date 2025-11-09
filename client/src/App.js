@@ -6,6 +6,7 @@ import MaterialLibrary from './components/MaterialLibrary';
 import CirculationAnalysis from './components/CirculationAnalysis';
 import NaturalLightAnalysis from './components/NaturalLightAnalysis';
 import { analyzeNaturalLight } from './analysis/light-analyzer';
+import AccessibilityReport from './components/AccessibilityReport';
 
 function App() {
   const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', 'or 'vr'
@@ -18,6 +19,7 @@ function App() {
   const [circulationData, setCirculationData] = useState(null);
   const [lightAnalysisResult, setLightAnalysisResult] = useState(null);
   const [isSunCycling, setIsSunCycling] = useState(false);
+  const [accessibilityReport, setAccessibilityReport] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
@@ -166,6 +168,20 @@ function App() {
     }, 2000); // Let it run for 2 seconds for visual effect
   };
 
+  const handleAccessibilityAudit = async () => {
+    const modelFilename = "dummy-model.json"; // Placeholder
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/audit-accessibility/${modelFilename}`);
+      if (!response.ok) {
+        throw new Error('Accessibility audit failed.');
+      }
+      const data = await response.json();
+      setAccessibilityReport(data.report);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    }
+  };
+
   const renderVRScene = () => (
     <div className="upload-card">
        <h1>Your VR Experience is Ready</h1>
@@ -174,11 +190,15 @@ function App() {
          <VRScene modelData={modelData} material={selectedMaterial} sunCycle={isSunCycling} />
          <CirculationAnalysis analysisData={circulationData} width={500} height={500} />
          <NaturalLightAnalysis analysisResult={lightAnalysisResult} onStartAnalysis={handleNaturalLightAnalysis} />
+         <AccessibilityReport report={accessibilityReport} onRunAudit={handleAccessibilityAudit} />
        </div>
        <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
        <div className="button-container">
          <button className="analysis-button" onClick={handleAnalyzeCirculation}>
            Analyze Circulation
+         </button>
+         <button className="analysis-button" onClick={handleAccessibilityAudit} style={{backgroundColor: '#6c757d'}}>
+           Run Accessibility Audit
          </button>
          <button className="upload-button" onClick={resetToDashboard} style={{marginTop: '1.5rem'}}>
            Back to Dashboard

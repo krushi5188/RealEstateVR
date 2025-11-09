@@ -1,0 +1,99 @@
+.accessibility-report-container {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  width: 300px;
+  z-index: 10;
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+.accessibility-report-container.start-audit {
+  text-align: center;
+}
+
+.accessibility-report-container h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.report-summary p {
+  font-weight: 500;
+  margin: 0.5rem 0;
+}
+
+.report-summary .no-issues {
+  color: #155724; /* Dark green */
+}
+
+.issue-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.issue-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.issue-item:last-child {
+  border-bottom: none;
+}
+
+.severity-indicator {
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.severity-high .severity-indicator { background-color: #dc3545; } /* Red */
+.severity-medium .severity-indicator { background-color: #ffc107; } /* Yellow */
+.severity-low .severity-indicator { background-color: #17a2b8; } /* Teal */
+
+.issue-details {
+  flex-grow: 1;
+}
+
+.issue-type {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.issue-message {
+  font-size: 0.85rem;
+  color: #555;
+  margin: 0.25rem 0 0 0;
+}
+
+.accessibility-report-container .analysis-button {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+.accessibility-report-container .analysis-button:hover {
+    background-color: #5a6268;
+}

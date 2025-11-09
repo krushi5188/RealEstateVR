@@ -6,6 +6,7 @@ const fs = require('fs');
 const { saveFile, extractWallData } = require('./image-processor');
 const { generateModel } = require('./model-generator');
 const { analyzeCirculation } = require('./path-analyzer');
+const { auditAccessibility } = require('./accessibility-auditor');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 const MODELS_DIR = path.join(__dirname, 'models');
@@ -170,6 +171,26 @@ const server = http.createServer((req, res) => {
         console.error('Analysis failed:', analysisErr);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to analyze circulation paths.' }));
+    }
+  } else if (req.url.startsWith('/audit-accessibility/') && req.method === 'GET') {
+    const filename = req.url.split('/')[2];
+    if (!filename) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Filename is required for audit.' }));
+        return;
+    }
+
+    // In the future, we would load the model and pass it. For now, we use a dummy object.
+    const dummyModelData = {};
+
+    try {
+        const auditReport = auditAccessibility(dummyModelData);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(auditReport));
+    } catch (auditErr) {
+        console.error('Audit failed:', auditErr);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to run accessibility audit.' }));
     }
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
