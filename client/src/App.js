@@ -7,6 +7,7 @@ import CirculationAnalysis from './components/CirculationAnalysis';
 import NaturalLightAnalysis from './components/NaturalLightAnalysis';
 import { analyzeNaturalLight } from './analysis/light-analyzer';
 import AccessibilityReport from './components/AccessibilityReport';
+import FurnitureLibrary from './components/FurnitureLibrary';
 
 function App() {
   const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', 'or 'vr'
@@ -20,6 +21,7 @@ function App() {
   const [lightAnalysisResult, setLightAnalysisResult] = useState(null);
   const [isSunCycling, setIsSunCycling] = useState(false);
   const [accessibilityReport, setAccessibilityReport] = useState(null);
+  const [heldFurniture, setHeldFurniture] = useState(null); // The furniture item being placed
   const fileInputRef = useRef(null);
 
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
@@ -187,12 +189,13 @@ function App() {
        <h1>Your VR Experience is Ready</h1>
        <p>Select a material or run an analysis.</p>
        <div className="vr-scene-container">
-         <VRScene modelData={modelData} material={selectedMaterial} sunCycle={isSunCycling} />
+         <VRScene modelData={modelData} material={selectedMaterial} sunCycle={isSunCycling} heldFurniture={heldFurniture} setHeldFurniture={setHeldFurniture} />
          <CirculationAnalysis analysisData={circulationData} width={500} height={500} />
          <NaturalLightAnalysis analysisResult={lightAnalysisResult} onStartAnalysis={handleNaturalLightAnalysis} />
          <AccessibilityReport report={accessibilityReport} onRunAudit={handleAccessibilityAudit} />
        </div>
        <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
+       <FurnitureLibrary onFurnitureSelect={setHeldFurniture} />
        <div className="button-container">
          <button className="analysis-button" onClick={handleAnalyzeCirculation}>
            Analyze Circulation

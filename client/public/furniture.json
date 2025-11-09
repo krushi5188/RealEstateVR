@@ -1,0 +1,42 @@
+[
+  {
+    "id": "sofa-standard",
+    "name": "Standard Sofa",
+    "category": "Seating",
+    "dimensions": {
+      "width": 84,
+      "depth": 36,
+      "height": 34
+    }
+  },
+  {
+    "id": "armchair-modern",
+    "name": "Modern Armchair",
+    "category": "Seating",
+    "dimensions": {
+      "width": 32,
+      "depth": 34,
+      "height": 35
+    }
+  },
+  {
+    "id": "coffee-table-rect",
+    "name": "Rectangle Coffee Table",
+    "category": "Tables",
+    "dimensions": {
+      "width": 48,
+      "depth": 24,
+      "height": 18
+    }
+  },
+  {
+    "id": "dining-table-6",
+    "name": "6-Person Dining Table",
+    "category": "Tables",
+    "dimensions": {
+      "width": 60,
+      "depth": 36,
+      "height": 30
+    }
+  }
+]

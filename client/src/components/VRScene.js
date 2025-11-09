@@ -1,8 +1,73 @@
-import React, { useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import React, { useMemo, useRef, useState } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
 import { VRButton, XR, DefaultXRController } from '@react-three/xr';
 import * as THREE from 'three';
+
+// --- Furniture Components ---
+
+function PlacedFurniture({ items }) {
+  const scaleFactor = 1 / 12; // inches to feet
+  return (
+    <group>
+      {items.map((item, index) => (
+        <mesh key={index} position={item.position}>
+          <boxGeometry args={[item.dimensions.width * scaleFactor, item.dimensions.height * scaleFactor, item.dimensions.depth * scaleFactor]} />
+          <meshStandardMaterial color="gray" />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function FurniturePlacer({ heldFurniture, onPlace, placedItems }) {
+  const { raycaster, scene } = useThree();
+  const [position, setPosition] = useState(new THREE.Vector3());
+  const [canPlace, setCanPlace] = useState(true);
+  const scaleFactor = 1 / 12;
+
+  // Helper for AABB collision detection
+  const checkCollision = (posA, dimA, posB, dimB) => {
+    const boxA = new THREE.Box3().setFromCenterAndSize(posA, new THREE.Vector3(dimA.width * scaleFactor, dimA.height * scaleFactor, dimA.depth * scaleFactor));
+    const boxB = new THREE.Box3().setFromCenterAndSize(posB, new THREE.Vector3(dimB.width * scaleFactor, dimB.height * scaleFactor, dimB.depth * scaleFactor));
+    return boxA.intersectsBox(boxB);
+  };
+
+  useFrame(() => {
+    if (!heldFurniture) return;
+
+    const floor = scene.getObjectByName('floorPlane');
+    if (floor) {
+      const intersects = raycaster.intersectObject(floor);
+      if (intersects.length > 0) {
+        const newPos = intersects[0].point;
+        setPosition(newPos);
+
+        // Collision detection
+        let collision = false;
+        for (const item of placedItems) {
+          if (checkCollision(newPos, heldFurniture.dimensions, item.position, item.dimensions)) {
+            collision = true;
+            break;
+          }
+        }
+        setCanPlace(!collision);
+      }
+    }
+  });
+
+  if (!heldFurniture) return null;
+
+  const { width, depth, height } = heldFurniture.dimensions;
+
+  return (
+    <mesh position={position} onClick={() => canPlace && onPlace(position)}>
+      <boxGeometry args={[width * scaleFactor, height * scaleFactor, depth * scaleFactor]} />
+      <meshStandardMaterial color={canPlace ? "lightblue" : "red"} transparent opacity={0.7} />
+    </mesh>
+  );
+}
+
 
 // A custom component to render the 3D model from raw geometry data
 function Model({ modelData, material }) {
@@ -66,7 +131,16 @@ function Sun({ isCycling }) {
 }
 
 // The main VR Scene component
-export default function VRScene({ modelData, material, sunCycle = false }) {
+export default function VRScene({ modelData, material, sunCycle = false, heldFurniture, setHeldFurniture }) {
+    const [placedFurniture, setPlacedFurniture] = useState([]);
+
+    const handlePlaceFurniture = (position) => {
+        if (heldFurniture) {
+            setPlacedFurniture([...placedFurniture, { ...heldFurniture, position }]);
+            setHeldFurniture(null); // Clear the held item
+        }
+    };
+
     return (
         <div style={{ position: 'relative', width: '100%', height: '500px', borderRadius: '8px', overflow: 'hidden' }}>
             <VRButton />
@@ -78,6 +152,12 @@ export default function VRScene({ modelData, material, sunCycle = false }) {
                     <DefaultXRController />
 
                     <Model modelData={modelData} material={material} />
+                    <PlacedFurniture items={placedFurniture} />
+                    <FurniturePlacer heldFurniture={heldFurniture} onPlace={handlePlaceFurniture} placedItems={placedFurniture} />
+
+                    <mesh name="floorPlane" rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} visible={false}>
+                        <planeGeometry args={[100, 100]} />
+                    </mesh>
 
                     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
                         <planeGeometry args={[100, 100]} />
