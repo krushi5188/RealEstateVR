@@ -131,7 +131,7 @@ function Sun({ isCycling }) {
 }
 
 // The main VR Scene component
-export default function VRScene({ modelData, material, sunCycle = false, heldFurniture, setHeldFurniture }) {
+export default function VRScene({ modelData, material, sunCycle = false, heldFurniture, setHeldFurniture, children }) {
     const [placedFurniture, setPlacedFurniture] = useState([]);
 
     const handlePlaceFurniture = (position) => {
@@ -154,6 +154,7 @@ export default function VRScene({ modelData, material, sunCycle = false, heldFur
                     <Model modelData={modelData} material={material} />
                     <PlacedFurniture items={placedFurniture} />
                     <FurniturePlacer heldFurniture={heldFurniture} onPlace={handlePlaceFurniture} placedItems={placedFurniture} />
+                    {children}
 
                     <mesh name="floorPlane" rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} visible={false}>
                         <planeGeometry args={[100, 100]} />

@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { saveFile, extractWallData } = require('./image-processor');
 const { generateModel } = require('./model-generator');
-const { analyzeCirculation } = require('./path-analyzer');
+const { analyzeCirculation, createGrid, findPath } = require('./path-analyzer');
 const { auditAccessibility } = require('./accessibility-auditor');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
@@ -192,6 +192,36 @@ const server = http.createServer((req, res) => {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to run accessibility audit.' }));
     }
+  } else if (req.url === '/find-path' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+        body += chunk.toString();
+    });
+    req.on('end', () => {
+        try {
+            const { start, end, wallData } = JSON.parse(body);
+            if (!start || !end || !wallData) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Start, end, and wallData are required.' }));
+                return;
+            }
+
+            const grid = createGrid(wallData);
+            const startNode = grid[start.y][start.x];
+            const endNode = grid[end.y][end.x];
+
+            const path = findPath(grid, startNode, endNode);
+
+            const simplifiedPath = path.map(node => ({ x: node.x, y: node.y }));
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ path: simplifiedPath }));
+
+        } catch (e) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to find path.' }));
+        }
+    });
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not Found' }));

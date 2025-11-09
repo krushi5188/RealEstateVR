@@ -8,6 +8,8 @@ import NaturalLightAnalysis from './components/NaturalLightAnalysis';
 import { analyzeNaturalLight } from './analysis/light-analyzer';
 import AccessibilityReport from './components/AccessibilityReport';
 import FurnitureLibrary from './components/FurnitureLibrary';
+import AgentScheduler from './components/AgentScheduler';
+import VirtualAgent from './components/VirtualAgent';
 
 function App() {
   const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', 'or 'vr'
@@ -22,6 +24,7 @@ function App() {
   const [isSunCycling, setIsSunCycling] = useState(false);
   const [accessibilityReport, setAccessibilityReport] = useState(null);
   const [heldFurniture, setHeldFurniture] = useState(null); // The furniture item being placed
+  const [agentPath, setAgentPath] = useState([]); // Path for the virtual agent
   const fileInputRef = useRef(null);
 
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); };
@@ -184,18 +187,34 @@ function App() {
     }
   };
 
+  const handleRunSimulation = () => {
+    // This is where we will fetch the path from the server.
+    // For now, a dummy path:
+    const dummyPath = [
+      { x: -5, y: 0.5, z: -5 },
+      { x: 5, y: 0.5, z: -5 },
+      { x: 5, y: 0.5, z: 5 },
+      { x: -5, y: 0.5, z: 5 },
+      { x: -5, y: 0.5, z: -5 },
+    ];
+    setAgentPath(dummyPath);
+  };
+
   const renderVRScene = () => (
     <div className="upload-card">
        <h1>Your VR Experience is Ready</h1>
-       <p>Select a material or run an analysis.</p>
+       <p>Select a material, run an analysis, or simulate a day in the life.</p>
        <div className="vr-scene-container">
-         <VRScene modelData={modelData} material={selectedMaterial} sunCycle={isSunCycling} heldFurniture={heldFurniture} setHeldFurniture={setHeldFurniture} />
+         <VRScene modelData={modelData} material={selectedMaterial} sunCycle={isSunCycling} heldFurniture={heldFurniture} setHeldFurniture={setHeldFurniture}>
+           <VirtualAgent path={agentPath} />
+         </VRScene>
          <CirculationAnalysis analysisData={circulationData} width={500} height={500} />
          <NaturalLightAnalysis analysisResult={lightAnalysisResult} onStartAnalysis={handleNaturalLightAnalysis} />
          <AccessibilityReport report={accessibilityReport} onRunAudit={handleAccessibilityAudit} />
        </div>
        <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
        <FurnitureLibrary onFurnitureSelect={setHeldFurniture} />
+       <AgentScheduler onScheduleRun={handleRunSimulation} />
        <div className="button-container">
          <button className="analysis-button" onClick={handleAnalyzeCirculation}>
            Analyze Circulation
