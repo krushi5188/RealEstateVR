@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import VRScene from './components/VRScene';
 import Dashboard from './components/Dashboard';
@@ -35,7 +35,6 @@ function App() {
   const [designPhilosophyReport, setDesignPhilosophyReport] = useState(null);
   const [biophilicReport, setBiophilicReport] = useState(null);
   const [acousticReport, setAcousticReport] = useState(null);
-  const [furnitureLibrary, setFurnitureLibrary] = useState([]);
   const [furnitureLibrary, setFurnitureLibrary] = useState([]);
   const [placedFurniture, setPlacedFurniture] = useState([]); // New state for placed items
   const [moodBoardPalette, setMoodBoardPalette] = useState(null);
