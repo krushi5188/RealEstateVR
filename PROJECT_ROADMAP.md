@@ -64,11 +64,12 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Features:**
     *   **Biophilic Design Score:**
         *   **Concept:** The system will analyze and score the design based on biophilic principles (the human need to connect with nature).
+        *   **Implementation Status:** The client-server architecture for this feature is now in place. A new `/analyze-biophilic-design` endpoint has been created on the server, and the client has been updated to call it. However, the core analysis logic on the server currently uses placeholders and does not perform a real geometric or lighting analysis.
         *   **Technical Approach:** This feature will build upon the existing sun simulation. The server will calculate the total "lumen-hours" for each room (from the Natural Light Analysis). It will also perform a line-of-sight analysis by casting rays from the center of each room to all windows, calculating the "View Quality Score" based on the percentage of unobstructed window area visible.
         *   **UI/UX:** The results will be presented as an overall "Biophilic Score" for the project and individual scores for each room. The UI will provide actionable suggestions like, "The living room has a low View Quality Score. Consider repositioning the sofa to face the main window."
 
 #### **Phase 4E: Acoustic Separation Analysis**
-*   **Status:** ✅ **Complete**
+*   **Status:** ⏳ **Pending**
 *   **Goal:** To analyze and mitigate noise pollution between rooms, ensuring a functional and peaceful living environment.
 *   **Features:**
     *   **Noise Path Highlighting:**
@@ -81,7 +82,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ### **Part 4: The Creative Engine**
 
 #### **Phase 5A: Procedural Layout Suggestions**
-*   **Status:** ✅ **Complete**
+*   **Status:** ⏳ **Pending**
 *   **Goal:** To inspire users and help them overcome "designer's block" by automatically generating optimized furniture layouts.
 *   **Features:**
     *   **Automated Arrangement:**
@@ -90,7 +91,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **UI/UX:** The user will be presented with 3-4 "layout cards" showing miniature 2D representations of the suggested arrangements. Clicking on a card will apply that layout to the main VR scene, which the user can then accept or customize further.
 
 #### **Phase 5B: Mood Board Integration & Style Analysis**
-*   **Status:** ✅ **Complete**
+*   **Status:** ⏳ **Pending**
 *   **Goal:** To help users create a stylistically coherent design by analyzing their inspirational images.
 *   **Features:**
     *   **Color Palette Extraction:**
@@ -103,8 +104,8 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ### **Part 5: Multi-Floor & Structure**
 
 #### **Phase 6A: Multi-Floor Support**
-*   **Status:** ✅ **Complete**
-*   **Goal:** To enable the creation and visualization of a multi-story buildings, a critical feature for professional use cases.
+*   **Status:** ⏳ **Pending**
+*   **Goal:** To enable the creation and visualization of multi-story buildings, a critical feature for professional use cases.
 *   **Features:**
     *   **Multi-File Upload:**
         *   **Concept:** The system will be updated to support the upload of multiple floor plan images within a single project.
@@ -117,9 +118,8 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Features:**
     *   **Interactive Placement Tool:**
         *   **Concept:** Users will be able to place staircases and elevators to connect the different levels of their project.
-        *   **Implementation Status:** The client-side UI for this feature is complete. Users can select the tool and define the start and end points for a staircase in the 3D view. However, the core procedural generation logic that creates the actual 3D staircase geometry is still pending implementation.
-        *   **Future Work:** The system should eventually detect stairs and elevators in the 2D floor plan image. Upon detection, it should prompt the user, asking if they want to create a multi-floor project, thus automating the vertical connections between levels.
-        *   **UI/UX:** A simple tool in the VR interface allows users to select "Add Stairs." The interface will guide them to select a start and end point. Once the geometry generation is implemented, the staircase will appear instantly.
+        *   **Technical Approach:** This will be a client-side tool. After a multi-floor model is loaded, the user will activate the "Staircase Tool." They will then click a point on the floor of the lower level and a corresponding point on the ceiling. The tool will then procedurally generate the 3D geometry for a staircase and automatically cut the required opening in the upper floor's model data.
+        *   **UI/UX:** A simple tool in the VR interface will allow users to select "Add Stairs." The interface will guide them to select a start and end point. The staircase will appear instantly, and the user will be able to walk up and down it in the VR scene.
 
 #### **Phase 6C: Automatic Roof Generator**
 *   **Status:** ⏳ **Pending**
