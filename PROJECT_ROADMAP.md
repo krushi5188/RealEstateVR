@@ -104,7 +104,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 
 #### **Phase 6A: Multi-Floor Support**
 *   **Status:** ✅ **Complete**
-*   **Goal:** To enable the creation and visualization of multi-story buildings, a critical feature for professional use cases.
+*   **Goal:** To enable the creation and visualization of a multi-story buildings, a critical feature for professional use cases.
 *   **Features:**
     *   **Multi-File Upload:**
         *   **Concept:** The system will be updated to support the upload of multiple floor plan images within a single project.
@@ -112,14 +112,14 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **UI/UX:** The user will be able to drag and drop multiple images and label them. In the VR scene, a new UI element (e.g., a simple level selector) will allow the user to instantly teleport between the different floors.
 
 #### **Phase 6B: Staircase and Elevator Tool**
-*   **Status:** ✅ **Complete**
+*   **Status:** ⏳ **Pending**
 *   **Goal:** To provide a realistic and interactive method for navigating between floors in a multi-story building.
 *   **Features:**
     *   **Interactive Placement Tool:**
         *   **Concept:** Users will be able to place staircases and elevators to connect the different levels of their project.
-        *   **Technical Approach:** This is a client-side tool. After a multi-floor model is loaded, the user activates the "Staircase Tool" and selects a start and end point. The tool then procedurally generates the 3D geometry for the staircase.
-        *   **UI/UX:** A simple tool in the VR interface allows users to select "Add Stairs." The staircase appears instantly, and the user can walk up and down it in the VR scene.
-        *   **Future Work:** A key future enhancement will be to add logic to the `image-processor.js` module to automatically detect staircases and elevators from the uploaded 2D floor plan, as these are almost always clearly marked in architectural drawings. This would allow for a more automated and seamless user experience.
+        *   **Implementation Status:** The client-side UI for this feature is complete. Users can select the tool and define the start and end points for a staircase in the 3D view. However, the core procedural generation logic that creates the actual 3D staircase geometry is still pending implementation.
+        *   **Future Work:** The system should eventually detect stairs and elevators in the 2D floor plan image. Upon detection, it should prompt the user, asking if they want to create a multi-floor project, thus automating the vertical connections between levels.
+        *   **UI/UX:** A simple tool in the VR interface allows users to select "Add Stairs." The interface will guide them to select a start and end point. Once the geometry generation is implemented, the staircase will appear instantly.
 
 #### **Phase 6C: Automatic Roof Generator**
 *   **Status:** ⏳ **Pending**
