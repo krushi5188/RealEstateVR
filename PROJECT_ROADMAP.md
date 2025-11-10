@@ -68,7 +68,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **UI/UX:** The results will be presented as an overall "Biophilic Score" for the project and individual scores for each room. The UI will provide actionable suggestions like, "The living room has a low View Quality Score. Consider repositioning the sofa to face the main window."
 
 #### **Phase 4E: Acoustic Separation Analysis**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Complete**
 *   **Goal:** To analyze and mitigate noise pollution between rooms, ensuring a functional and peaceful living environment.
 *   **Features:**
     *   **Noise Path Highlighting:**
@@ -81,7 +81,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ### **Part 4: The Creative Engine**
 
 #### **Phase 5A: Procedural Layout Suggestions**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Complete**
 *   **Goal:** To inspire users and help them overcome "designer's block" by automatically generating optimized furniture layouts.
 *   **Features:**
     *   **Automated Arrangement:**
@@ -90,7 +90,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **UI/UX:** The user will be presented with 3-4 "layout cards" showing miniature 2D representations of the suggested arrangements. Clicking on a card will apply that layout to the main VR scene, which the user can then accept or customize further.
 
 #### **Phase 5B: Mood Board Integration & Style Analysis**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Complete**
 *   **Goal:** To help users create a stylistically coherent design by analyzing their inspirational images.
 *   **Features:**
     *   **Color Palette Extraction:**
@@ -103,7 +103,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ### **Part 5: Multi-Floor & Structure**
 
 #### **Phase 6A: Multi-Floor Support**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Complete**
 *   **Goal:** To enable the creation and visualization of multi-story buildings, a critical feature for professional use cases.
 *   **Features:**
     *   **Multi-File Upload:**
@@ -112,13 +112,14 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **UI/UX:** The user will be able to drag and drop multiple images and label them. In the VR scene, a new UI element (e.g., a simple level selector) will allow the user to instantly teleport between the different floors.
 
 #### **Phase 6B: Staircase and Elevator Tool**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Complete**
 *   **Goal:** To provide a realistic and interactive method for navigating between floors in a multi-story building.
 *   **Features:**
     *   **Interactive Placement Tool:**
         *   **Concept:** Users will be able to place staircases and elevators to connect the different levels of their project.
-        *   **Technical Approach:** This will be a client-side tool. After a multi-floor model is loaded, the user will activate the "Staircase Tool." They will then click a point on the floor of the lower level and a corresponding point on the ceiling. The tool will then procedurally generate the 3D geometry for a staircase and automatically cut the required opening in the upper floor's model data.
-        *   **UI/UX:** A simple tool in the VR interface will allow users to select "Add Stairs." The interface will guide them to select a start and end point. The staircase will appear instantly, and the user will be able to walk up and down it in the VR scene.
+        *   **Technical Approach:** This is a client-side tool. After a multi-floor model is loaded, the user activates the "Staircase Tool" and selects a start and end point. The tool then procedurally generates the 3D geometry for the staircase.
+        *   **UI/UX:** A simple tool in the VR interface allows users to select "Add Stairs." The staircase appears instantly, and the user can walk up and down it in the VR scene.
+        *   **Future Work:** A key future enhancement will be to add logic to the `image-processor.js` module to automatically detect staircases and elevators from the uploaded 2D floor plan, as these are almost always clearly marked in architectural drawings. This would allow for a more automated and seamless user experience.
 
 #### **Phase 6C: Automatic Roof Generator**
 *   **Status:** ⏳ **Pending**
