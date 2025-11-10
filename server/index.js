@@ -11,6 +11,7 @@ const { analyzeDesignPhilosophy } = require('./design-philosophy-analyzer');
 const { analyzeAcousticSeparation } = require('./acoustic-separation-analyzer');
 const { generateLayouts } = require('./layout-generator');
 const { extractColorPalette } = require('./mood-board-analyzer');
+const { analyzeBiophilicDesign } = require('./biophilic-analyzer');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 const MODELS_DIR = path.join(__dirname, 'models');
@@ -322,6 +323,28 @@ const server = http.createServer((req, res) => {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: analysisErr.message }));
       }
+    });
+  } else if (req.url === '/analyze-biophilic-design' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+        body += chunk.toString();
+    });
+    req.on('end', async () => {
+        try {
+            const modelData = JSON.parse(body);
+            if (!modelData) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Model data is required.' }));
+                return;
+            }
+            const report = await analyzeBiophilicDesign(modelData);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(report));
+        } catch (e) {
+            console.error('Biophilic design analysis failed:', e);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to run biophilic design analysis.' }));
+        }
     });
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
