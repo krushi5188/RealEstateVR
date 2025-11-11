@@ -64,7 +64,7 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Features:**
     *   **Biophilic Design Score:**
         *   **Concept:** The system will analyze and score the design based on biophilic principles (the human need to connect with nature).
-        *   **Implementation Status:** The client-server architecture for this feature is now in place. A new `/analyze-biophilic-design` endpoint has been created on the server, and the client has been updated to call it. However, the core analysis logic on the server currently uses placeholders and does not perform a real geometric or lighting analysis.
+        *   **Implementation Details:** As a prerequisite for this feature, the `image-processor.js` module was significantly enhanced to perform room and window detection using a flood-fill algorithm. A new `biophilic-analyzer.js` module was created on the server, which uses 3D raycasting to calculate a "View Quality Score" and a "Natural Light Score" for each room. These scores are combined to produce the final Biophilic Score.
         *   **Technical Approach:** This feature will build upon the existing sun simulation. The server will calculate the total "lumen-hours" for each room (from the Natural Light Analysis). It will also perform a line-of-sight analysis by casting rays from the center of each room to all windows, calculating the "View Quality Score" based on the percentage of unobstructed window area visible.
         *   **UI/UX:** The results will be presented as an overall "Biophilic Score" for the project and individual scores for each room. The UI will provide actionable suggestions like, "The living room has a low View Quality Score. Consider repositioning the sofa to face the main window."
 

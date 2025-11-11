@@ -13,6 +13,7 @@
     "canvas": "^2.11.2",
     "dotenv": "^17.2.3",
     "multiparty": "^4.2.3",
+    "ray-triangle-intersection": "^1.0.3",
     "svg-parser": "^2.0.4",
     "uuid": "^13.0.0"
   }

@@ -115,8 +115,99 @@ async function extractWallsFromBitmap(filePath) {
             }
         }
     }
-    return { width, height, walls };
+    const { rooms, windows } = identifyRoomsAndWindows(walls, width, height);
+    return { width, height, walls, rooms, windows };
 }
+
+// --- Room and Window Identification ---
+
+function identifyRoomsAndWindows(walls, width, height) {
+    const rooms = [];
+    const windows = [];
+    const grid = new Array(height).fill(null).map(() => new Array(width).fill(0));
+
+    // Create a grid representation of the walls
+    for (const wall of walls) {
+        for (let y = wall.y1; y <= wall.y2; y++) {
+            for (let x = wall.x1; x <= wall.x2; x++) {
+                if (x >= 0 && x < width && y >= 0 && y < height) {
+                    grid[y][x] = 1; // Mark wall
+                }
+            }
+        }
+    }
+
+    // Flood fill to find rooms
+    const visited = new Array(height).fill(null).map(() => new Array(width).fill(false));
+    let roomCounter = 0;
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            if (grid[y][x] === 0 && !visited[y][x]) {
+                const roomPixels = [];
+                const queue = [[x, y]];
+                visited[y][x] = true;
+                let minX = width, minY = height, maxX = 0, maxY = 0;
+
+                while (queue.length > 0) {
+                    const [cx, cy] = queue.shift();
+                    roomPixels.push({ x: cx, y: cy });
+                    minX = Math.min(minX, cx);
+                    minY = Math.min(minY, cy);
+                    maxX = Math.max(maxX, cx);
+                    maxY = Math.max(maxY, cy);
+
+                    const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    for (const [dx, dy] of neighbors) {
+                        const nx = cx + dx;
+                        const ny = cy + dy;
+                        if (nx >= 0 && nx < width && ny >= 0 && ny < height && grid[ny][nx] === 0 && !visited[ny][nx]) {
+                            visited[ny][nx] = true;
+                            queue.push([nx, ny]);
+                        }
+                    }
+                }
+                if (roomPixels.length > 100) { // Filter out small noise
+                    rooms.push({
+                        id: roomCounter++,
+                        center: { x: Math.round((minX + maxX) / 2), y: Math.round((minY + maxY) / 2) },
+                        bounds: { minX, minY, maxX, maxY },
+                        pixels: roomPixels,
+                    });
+                }
+            }
+        }
+    }
+
+    // Identify windows (gaps in exterior walls)
+    const exteriorWalls = walls.filter(wall => wall.x1 === 0 || wall.x2 === width -1 || wall.y1 === 0 || wall.y2 === height - 1);
+    for(const wall of exteriorWalls) {
+        if(wall.x1 === wall.x2) { //vertical wall
+            let lastY = wall.y1;
+            for(let y = wall.y1; y <= wall.y2; y++) {
+                if(grid[y][wall.x1] === 0) {
+                    if(y - lastY > 5) { //gap of at least 5 pixels
+                        windows.push({ x1: wall.x1, y1: lastY, x2: wall.x1, y2: y });
+                    }
+                    lastY = y;
+                }
+            }
+        } else { //horizontal wall
+            let lastX = wall.x1;
+            for(let x = wall.x1; x <= wall.x2; x++) {
+                if(grid[wall.y1][x] === 0) {
+                    if(x - lastX > 5) { //gap of at least 5 pixels
+                        windows.push({ x1: lastX, y1: wall.y1, x2: x, y2: wall.y1 });
+                    }
+                    lastX = x;
+                }
+            }
+        }
+    }
+
+
+    return { rooms, windows };
+}
+
 
 // --- File Saving Logic (Unchanged) ---
 
