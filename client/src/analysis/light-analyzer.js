@@ -18,17 +18,31 @@ class Window {
 
 /**
  * Identifies window openings from the model geometry.
- * NOTE: This is a placeholder. A real implementation would need to analyze
  * the geometry to find vertical openings in the walls.
- * @param {object} modelData - The 3D model geometry.
+ * @param {object} wallData - The 2D wall data from the server.
  * @returns {Window[]} An array of identified windows.
  */
-function identifyWindows(modelData) {
-  // Dummy windows for now. A real implementation would be complex.
-  return [
-    new Window(0, 5, 10, { x: 0, y: 0, z: -1 }, 20), // A window facing forward
-    new Window(10, 5, 0, { x: -1, y: 0, z: 0 }, 15), // A window facing right
-  ];
+function identifyWindows(wallData) {
+    if (!wallData || !wallData.windows) return [];
+
+    const windows = wallData.windows.map(win => {
+        const centerX = (win.x1 + win.x2) / 2;
+        const centerZ = (win.y1 + win.y2) / 2; // y in 2D is z in 3D
+        const width = Math.abs(win.x2 - win.x1);
+        const depth = Math.abs(win.y2 - win.y1);
+        const area = (width > depth ? width : depth) * 5; // Assuming a height of 5 units
+
+        let normal = { x: 0, y: 0, z: 0 };
+        if (width > depth) { // Horizontal window
+            normal.z = centerZ > 0 ? -1 : 1;
+        } else { // Vertical window
+            normal.x = centerX > 0 ? -1 : 1;
+        }
+
+        return new Window(centerX * 0.1, 5, centerZ * 0.1, normal, area);
+    });
+
+    return windows;
 }
 
 /**
@@ -72,11 +86,11 @@ function calculateInstantaneousLight(sunPosition, windows) {
 
 /**
  * Analyzes the natural light over a full day cycle.
- * @param {object} modelData - The 3D model geometry.
+ * @param {object} wallData - The 2D wall data from the server.
  * @returns {Promise<object>} A promise that resolves with the analysis results.
  */
-async function analyzeNaturalLight(modelData) {
-  const windows = identifyWindows(modelData);
+async function analyzeNaturalLight(wallData) {
+  const windows = identifyWindows(wallData);
   let cumulativeLightScore = 0;
   const simulationSteps = 100; // Number of steps in our simulated day
 
