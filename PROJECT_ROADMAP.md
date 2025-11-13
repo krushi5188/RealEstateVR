@@ -4,6 +4,11 @@
 To create the world's most powerful, insightful, and creatively empowering platform for transforming 2D floor plans into immersive, interactive, and intelligent VR experiences. Our strategy is to win by focusing on brilliant, non-AI engineering, sophisticated procedural systems, and a deep, empathetic understanding of the user's design journey. This document is a living blueprint, updated continuously to reflect our progress and challenges.
 
 ---
+
+## **`[Meta-Note]`**
+*This document has been updated to reflect the true, evidence-based status of each feature as of the latest codebase analysis. The statuses now accurately represent what is fully functional, what is partially implemented, and what remains a placeholder.*
+
+---
 ## Technical Decisions & Justifications
 
 *   **`node-canvas` for Image Processing:**
@@ -13,22 +18,17 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ---
 ## Detailed Implementation Logs
 
-### **Phase 2: Model Persistence, API & Dashboard Integration**
-*   **Status:** ✅ **Complete**
-*   **Objective:** To transition from a transient, single-session tool to a persistent, project-based application. This required building a secure backend API to manage 3D model files and a frontend dashboard for user interaction.
-*   *(For a full, exhaustive breakdown of this phase, please see the previous version of this document. The log has been condensed to improve readability.)*
+### **Core Pipeline: 2D to 3D Conversion**
+*   **Status:** ✅ **Fully Functional**
+*   **Evidence:** The end-to-end pipeline from image upload (`App.js`), through server-side processing (`image-processor.js`), to 3D model generation (`model-generator.js`) and rendering (`VRScene.js`) is complete and operates on user-provided data.
 
 ### **Phase 3A: The Sun & Shadow Simulation**
-*   **Status:** ✅ **Complete**
-*   **Objective:** To introduce a realistic lighting model by simulating a dynamic sun and casting physically plausible shadows, enhancing the sense of realism and immersion in the VR scene.
-*   *(For a full, exhaustive breakdown of this phase, please see the previous version of this document. The log has been condensed to improve readability.)*
+*   **Status:** ✅ **Fully Functional**
+*   **Evidence:** The `Sun` component within `VRScene.js` correctly implements a dynamic directional light that animates on a timer, casting realistic shadows. This is a purely client-side feature.
 
 ### **Phase 3B: Foundational Material Library**
-*   **Status:** ✅ **Complete**
-*   **Objective:** To create the foundational system for applying different materials to 3D models, allowing for visual customization.
-*   **Implementation Details:**
-    *   **Files Created:** `client/public/materials.json`, `client/src/components/MaterialLibrary.js`, `client/src/components/MaterialLibrary.css`
-    *   **Functionality:** A new UI component was created to fetch material definitions from a JSON file. This library is displayed in the VR view, allowing the user to select a material. The selected material's properties (color, roughness, metalness) are then dynamically applied to the entire 3D model in the `VRScene` component.
+*   **Status:** ✅ **Fully Functional**
+*   **Evidence:** The `MaterialLibrary.js` component allows users to select materials, and the `Model` component in `VRScene.js` correctly applies these materials to the 3D mesh. This is a purely client-side feature.
 
 ---
 ## The Roadmap: Future Phases Detailed Blueprint
@@ -36,46 +36,42 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ### **Part 3: The Intelligence Layer**
 
 #### **Phase 4A: Architectural Pattern Analysis**
-*   **Status:** ✅ **Complete**
 *   **Goal:** To provide users with expert, automated feedback based on established architectural principles and best practices, acting as a virtual design consultant.
-*   **Implementation Details:**
-    *   **Circulation Path Analysis:** A new `path-analyzer.js` module was created on the server to perform A* pathfinding on a grid representation of the floor plan. The results are exposed via a `/analyze-circulation` endpoint and visualized on the client with a new `CirculationAnalysis.js` component.
-    *   **Natural Light Analysis:** The `VRScene.js` component was enhanced with an animated day/night cycle. A new `light-analyzer.js` module on the client calculates a "Natural Light Score" based on the sun's position relative to placeholder windows. The results are displayed in a new `NaturalLightAnalysis.js` component.
-    *   **Ergonomics & Accessibility Audit:** A new `accessibility-auditor.js` module was created on the server to run a rule-based audit for common issues like doorway widths. The results are exposed via an `/audit-accessibility` endpoint and displayed in a new `AccessibilityReport.js` component.
+*
+    *   **Circulation Path Analysis:**
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** The server now saves the 2D `wallData` to the model's JSON file. The `/analyze-circulation` endpoint has been updated to load this real data and pass it to the A* pathfinding algorithm, replacing the previous hardcoded dummy data. The feature is functional end-to-end.
+    *   **Natural Light Analysis:**
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** The client-side `light-analyzer.js` module now uses the real `wallData` (fetched from the server when a model is loaded) to identify window locations. It performs a geometric calculation to produce a natural light score, replacing the previous static placeholder.
+    *   **Ergonomics & Accessibility Audit:**
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** The `accessibility-auditor.js` module on the server now contains a rule-based engine that programmatically identifies and measures doorway widths from the real `wallData`. The `/audit-accessibility` endpoint is now connected to this real data, replacing the previous static placeholder report.
 
 #### **Phase 4B: Human Factors & Usability Simulation**
-*   **Status:** ✅ **Complete**
 *   **Goal:** To simulate the human *experience* of the design, helping users understand how the space will function in practice.
-*   **Implementation Details:**
-    *   **Furniture Placement & Layout Assistant:** A new `furniture.json` file was created to serve as a library. The `VRScene.js` component was heavily modified to support drag-and-drop placement of furniture, using raycasting for positioning and AABB collision detection for real-time validation. New components `FurnitureLibrary.js` and `FurniturePlacer.js` were created to manage the UI and placement logic.
-    *   **"Day in the Life" Simulation:** A new `AgentScheduler.js` component was created for UI, and a `VirtualAgent.js` component was built to animate a 3D agent along a path in the scene. The server was refactored to provide an on-demand `/find-path` endpoint to support this feature.
+*
+    *   **Furniture Placement & Layout Assistant:**
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** The `FurniturePlacer` component in `VRScene.js` is a fully functional, client-side feature. It correctly uses raycasting for placement and performs real-time AABB collision detection to prevent objects from overlapping. The "Layout Assistant" portion is not yet implemented.
+    *   **"Day in the Life" Simulation:**
+        *   **Status:** 🟡 **Partially Implemented**
+        *   **Evidence:** The client-side animation of a virtual agent in `VirtualAgent.js` works correctly. However, the path it follows is a **hardcoded, client-side dummy path** in `App.js`. The server's functional `/find-path` endpoint is never called.
 
 #### **Phase 4C: Design Philosophy Analysis (Vastu Shastra & Feng Shui)**
-*   **Status:** ✅ **Complete**
+*   **Status:** 🟡 **Partially Implemented**
 *   **Goal:** To provide automated analysis based on ancient and modern design philosophies, transforming the platform into a virtual design consultant.
-*   **Implementation Details:**
-    *   A new `design-philosophy-analyzer.js` module was created on the server, containing a rule-based engine for Vastu Shastra that calculates a compliance score based on room placement relative to a user-defined North.
-    *   The analysis is exposed via a new `/analyze-design-philosophy` POST endpoint.
-    *   On the client, new `DesignPhilosophyInput.js` and `DesignPhilosophyReport.js` components were created to allow users to set the analysis parameters and view the detailed results.
+*   **Evidence:** The backend `design-philosophy-analyzer.js` module contains **real, non-placeholder analysis logic** for Vastu. However, its functionality is entirely dependent on the client's ability to generate a complex `layoutData` object from the raw model data, which is a significant and unverified dependency.
 
 #### **Phase 4D: Wellness & Biophilic Design Analysis**
-*   **Status:** ✅ **Complete**
+*   **Status:** 🟠 **Placeholder**
 *   **Goal:** To computationally score a design's positive impact on human well-being by analyzing its connection to nature.
-*   **Features:**
-    *   **Biophilic Design Score:**
-        *   **Concept:** The system will analyze and score the design based on biophilic principles (the human need to connect with nature).
-        *   **Implementation Details:** As a prerequisite for this feature, the `image-processor.js` module was significantly enhanced to perform room and window detection using a flood-fill algorithm. A new `biophilic-analyzer.js` module was created on the server, which uses 3D raycasting to calculate a "View Quality Score" and a "Natural Light Score" for each room. These scores are combined to produce the final Biophilic Score.
-        *   **Technical Approach:** This feature will build upon the existing sun simulation. The server will calculate the total "lumen-hours" for each room (from the Natural Light Analysis). It will also perform a line-of-sight analysis by casting rays from the center of each room to all windows, calculating the "View Quality Score" based on the percentage of unobstructed window area visible.
-        *   **UI/UX:** The results will be presented as an overall "Biophilic Score" for the project and individual scores for each room. The UI will provide actionable suggestions like, "The living room has a low View Quality Score. Consider repositioning the sofa to face the main window."
+*   **Evidence:** The feature is implemented as a purely client-side module (`biophilic-analyzer.js`) that contains **no real analysis logic**. It returns a hardcoded, static report.
 
 #### **Phase 4E: Acoustic Separation Analysis**
-*   **Status:** ⏳ **Pending**
+*   **Status:** 🟡 **Partially Implemented**
 *   **Goal:** To analyze and mitigate noise pollution between rooms, ensuring a functional and peaceful living environment.
-*   **Features:**
-    *   **Noise Path Highlighting:**
-        *   **Concept:** The system will identify potential areas of noise transmission between "noisy" rooms (e.g., Living Room, Kitchen) and "quiet" rooms (e.g., Bedroom, Office).
-        *   **Technical Approach:** The user will first categorize each room's expected noise level (e.g., "High," "Medium," "Low"). The server will then perform an adjacency analysis, identifying all walls shared between rooms. For each shared wall, it will calculate a "Sound Transmission Score" based on the noise levels of the adjoining rooms and the acoustic properties of the wall's assigned material (this will require adding an `acoustic_dampening` property to our material library).
-        *   **UI/UX:** A visual overlay on the 2D plan will show potential "sound leak" paths. The system will offer recommendations like, "The wall between the Living Room and Master Bedroom has a high Sound Transmission Score. Consider using a material with better acoustic dampening or adding a closet to act as a sound buffer."
+*   **Evidence:** The backend `acoustic-separation-analyzer.js` module appears to contain real analysis logic. However, the client in `App.js` sends it **hardcoded dummy data**, making the feature non-functional from a user's perspective.
 
 ---
 
@@ -90,14 +86,10 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **Technical Approach:** The user will select a room and a list of furniture items from a library (e.g., "1 sofa, 2 armchairs, 1 coffee table"). The server will then run a placement algorithm. This algorithm will be rule-based, considering factors like clearance zones (e.g., `3ft` of walking space), conversation areas (e.g., seating arranged in a `U-shape`), and focal points (e.g., aligning seating towards a fireplace or window). It will generate several valid layouts and send them to the client.
         *   **UI/UX:** The user will be presented with 3-4 "layout cards" showing miniature 2D representations of the suggested arrangements. Clicking on a card will apply that layout to the main VR scene, which the user can then accept or customize further.
 
-#### **Phase 5B: Mood Board Integration & Style Analysis**
-*   **Status:** ⏳ **Pending**
+#### **Phase 5B: Color Palette Extraction**
+*   **Status:** ✅ **Fully Functional**
 *   **Goal:** To help users create a stylistically coherent design by analyzing their inspirational images.
-*   **Features:**
-    *   **Color Palette Extraction:**
-        *   **Concept:** Users will be able to upload a "mood board" or a single inspirational image, and the system will extract its dominant color palette.
-        *   **Technical Approach:** The uploaded image will be processed on the server using `node-canvas`. The system will iterate through the image's pixels, clustering the colors using a k-means algorithm to identify the 5-6 most dominant colors. This color palette will be sent back to the client.
-        *   **UI/UX:** The extracted color palette will be displayed in the UI. The "Material Library" will then automatically filter or suggest materials that match this palette, providing the user with a curated list of stylistically appropriate options to start their design.
+*   **Evidence:** The `MoodBoardUploader` component correctly sends an image to the `/analyze-mood-board` endpoint. The server's `mood-board-analyzer.js` module uses a **real k-means clustering algorithm** to process the image pixels and extract a dominant color palette. The feature works end-to-end.
 
 ---
 
