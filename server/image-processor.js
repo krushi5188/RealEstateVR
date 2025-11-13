@@ -3,6 +3,7 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { createCanvas, loadImage } = require('canvas');
 const { parse } = require('svg-parser');
+const Tesseract = require('tesseract.js');
 
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 
@@ -115,9 +116,101 @@ async function extractWallsFromBitmap(filePath) {
             }
         }
     }
-    const { rooms, windows } = identifyRoomsAndWindows(walls, width, height);
-    return { width, height, walls, rooms, windows };
+    let { rooms, windows } = identifyRoomsAndWindows(walls, width, height);
+    rooms = await labelRoomsWithOCR(rooms, filePath);
+
+    const detectedNorthVector = await detectNorthArrow(filePath);
+
+    return { width, height, walls, rooms, windows, detectedNorthVector };
 }
+
+// --- North Arrow Detection ---
+
+async function detectNorthArrow(imagePath) {
+    console.log("Attempting to detect North arrow...");
+    try {
+        const { data: { words } } = await Tesseract.recognize(imagePath, 'eng', {
+            tessedit_char_whitelist: 'N',
+        });
+
+        const northWord = words.find(w => w.text.trim() === 'N');
+        if (!northWord) {
+            console.log("No 'N' character found for North arrow detection.");
+            return null;
+        }
+
+        const { bbox } = northWord;
+        const roiX = bbox.x0 - 50;
+        const roiY = bbox.y0 - 50;
+        const roiWidth = 100;
+        const roiHeight = 100;
+
+        const image = await loadImage(imagePath);
+        const canvas = createCanvas(roiWidth, roiHeight);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image, roiX, roiY, roiWidth, roiHeight, 0, 0, roiWidth, roiHeight);
+
+        // Simple shape detection: look for a triangle
+        // This is a simplified heuristic.
+        // A real implementation would use more advanced techniques.
+        const imageData = ctx.getImageData(0, 0, roiWidth, roiHeight);
+        const { data } = imageData;
+        let blackPixels = 0;
+        for (let i = 0; i < data.length; i += 4) {
+            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            if (avg < 128) {
+                blackPixels++;
+            }
+        }
+
+        // If there are a significant number of black pixels in the ROI
+        // assume it's an arrow and default to pointing North (up).
+        if (blackPixels > 100) { // Arbitrary threshold
+             console.log("Found a shape near 'N', assuming North is up.");
+            return { x: 0, y: -1, z: 0 }; // North is 'up' in 2D image space
+        }
+
+    } catch (err) {
+        console.error("Error during North arrow detection:", err);
+    }
+
+    return null;
+}
+
+// --- OCR for Room Labeling ---
+
+async function labelRoomsWithOCR(rooms, imagePath) {
+    if (!rooms || rooms.length === 0) {
+        return [];
+    }
+    console.log(`Labeling ${rooms.length} rooms with OCR...`);
+
+    const labeledRooms = [];
+    for (const room of rooms) {
+        const { minX, minY, maxX, maxY } = room.bounds;
+        const width = maxX - minX;
+        const height = maxY - minY;
+
+        // Create a temporary canvas for the cropped image
+        const canvas = createCanvas(width, height);
+        const ctx = canvas.getContext('2d');
+        const image = await loadImage(imagePath);
+        ctx.drawImage(image, minX, minY, width, height, 0, 0, width, height);
+        const croppedImageBuffer = canvas.toBuffer('image/png');
+
+        const { data: { text } } = await Tesseract.recognize(croppedImageBuffer, 'eng');
+        const label = text.trim().split('\n')[0]; // Take the first line of recognized text
+
+        labeledRooms.push({
+            ...room,
+            label: label || `Room ${room.id}`, // Default label if OCR fails
+        });
+    }
+
+    console.log("OCR labeling complete.");
+    return labeledRooms;
+}
+
 
 // --- Room and Window Identification ---
 
