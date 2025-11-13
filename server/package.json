@@ -15,6 +15,7 @@
     "multiparty": "^4.2.3",
     "ray-triangle-intersection": "^1.0.3",
     "svg-parser": "^2.0.4",
+    "tesseract.js": "^6.0.1",
     "uuid": "^13.0.0"
   }
 }
