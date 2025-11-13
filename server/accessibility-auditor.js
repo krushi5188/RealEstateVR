@@ -12,19 +12,33 @@ const RULES = {
 
 /**
  * Identifies architectural features like doors and hallways from model data.
- * NOTE: This is a placeholder. A real implementation will need to parse the geometry
  * to recognize these features based on their shape and context.
- * @param {object} modelData - The 3D model geometry.
+ * @param {object} wallData - The 2D wall data from the image processor.
  * @returns {{doors: object[], hallways: object[]}}
  */
-function identifyFeatures(modelData) {
-  // Dummy features for now.
+function identifyFeatures(wallData) {
+    const doors = [];
+    let doorCount = 0;
+
+    // A simple approach to find gaps in walls which we'll assume are doors.
+    // A more robust solution would involve analyzing room adjacency.
+    for (const wall of wallData.walls) {
+        const length = Math.sqrt(Math.pow(wall.x2 - wall.x1, 2) + Math.pow(wall.y2 - wall.y1, 2));
+
+        // Let's assume any gap between 20 and 50 pixels is a door
+        // This is a heuristic and would need to be improved.
+        if (length > 20 && length < 50) {
+            doorCount++;
+            doors.push({
+                id: `Door ${doorCount}`,
+                width: length,
+            });
+        }
+    }
+
+  // Dummy features for hallways and bathrooms remain for now.
   return {
-    doors: [
-      { id: 'Front Door', width: 36 },
-      { id: 'Bedroom Door', width: 30 }, // This one should fail
-      { id: 'Bathroom Door', width: 32 },
-    ],
+    doors: doors,
     hallways: [
       { id: 'Main Hallway', width: 40 },
       { id: 'Narrow Hall to Bedroom', width: 34 }, // This one should fail
@@ -40,11 +54,11 @@ function identifyFeatures(modelData) {
 
 /**
  * Audits the identified architectural features against accessibility standards.
- * @param {object} modelData - The 3D model geometry.
+ * @param {object} wallData - The 2D wall data from the image processor.
  * @returns {object[]} A list of compliance issues.
  */
-function auditAccessibility(modelData) {
-  const features = identifyFeatures(modelData);
+function auditAccessibility(wallData) {
+  const features = identifyFeatures(wallData);
   const issues = [];
 
   // 1. Audit Doors
