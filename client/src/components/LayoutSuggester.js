@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './LayoutSuggester.css';
 
-export default function LayoutSuggester({ furnitureLibrary, onLayoutSelect }) {
+export default function LayoutSuggester({ wallData, furnitureLibrary, onLayoutSelect }) {
   const [selectedFurniture, setSelectedFurniture] = useState([]);
   const [suggestedLayouts, setSuggestedLayouts] = useState([]);
 

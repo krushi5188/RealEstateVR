@@ -14,13 +14,18 @@ export default function LayoutSuggester({ furnitureLibrary, onLayoutSelect }) {
   };
 
   const handleGenerate = async () => {
-    // In a real implementation, room dimensions would be passed in
-    const dummyRoom = { width: 400, depth: 400 };
+    if (!wallData || !wallData.rooms || wallData.rooms.length === 0) {
+      alert("No room data available to generate layouts.");
+      return;
+    }
+    // For now, we'll use the first detected room.
+    const roomToDecorate = wallData.rooms[0];
+
     try {
-      const response = await fetch('/generate-layouts', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/generate-layouts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ room: dummyRoom, furniture: selectedFurniture }),
+        body: JSON.stringify({ room: roomToDecorate, furniture: selectedFurniture }),
       });
       const data = await response.json();
       setSuggestedLayouts(data.layouts);
