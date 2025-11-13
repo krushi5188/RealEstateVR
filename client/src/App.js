@@ -25,6 +25,8 @@ function App() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState(null);
   const [modelData, setModelData] = useState(null);
+  const [wallData, setWallData] = useState(null);
+  const [modelFilename, setModelFilename] = useState(null);
   const [selectedMaterial, setSelectedMaterial] = useState(null);
   const [circulationData, setCirculationData] = useState(null);
   const [lightAnalysisResult, setLightAnalysisResult] = useState(null);
@@ -119,11 +121,12 @@ function App() {
           const response = JSON.parse(xhr.responseText);
           const vertices = new Float32Array(response.model.vertices);
           const faces = new Uint32Array(response.model.faces);
+          const modelFilename = response.modelPath.split('/').pop();
           setModelData({ vertices, faces });
+          setModelFilename(modelFilename);
           setMessage({ type: 'success', text: 'Model generated successfully!' });
 
           // Update localStorage with the new model
-          const modelFilename = response.modelPath.split('/').pop();
           const cachedModels = JSON.parse(localStorage.getItem('models') || '[]');
           cachedModels.push(modelFilename);
           localStorage.setItem('models', JSON.stringify(cachedModels));
@@ -205,8 +208,10 @@ function App() {
   );
 
   const handleAnalyzeCirculation = async () => {
-    // We need a model filename to analyze. For now, we'll pass a dummy one.
-    const modelFilename = "dummy-model.json";
+    if (!modelFilename) {
+      setMessage({ type: 'error', text: 'No model is loaded for analysis.' });
+      return;
+    }
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/analyze-circulation/${modelFilename}`);
       if (!response.ok) {
@@ -220,12 +225,12 @@ function App() {
   };
 
   const handleNaturalLightAnalysis = async () => {
-    if (!modelData) return;
+    if (!wallData) return;
 
     setIsSunCycling(true); // Start the sun animation
 
     // Run the analysis
-    const results = await analyzeNaturalLight(modelData);
+    const results = await analyzeNaturalLight(wallData);
     setLightAnalysisResult(results);
 
     // Stop the animation after a brief period to show the cycle
@@ -235,7 +240,10 @@ function App() {
   };
 
   const handleAccessibilityAudit = async () => {
-    const modelFilename = "dummy-model.json"; // Placeholder
+    if (!modelFilename) {
+      setMessage({ type: 'error', text: 'No model is loaded for analysis.' });
+      return;
+    }
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/audit-accessibility/${modelFilename}`);
       if (!response.ok) {
@@ -248,17 +256,48 @@ function App() {
     }
   };
 
-  const handleRunSimulation = () => {
-    // This is where we will fetch the path from the server.
-    // For now, a dummy path:
-    const dummyPath = [
-      { x: -5, y: 0.5, z: -5 },
-      { x: 5, y: 0.5, z: -5 },
-      { x: 5, y: 0.5, z: 5 },
-      { x: -5, y: 0.5, z: 5 },
-      { x: -5, y: 0.5, z: -5 },
-    ];
-    setAgentPath(dummyPath);
+  const handleRunSimulation = async () => {
+    if (!wallData || !wallData.rooms || wallData.rooms.length < 2) {
+      setMessage({ type: 'error', text: 'Not enough rooms to simulate a path.' });
+      return;
+    }
+
+    // For demonstration, we'll find a path between the centers of the first two rooms.
+    const start = wallData.rooms[0].center;
+    const end = wallData.rooms[1].center;
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/find-path`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ start, end, wallData }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to find a path from the server.');
+      }
+
+      const { path: path2D } = await response.json();
+
+      if (!path2D || path2D.length === 0) {
+        setMessage({ type: 'info', text: 'No path could be found between the two points.' });
+        return;
+      }
+
+      // Convert the 2D path from the server into a 3D path for the agent
+      const offsetX = wallData.width / 2;
+      const offsetY = wallData.height / 2;
+      const path3D = path2D.map(p => ({
+        x: (p.x - offsetX) * 0.1,
+        y: 0.5, // Agent's height above the floor
+        z: (p.y - offsetY) * 0.1,
+      }));
+
+      setAgentPath(path3D);
+
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    }
   };
 
   const handleDesignPhilosophyAnalysis = async (layoutData) => {
@@ -336,7 +375,7 @@ function App() {
        </div>
        <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
        <FurnitureLibrary onFurnitureSelect={setHeldFurniture} />
-       <LayoutSuggester model={modelData} onLayoutSelect={setPlacedFurniture} />
+       <LayoutSuggester wallData={wallData} furnitureLibrary={furnitureLibrary} onLayoutSelect={setPlacedFurniture} />
        <AgentScheduler onScheduleRun={handleRunSimulation} />
        <DesignPhilosophyInput onAnalyze={handleDesignPhilosophyAnalysis} />
        <MoodBoardUploader onPaletteExtracted={handlePaletteExtracted} />
@@ -375,10 +414,20 @@ function App() {
   );
 
   const handleViewModel = (data) => {
+    if (!data.model || !data.wallData) {
+      setMessage({ type: 'error', text: 'Loaded model file is missing required data.' });
+      return;
+    }
     // Ensure the data is in the correct format (TypedArrays) for the VRScene
-    const vertices = new Float32Array(data.vertices);
-    const faces = new Uint32Array(data.faces);
+    const vertices = new Float32Array(data.model.vertices);
+    const faces = new Uint32Array(data.model.faces);
     setModelData({ vertices, faces });
+    setWallData(data.wallData);
+    // It's a bit redundant, but we need the filename for other functions
+    const cachedModels = JSON.parse(localStorage.getItem('models') || '[]');
+    // This is a simplistic way to find the model; a better way would be passing it from Dashboard
+    if (cachedModels.length > 0) setModelFilename(cachedModels[cachedModels.length - 1]);
+
     setView('vr');
   };
 
