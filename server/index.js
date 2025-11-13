@@ -45,31 +45,39 @@ const server = http.createServer((req, res) => {
 
       try {
         const floorData = [];
-        for (const file of floorFiles) {
+        let firstFloorWallData;
+        for (let i = 0; i < floorFiles.length; i++) {
+            const file = floorFiles[i];
             const filePath = await saveFile(file);
             const wallData = await extractWallData(filePath);
             floorData.push(wallData);
+            if (i === 0) {
+                firstFloorWallData = wallData;
+            }
         }
 
         // The model generator will now take an array of wall data objects
         const model = generateModel(floorData);
 
         // Convert TypedArrays to regular arrays for JSON serialization
-        const serializedModel = {
-          vertices: Array.from(model.vertices),
-          faces: Array.from(model.faces),
+        const finalOutput = {
+          model: {
+            vertices: Array.from(model.vertices),
+            faces: Array.from(model.faces),
+          },
+          wallData: firstFloorWallData // Save the 2D data for analysis
         };
 
-        const modelFilename = `${path.basename(filePath, path.extname(filePath))}.json`;
+        const modelFilename = `${path.basename(floorFiles[0].path, path.extname(floorFiles[0].path))}.json`;
         const modelPath = path.join(MODELS_DIR, modelFilename);
 
-        await fs.promises.writeFile(modelPath, JSON.stringify(serializedModel, null, 2));
+        await fs.promises.writeFile(modelPath, JSON.stringify(finalOutput, null, 2));
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           message: 'Model generated and saved successfully',
           modelPath: `/models/${modelFilename}`,
-          model: serializedModel
+          model: finalOutput.model
         }));
 
       } catch (processErr) {
@@ -152,24 +160,26 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // In the future, we would load the model, extract wallData, and pass it.
-    // For now, we use dummy data that matches the structure.
-    const dummyWallData = {
-        width: 500,
-        height: 500,
-        walls: [
-            { x1: 0, y1: 0, x2: 500, y2: 0 },       // Top border
-            { x1: 0, y1: 499, x2: 500, y2: 499 }, // Bottom border
-            { x1: 0, y1: 0, x2: 0, y2: 500 },       // Left border
-            { x1: 499, y1: 0, x2: 499, y2: 500 }, // Right border
-            { x1: 100, y1: 100, x2: 300, y2: 100 }, // Inner wall
-        ]
-    };
+    const modelPath = path.join(MODELS_DIR, filename);
 
-    try {
-        const analysisResults = analyzeCirculation({ wallData: dummyWallData });
+    fs.readFile(modelPath, 'utf8', (err, data) => {
+        if (err) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Model not found.' }));
+            return;
+        }
 
-        // The result can be large, so we simplify it for the client.
+        try {
+            const modelData = JSON.parse(data);
+            if (!modelData.wallData) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Wall data not found in model file.' }));
+                return;
+            }
+
+            const analysisResults = analyzeCirculation({ wallData: modelData.wallData });
+
+            // The result can be large, so we simplify it for the client.
         const simplifiedResults = {
             paths: analysisResults.paths.map(path => path.map(node => ({ x: node.x, y: node.y }))),
             keyNodes: analysisResults.keyNodes.map(node => ({ x: node.x, y: node.y })),
@@ -179,11 +189,7 @@ const server = http.createServer((req, res) => {
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(simplifiedResults));
-    } catch (analysisErr) {
-        console.error('Analysis failed:', analysisErr);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to analyze circulation paths.' }));
-    }
+    });
   } else if (req.url.startsWith('/audit-accessibility/') && req.method === 'GET') {
     const filename = req.url.split('/')[2];
     if (!filename) {
@@ -191,19 +197,31 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: 'Filename is required for audit.' }));
         return;
     }
+    const modelPath = path.join(MODELS_DIR, filename);
 
-    // In the future, we would load the model and pass it. For now, we use a dummy object.
-    const dummyModelData = {};
+    fs.readFile(modelPath, 'utf8', (err, data) => {
+        if (err) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Model not found.' }));
+            return;
+        }
 
-    try {
-        const auditReport = auditAccessibility(dummyModelData);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(auditReport));
-    } catch (auditErr) {
-        console.error('Audit failed:', auditErr);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to run accessibility audit.' }));
-    }
+        try {
+            const modelData = JSON.parse(data);
+            if (!modelData.wallData) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Wall data not found in model file.' }));
+                return;
+            }
+            const auditReport = auditAccessibility(modelData.wallData);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(auditReport));
+        } catch (auditErr) {
+            console.error('Audit failed:', auditErr);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to run accessibility audit.' }));
+        }
+    });
   } else if (req.url === '/find-path' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => {
@@ -234,20 +252,37 @@ const server = http.createServer((req, res) => {
             res.end(JSON.stringify({ error: 'Failed to find path.' }));
         }
     });
-  } else if (req.url === '/analyze-design-philosophy' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => {
-        body += chunk.toString();
-    });
-    req.on('end', () => {
+  } else if (req.url.startsWith('/analyze-design-philosophy/') && req.method === 'GET') {
+    const filename = req.url.split('/')[2];
+    if (!filename) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Filename is required for analysis.' }));
+        return;
+    }
+    const modelPath = path.join(MODELS_DIR, filename);
+
+    fs.readFile(modelPath, 'utf8', (err, data) => {
+        if (err) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Model not found.' }));
+            return;
+        }
+
         try {
-            const layoutData = JSON.parse(body);
-            if (!layoutData || !layoutData.philosophy || !layoutData.rooms) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Philosophy and rooms data are required.' }));
+            const modelData = JSON.parse(data);
+            if (!modelData.wallData) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Wall data not found in model file.' }));
                 return;
             }
-            const report = analyzeDesignPhilosophy(layoutData);
+
+            // The client will handle the North override; the server uses what's in the file.
+            const report = analyzeDesignPhilosophy({
+                philosophy: 'Vastu', // Hardcoded for now
+                rooms: modelData.wallData.rooms,
+                northAngle: modelData.wallData.detectedNorthVector ? 0 : 90 // Simplified logic
+            });
+
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(report));
         } catch (e) {
@@ -324,19 +359,30 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: analysisErr.message }));
       }
     });
-  } else if (req.url === '/analyze-biophilic-design' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => {
-        body += chunk.toString();
-    });
-    req.on('end', async () => {
+  } else if (req.url.startsWith('/analyze-biophilic-design/') && req.method === 'GET') {
+    const filename = req.url.split('/')[2];
+    if (!filename) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Filename is required for analysis.' }));
+        return;
+    }
+    const modelPath = path.join(MODELS_DIR, filename);
+
+    fs.readFile(modelPath, 'utf8', async (err, data) => {
+        if (err) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Model not found.' }));
+            return;
+        }
+
         try {
-            const modelData = JSON.parse(body);
-            if (!modelData) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Model data is required.' }));
+            const modelData = JSON.parse(data);
+            if (!modelData.wallData || !modelData.model) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Required data not found in model file.' }));
                 return;
             }
+
             const report = await analyzeBiophilicDesign(modelData);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(report));

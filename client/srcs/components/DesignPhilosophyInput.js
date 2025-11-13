@@ -1,23 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './DesignPhilosophyInput.css';
 
-export default function DesignPhilosophyInput({ onAnalyze }) {
+export default function DesignPhilosophyInput({ wallData, onAnalyze }) {
   const [philosophy, setPhilosophy] = useState('Vastu');
   const [northAngle, setNorthAngle] = useState(0);
+  const [isNorthDetected, setIsNorthDetected] = useState(false);
+
+  useEffect(() => {
+    if (wallData && wallData.detectedNorthVector) {
+      // A simple mapping from vector to angle for our UI
+      const { x, y } = wallData.detectedNorthVector;
+      const angle = Math.round((Math.atan2(y, x) * 180) / Math.PI) + 90;
+      setNorthAngle(angle);
+      setIsNorthDetected(true);
+    }
+  }, [wallData]);
 
   const handleAnalysis = () => {
-    // Placeholder for room data. In a real implementation, this would
-    // come from a UI where the user draws and labels rooms.
-    const dummyRooms = [
-      { label: 'Kitchen', center: { x: 400, y: 400 } },
-      { label: 'MasterBedroom', center: { x: 100, y: 100 } },
-      { label: 'LivingRoom', center: { x: 100, y: 400 } },
-    ];
-
+    if (!wallData || !wallData.rooms) {
+      alert("No room data available for analysis.");
+      return;
+    }
     onAnalyze({
       philosophy,
       northAngle,
-      rooms: dummyRooms,
+      rooms: wallData.rooms,
     });
   };
 
@@ -35,6 +42,7 @@ export default function DesignPhilosophyInput({ onAnalyze }) {
 
       <div className="setting">
         <label>Set North:</label>
+        {isNorthDetected && <p className="detected-message">We've automatically detected North. Adjust if needed.</p>}
         <div className="compass-container">
           <div
             className="compass-rose"
@@ -51,10 +59,6 @@ export default function DesignPhilosophyInput({ onAnalyze }) {
             className="angle-slider"
           />
         </div>
-      </div>
-
-      <div className="room-editor-placeholder">
-        <p>Room definition UI coming soon.</p>
       </div>
 
       <button className="analysis-button" onClick={handleAnalysis}>
