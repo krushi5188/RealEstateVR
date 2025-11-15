@@ -322,9 +322,9 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
         try {
             const layoutRequest = JSON.parse(body);
-            if (!layoutRequest || !layoutRequest.room || !layoutRequest.furniture) {
+            if (!layoutRequest || !layoutRequest.room || !layoutRequest.furniture || !layoutRequest.room.bounds) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Room and furniture data are required.' }));
+                res.end(JSON.stringify({ error: 'Valid room geometry and furniture data are required.' }));
                 return;
             }
             const layouts = generateLayouts(layoutRequest);
