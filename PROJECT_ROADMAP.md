@@ -69,22 +69,18 @@ To create the world's most powerful, insightful, and creatively empowering platf
 *   **Evidence:** The `biophilic-analyzer.js` module on the server now uses a ray-triangle intersection algorithm to calculate a "View Quality Score" by casting rays from the center of each room to the windows. It combines this with a simplified "Natural Light Score" to produce an overall Biophilic Score. The feature is functional end-to-end.
 
 #### **Phase 4E: Acoustic Separation Analysis**
-*   **Status:** 🟡 **Partially Implemented**
+*   **Status:** ✅ **Fully Functional**
 *   **Goal:** To analyze and mitigate noise pollution between rooms, ensuring a functional and peaceful living environment.
-*   **Evidence:** The backend `acoustic-separation-analyzer.js` module appears to contain real analysis logic. However, the client in `App.js` sends it **hardcoded dummy data**, making the feature non-functional from a user's perspective.
+*   **Evidence:** The `handleAcousticAnalysis` function in `client/src/App.js` has been updated to send the real `wallData` object to the server's `/analyze-acoustic-separation` endpoint. The feature is now fully functional end-to-end.
 
 ---
 
 ### **Part 4: The Creative Engine**
 
 #### **Phase 5A: Procedural Layout Suggestions**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Fully Functional**
 *   **Goal:** To inspire users and help them overcome "designer's block" by automatically generating optimized furniture layouts.
-*   **Features:**
-    *   **Automated Arrangement:**
-        *   **Concept:** The system will suggest multiple valid furniture arrangements based on user-selected items and established interior design principles.
-        *   **Technical Approach:** The user will select a room and a list of furniture items from a library (e.g., "1 sofa, 2 armchairs, 1 coffee table"). The server will then run a placement algorithm. This algorithm will be rule-based, considering factors like clearance zones (e.g., `3ft` of walking space), conversation areas (e.g., seating arranged in a `U-shape`), and focal points (e.g., aligning seating towards a fireplace or window). It will generate several valid layouts and send them to the client.
-        *   **UI/UX:** The user will be presented with 3-4 "layout cards" showing miniature 2D representations of the suggested arrangements. Clicking on a card will apply that layout to the main VR scene, which the user can then accept or customize further.
+*   **Evidence:** The `LayoutSuggester.js` component correctly calls the `/generate-layouts` endpoint on the server. The `layout-generator.js` module on the server contains a rule-based algorithm that generates multiple valid furniture layouts and returns them to the client. The feature is functional end-to-end.
 
 #### **Phase 5B: Color Palette Extraction**
 *   **Status:** ✅ **Fully Functional**

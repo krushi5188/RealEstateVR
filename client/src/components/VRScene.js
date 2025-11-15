@@ -4,6 +4,7 @@ import { OrbitControls, Grid } from '@react-three/drei';
 import { VRButton, XR, DefaultXRController } from '@react-three/xr';
 import * as THREE from 'three';
 import { CSG } from 'three-csg-ts';
+import Staircase from './Staircase';
 
 // --- Staircase Tool ---
 function StaircaseTool({ onAddStaircase }) {
@@ -104,16 +105,45 @@ function FurniturePlacer({ heldFurniture, onPlace, placedItems }) {
 
 
 // A custom component to render the 3D model from raw geometry data
-function Model({ modelData, material }) {
+function Model({ modelData, material, staircases }) {
     const geometry = useMemo(() => {
         if (!modelData || !modelData.vertices || !modelData.faces) return null;
 
-        const geom = new THREE.BufferGeometry();
-        geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(modelData.vertices), 3));
-        geom.setIndex(new THREE.BufferAttribute(new Uint32Array(modelData.faces), 1));
-        geom.computeVertexNormals();
-        return geom;
-    }, [modelData]);
+        let baseGeom = new THREE.BufferGeometry();
+        baseGeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(modelData.vertices), 3));
+        baseGeom.setIndex(new THREE.BufferAttribute(new Uint32Array(modelData.faces), 1));
+        baseGeom.computeVertexNormals();
+
+        if (staircases && staircases.length > 0) {
+            let modelMesh = new THREE.Mesh(baseGeom);
+            modelMesh.updateMatrix(); // Ensure the matrix is up to date
+
+            staircases.forEach(stair => {
+                const stairWidth = 4.0; // Must match Staircase.js
+                const stairLength = new THREE.Vector3(stair.end.x - stair.start.x, 0, stair.end.z - stair.start.z).length();
+
+                const holeGeom = new THREE.BoxGeometry(stairLength, 2, stairWidth); // Height of 2 should be enough to cut through a floor
+                const holeMesh = new THREE.Mesh(holeGeom);
+
+                // Position and rotate the hole to match the staircase
+                const midPoint = new THREE.Vector3().addVectors(stair.start, stair.end).multiplyScalar(0.5);
+                holeMesh.position.set(midPoint.x, stair.end.y, midPoint.z); // Position it at the upper floor level
+
+                const direction = new THREE.Vector3().subVectors(stair.end, stair.start);
+                const angle = Math.atan2(direction.z, direction.x);
+                holeMesh.rotation.y = -angle + Math.PI / 2;
+
+                holeMesh.updateMatrix();
+
+                // Perform CSG
+                modelMesh = CSG.subtract(modelMesh, holeMesh);
+            });
+
+            return modelMesh.geometry;
+        }
+
+        return baseGeom;
+    }, [modelData, staircases]);
 
     if (!geometry) return null;
 
@@ -164,34 +194,26 @@ function Sun({ isCycling }) {
     );
 }
 
-// --- Floor Teleporter UI ---
-function FloorTeleporter({ floorLabels, onTeleport }) {
-  if (!floorLabels || floorLabels.length <= 1) return null;
+function SceneContent({
+    modelData, material, sunCycle, heldFurniture, handlePlaceFurniture, allFurniture, children, onTeleportReady,
+    isStaircaseMode, staircasePoints, handleStaircasePointSelect, staircases
+}) {
+    const { camera, raycaster, scene } = useThree();
 
-  const buttonStyle = {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    color: 'white',
-    border: '1px solid white',
-    borderRadius: '5px',
-    padding: '10px',
-    cursor: 'pointer',
-    margin: '5px',
-  };
+    const handleSceneClick = (event) => {
+        if (!isStaircaseMode) return;
 
-  return (
-    <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
-      {floorLabels.map((label, index) => (
-        <button key={index} style={buttonStyle} onClick={() => onTeleport(index)}>
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-
-function SceneContent({ modelData, material, sunCycle, heldFurniture, handlePlaceFurniture, allFurniture, children, onTeleport }) {
-    const { camera } = useThree();
+        // The intersection needs to be calculated based on the event,
+        // which useThree doesn't directly provide in the click handler.
+        // We'll assume the raycaster is updated based on mouse position internally by fiber/drei.
+        const floor = scene.getObjectByName('floorPlane');
+        if (floor) {
+            const intersects = raycaster.intersectObject(floor);
+            if (intersects.length > 0) {
+                handleStaircasePointSelect(intersects[0].point);
+            }
+        }
+    };
 
     const handleTeleport = (floorIndex) => {
         const WALL_HEIGHT = 10; // Must match server
@@ -212,22 +234,40 @@ function SceneContent({ modelData, material, sunCycle, heldFurniture, handlePlac
         animate();
     };
 
-    // We lift the teleporter UI outside the canvas, but we need the teleport logic inside.
-    // A better approach would be to use a state management library, but for now, we pass the function down.
+    // Pass the teleport function up to the App component
     React.useEffect(() => {
-        onTeleport.current = handleTeleport;
-    }, [handleTeleport, onTeleport]);
+        if (onTeleportReady) {
+            onTeleportReady(handleTeleport);
+        }
+    }, [handleTeleport, onTeleportReady]);
 
     return (
         <>
             <ambientLight intensity={0.5} />
             <Sun isCycling={sunCycle} />
             <DefaultXRController />
-            <Model modelData={modelData} material={material} />
+            <Model modelData={modelData} material={material} staircases={staircases} />
             <PlacedFurniture items={allFurniture} />
             <FurniturePlacer heldFurniture={heldFurniture} onPlace={handlePlaceFurniture} placedItems={allFurniture} />
             {children}
-            <mesh name="floorPlane" rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} visible={false}>
+            {/* Render the staircases */}
+            {staircases.map((stair, index) => (
+                <Staircase key={index} start={stair.start} end={stair.end} />
+            ))}
+            {/* Visual feedback for staircase points */}
+            {staircasePoints.map((point, index) => (
+                <mesh key={index} position={point}>
+                    <sphereGeometry args={[0.2, 16, 16]} />
+                    <meshStandardMaterial color="red" />
+                </mesh>
+            ))}
+            <mesh
+                name="floorPlane"
+                rotation={[-Math.PI / 2, 0, 0]}
+                position={[0, 0, 0]}
+                onClick={handleSceneClick}
+                visible={false}
+            >
                 <planeGeometry args={[100, 100]} />
             </mesh>
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
@@ -242,15 +282,26 @@ function SceneContent({ modelData, material, sunCycle, heldFurniture, handlePlac
 
 
 // The main VR Scene component
-export default function VRScene({ modelData, material, sunCycle = false, heldFurniture, setHeldFurniture, placedFurniture = [], floorLabels = [], children }) {
+export default function VRScene({
+    modelData, material, sunCycle = false, heldFurniture, setHeldFurniture,
+    placedFurniture = [], floorLabels = [], onTeleportReady, children,
+    isStaircaseMode
+}) {
     const [internalPlacedFurniture, setInternalPlacedFurniture] = useState([]);
     const [staircases, setStaircases] = useState([]);
-    const teleportRef = useRef(null);
+    const [staircasePoints, setStaircasePoints] = useState([]);
 
-    const handleAddStaircase = (start, end) => {
-        // For now, we'll just store the points.
-        // The actual geometry generation will happen in a separate component.
-        setStaircases([...staircases, { start, end }]);
+    const handleStaircasePointSelect = (point) => {
+        const newPoints = [...staircasePoints, point];
+        if (newPoints.length === 2) {
+            // We have two points, let's create a staircase
+            setStaircases([...staircases, { start: newPoints[0], end: newPoints[1] }]);
+            // Reset for the next one
+            setStaircasePoints([]);
+            // Potentially turn off staircase mode here as well
+        } else {
+            setStaircasePoints(newPoints);
+        }
     };
 
     const handlePlaceFurniture = (position) => {
@@ -265,8 +316,7 @@ export default function VRScene({ modelData, material, sunCycle = false, heldFur
     return (
         <div style={{ position: 'relative', width: '100%', height: '500px', borderRadius: '8px', overflow: 'hidden' }}>
             <VRButton />
-            <FloorTeleporter floorLabels={floorLabels} onTeleport={(index) => teleportRef.current(index)} />
-            <StaircaseTool onAddStaircase={handleAddStaircase} />
+            {/* The 2D UI for the tool is now in App.js, this placeholder is removed */}
             <Canvas shadows camera={{ position: [0, 5, 15] }}>
                 <XR>
                     <SceneContent
@@ -276,7 +326,11 @@ export default function VRScene({ modelData, material, sunCycle = false, heldFur
                         heldFurniture={heldFurniture}
                         handlePlaceFurniture={handlePlaceFurniture}
                         allFurniture={allFurniture}
-                        onTeleport={teleportRef}
+                        onTeleportReady={onTeleportReady}
+                        isStaircaseMode={isStaircaseMode}
+                        staircasePoints={staircasePoints}
+                        handleStaircasePointSelect={handleStaircasePointSelect}
+                        staircases={staircases}
                     >
                         {children}
                     </SceneContent>
