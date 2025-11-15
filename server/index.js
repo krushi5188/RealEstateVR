@@ -291,21 +291,30 @@ const server = http.createServer((req, res) => {
             res.end(JSON.stringify({ error: 'Failed to run design philosophy analysis.' }));
         }
     });
-  } else if (req.url === '/analyze-acoustic-separation' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => {
-        body += chunk.toString();
-    });
-    req.on('end', () => {
+  } else if (req.url.startsWith('/analyze-acoustic-separation/') && req.method === 'GET') {
+    const filename = req.url.split('/')[2];
+    if (!filename) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Filename is required for analysis.' }));
+        return;
+    }
+    const modelPath = path.join(MODELS_DIR, filename);
+
+    fs.readFile(modelPath, 'utf8', (err, data) => {
+        if (err) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Model not found.' }));
+            return;
+        }
+
         try {
-            const layoutData = JSON.parse(body);
-            // A more robust implementation would fetch this from the saved model data
-            if (!layoutData || !layoutData.rooms || !layoutData.adjacencies) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Room and adjacency data are required.' }));
+            const modelData = JSON.parse(data);
+            if (!modelData.wallData) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Wall data not found in model file.' }));
                 return;
             }
-            const report = analyzeAcousticSeparation(layoutData);
+            const report = analyzeAcousticSeparation(modelData.wallData);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(report));
         } catch (e) {
