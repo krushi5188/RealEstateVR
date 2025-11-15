@@ -341,22 +341,12 @@ function App() {
   };
 
   const handleAcousticAnalysis = async () => {
-    // Placeholder for the data that would be derived from the model
-    const dummyLayoutData = {
-      rooms: [
-        { id: 1, label: 'LivingRoom' },
-        { id: 2, label: 'Bedroom' },
-      ],
-      adjacencies: [
-        { roomA: 1, roomB: 2, wallMaterial: { acoustic_dampening: 0.4 } }
-      ]
-    };
+    if (!modelFilename) {
+      setMessage({ type: 'error', text: 'No model is loaded for analysis.' });
+      return;
+    }
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/analyze-acoustic-separation`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dummyLayoutData),
-      });
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/analyze-acoustic-separation/${modelFilename}`);
       if (!response.ok) {
         throw new Error('Acoustic analysis failed.');
       }
