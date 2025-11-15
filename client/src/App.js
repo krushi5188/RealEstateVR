@@ -18,6 +18,129 @@ import AcousticAnalysisReport from './components/AcousticAnalysisReport';
 import LayoutSuggester from './components/LayoutSuggester';
 import MoodBoardUploader from './components/MoodBoardUploader';
 
+// --- Floor Teleporter UI ---
+function FloorTeleporter({ floorLabels, onTeleport }) {
+  if (!floorLabels || floorLabels.length <= 1) return null;
+
+  const buttonStyle = {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: 'white',
+    border: '1px solid white',
+    borderRadius: '5px',
+    padding: '10px',
+    cursor: 'pointer',
+    margin: '5px',
+  };
+
+  return (
+    <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
+      {floorLabels.map((label, index) => (
+        <button key={index} style={buttonStyle} onClick={() => onTeleport(index)}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+
+function VRView({
+  modelData,
+  selectedMaterial,
+  setSelectedMaterial,
+  isSunCycling,
+  heldFurniture,
+  setHeldFurniture,
+  placedFurniture,
+  setPlacedFurniture,
+  floorFiles,
+  agentPath,
+  circulationData,
+  lightAnalysisResult,
+  handleNaturalLightAnalysis,
+  accessibilityReport,
+  handleAccessibilityAudit,
+  designPhilosophyReport,
+  biophilicReport,
+  handleBiophilicAnalysis,
+  acousticReport,
+  handleAcousticAnalysis,
+  wallData,
+  furnitureLibrary,
+  handleRunSimulation,
+  handleDesignPhilosophyAnalysis,
+  moodBoardPalette,
+  handlePaletteExtracted,
+  handleAnalyzeCirculation,
+  resetToDashboard
+}) {
+  const teleportRef = useRef(null);
+  return (
+    <div className="upload-card">
+       <h1>Your VR Experience is Ready</h1>
+       <p>Select a material, run an analysis, or simulate a day in the life.</p>
+       <div className="vr-scene-container">
+         <VRScene
+            modelData={modelData}
+            material={selectedMaterial}
+            sunCycle={isSunCycling}
+            heldFurniture={heldFurniture}
+            setHeldFurniture={setHeldFurniture}
+            placedFurniture={placedFurniture}
+            floorLabels={floorFiles.map(f => f.label)}
+            onTeleportReady={(teleportFn) => { teleportRef.current = teleportFn; }}
+         >
+           <VirtualAgent path={agentPath} />
+         </VRScene>
+         <FloorTeleporter floorLabels={floorFiles.map(f => f.label)} onTeleport={(index) => teleportRef.current && teleportRef.current(index)} />
+         <CirculationAnalysis analysisData={circulationData} width={500} height={500} />
+       <NaturalLightAnalysis analysisResult={lightAnalysisResult} onStartAnalysis={handleNaturalLightAnalysis} />
+       <AccessibilityReport report={accessibilityReport} onRunAudit={handleAccessibilityAudit} />
+       <DesignPhilosophyReport report={designPhilosophyReport} />
+       <BiophilicDesignReport report={biophilicReport} onRunAnalysis={handleBiophilicAnalysis} />
+       <AcousticAnalysisReport report={acousticReport} onRunAnalysis={handleAcousticAnalysis} />
+     </div>
+     <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
+     <FurnitureLibrary onFurnitureSelect={setHeldFurniture} />
+     <LayoutSuggester wallData={wallData} furnitureLibrary={furnitureLibrary} onLayoutSelect={setPlacedFurniture} />
+     <AgentScheduler onScheduleRun={handleRunSimulation} />
+     <DesignPhilosophyInput wallData={wallData} onAnalyze={handleDesignPhilosophyAnalysis} />
+     <MoodBoardUploader onPaletteExtracted={handlePaletteExtracted} />
+     {moodBoardPalette && (
+       <div className="palette-display">
+         <h4>Extracted Palette:</h4>
+         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+           {moodBoardPalette.map((color, index) => (
+             <div
+               key={index}
+               style={{
+                 backgroundColor: color,
+                 width: '40px',
+                 height: '40px',
+                 borderRadius: '50%',
+                 border: '2px solid white'
+               }}
+               title={color}
+             />
+           ))}
+         </div>
+       </div>
+     )}
+     <div className="button-container">
+       <button className="analysis-button" onClick={handleAnalyzeCirculation}>
+         Analyze Circulation
+       </button>
+       <button className="analysis-button" onClick={handleAccessibilityAudit} style={{backgroundColor: '#6c757d'}}>
+         Run Accessibility Audit
+       </button>
+       <button className="upload-button" onClick={resetToDashboard} style={{marginTop: '1.5rem'}}>
+         Back to Dashboard
+       </button>
+     </div>
+  </div>
+  );
+}
+
 function App() {
   const [view, setView] = useState('dashboard'); // 'dashboard', 'uploader', 'or 'vr'
   const [floorFiles, setFloorFiles] = useState([]); // { file: File, label: string }
@@ -89,6 +212,10 @@ function App() {
       updatedFiles[index].label = newLabel;
       return updatedFiles;
     });
+  };
+
+  const handleRemoveFile = (index) => {
+    setFloorFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
   };
 
   const handleGenerate = () => {
@@ -183,6 +310,7 @@ function App() {
         />
       </div>
       <div className="file-list">
+        <h4>Selected Floors:</h4>
         {floorFiles.map((floor, index) => (
           <div key={index} className="file-item">
             <span>{floor.file.name}</span>
@@ -192,6 +320,7 @@ function App() {
               onChange={(e) => handleLabelChange(index, e.target.value)}
               className="floor-label-input"
             />
+            <button onClick={() => handleRemoveFile(index)} className="remove-file-btn">×</button>
           </div>
         ))}
       </div>
@@ -367,69 +496,6 @@ function App() {
     }
   };
 
-  const renderVRScene = () => (
-    <div className="upload-card">
-       <h1>Your VR Experience is Ready</h1>
-       <p>Select a material, run an analysis, or simulate a day in the life.</p>
-       <div className="vr-scene-container">
-         <VRScene
-            modelData={modelData}
-            material={selectedMaterial}
-            sunCycle={isSunCycling}
-            heldFurniture={heldFurniture}
-            setHeldFurniture={setHeldFurniture}
-            placedFurniture={placedFurniture}
-            floorLabels={floorFiles.map(f => f.label)}
-         >
-           <VirtualAgent path={agentPath} />
-         </VRScene>
-         <CirculationAnalysis analysisData={circulationData} width={500} height={500} />
-         <NaturalLightAnalysis analysisResult={lightAnalysisResult} onStartAnalysis={handleNaturalLightAnalysis} />
-         <AccessibilityReport report={accessibilityReport} onRunAudit={handleAccessibilityAudit} />
-         <DesignPhilosophyReport report={designPhilosophyReport} />
-         <BiophilicDesignReport report={biophilicReport} onRunAnalysis={handleBiophilicAnalysis} />
-         <AcousticAnalysisReport report={acousticReport} onRunAnalysis={handleAcousticAnalysis} />
-       </div>
-       <MaterialLibrary onMaterialSelect={setSelectedMaterial} />
-       <FurnitureLibrary onFurnitureSelect={setHeldFurniture} />
-       <LayoutSuggester wallData={wallData} furnitureLibrary={furnitureLibrary} onLayoutSelect={setPlacedFurniture} />
-       <AgentScheduler onScheduleRun={handleRunSimulation} />
-       <DesignPhilosophyInput wallData={wallData} onAnalyze={handleDesignPhilosophyAnalysis} />
-       <MoodBoardUploader onPaletteExtracted={handlePaletteExtracted} />
-       {moodBoardPalette && (
-         <div className="palette-display">
-           <h4>Extracted Palette:</h4>
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-             {moodBoardPalette.map((color, index) => (
-               <div
-                 key={index}
-                 style={{
-                   backgroundColor: color,
-                   width: '40px',
-                   height: '40px',
-                   borderRadius: '50%',
-                   border: '2px solid white'
-                 }}
-                 title={color}
-               />
-             ))}
-           </div>
-         </div>
-       )}
-       <div className="button-container">
-         <button className="analysis-button" onClick={handleAnalyzeCirculation}>
-           Analyze Circulation
-         </button>
-         <button className="analysis-button" onClick={handleAccessibilityAudit} style={{backgroundColor: '#6c757d'}}>
-           Run Accessibility Audit
-         </button>
-         <button className="upload-button" onClick={resetToDashboard} style={{marginTop: '1.5rem'}}>
-           Back to Dashboard
-         </button>
-       </div>
-    </div>
-  );
-
   const handleViewModel = (data) => {
     if (!data.model || !data.wallData) {
       setMessage({ type: 'error', text: 'Loaded model file is missing required data.' });
@@ -453,7 +519,36 @@ function App() {
       case 'uploader':
         return renderUploader();
       case 'vr':
-        return renderVRScene();
+        return <VRView
+          modelData={modelData}
+          selectedMaterial={selectedMaterial}
+          setSelectedMaterial={setSelectedMaterial}
+          isSunCycling={isSunCycling}
+          heldFurniture={heldFurniture}
+          setHeldFurniture={setHeldFurniture}
+          placedFurniture={placedFurniture}
+          setPlacedFurniture={setPlacedFurniture}
+          floorFiles={floorFiles}
+          agentPath={agentPath}
+          circulationData={circulationData}
+          lightAnalysisResult={lightAnalysisResult}
+          handleNaturalLightAnalysis={handleNaturalLightAnalysis}
+          accessibilityReport={accessibilityReport}
+          handleAccessibilityAudit={handleAccessibilityAudit}
+          designPhilosophyReport={designPhilosophyReport}
+          biophilicReport={biophilicReport}
+          handleBiophilicAnalysis={handleBiophilicAnalysis}
+          acousticReport={acousticReport}
+          handleAcousticAnalysis={handleAcousticAnalysis}
+          wallData={wallData}
+          furnitureLibrary={furnitureLibrary}
+          handleRunSimulation={handleRunSimulation}
+          handleDesignPhilosophyAnalysis={handleDesignPhilosophyAnalysis}
+          moodBoardPalette={moodBoardPalette}
+          handlePaletteExtracted={handlePaletteExtracted}
+          handleAnalyzeCirculation={handleAnalyzeCirculation}
+          resetToDashboard={resetToDashboard}
+        />;
       case 'dashboard':
       default:
         return <Dashboard onViewChange={setView} onViewModel={handleViewModel} />;

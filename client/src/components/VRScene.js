@@ -164,33 +164,7 @@ function Sun({ isCycling }) {
     );
 }
 
-// --- Floor Teleporter UI ---
-function FloorTeleporter({ floorLabels, onTeleport }) {
-  if (!floorLabels || floorLabels.length <= 1) return null;
-
-  const buttonStyle = {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    color: 'white',
-    border: '1px solid white',
-    borderRadius: '5px',
-    padding: '10px',
-    cursor: 'pointer',
-    margin: '5px',
-  };
-
-  return (
-    <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
-      {floorLabels.map((label, index) => (
-        <button key={index} style={buttonStyle} onClick={() => onTeleport(index)}>
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-
-function SceneContent({ modelData, material, sunCycle, heldFurniture, handlePlaceFurniture, allFurniture, children, onTeleport }) {
+function SceneContent({ modelData, material, sunCycle, heldFurniture, handlePlaceFurniture, allFurniture, children, onTeleportReady }) {
     const { camera } = useThree();
 
     const handleTeleport = (floorIndex) => {
@@ -212,11 +186,12 @@ function SceneContent({ modelData, material, sunCycle, heldFurniture, handlePlac
         animate();
     };
 
-    // We lift the teleporter UI outside the canvas, but we need the teleport logic inside.
-    // A better approach would be to use a state management library, but for now, we pass the function down.
+    // Pass the teleport function up to the App component
     React.useEffect(() => {
-        onTeleport.current = handleTeleport;
-    }, [handleTeleport, onTeleport]);
+        if (onTeleportReady) {
+            onTeleportReady(handleTeleport);
+        }
+    }, [handleTeleport, onTeleportReady]);
 
     return (
         <>
@@ -242,10 +217,9 @@ function SceneContent({ modelData, material, sunCycle, heldFurniture, handlePlac
 
 
 // The main VR Scene component
-export default function VRScene({ modelData, material, sunCycle = false, heldFurniture, setHeldFurniture, placedFurniture = [], floorLabels = [], children }) {
+export default function VRScene({ modelData, material, sunCycle = false, heldFurniture, setHeldFurniture, placedFurniture = [], floorLabels = [], onTeleportReady, children }) {
     const [internalPlacedFurniture, setInternalPlacedFurniture] = useState([]);
     const [staircases, setStaircases] = useState([]);
-    const teleportRef = useRef(null);
 
     const handleAddStaircase = (start, end) => {
         // For now, we'll just store the points.
@@ -265,7 +239,6 @@ export default function VRScene({ modelData, material, sunCycle = false, heldFur
     return (
         <div style={{ position: 'relative', width: '100%', height: '500px', borderRadius: '8px', overflow: 'hidden' }}>
             <VRButton />
-            <FloorTeleporter floorLabels={floorLabels} onTeleport={(index) => teleportRef.current(index)} />
             <StaircaseTool onAddStaircase={handleAddStaircase} />
             <Canvas shadows camera={{ position: [0, 5, 15] }}>
                 <XR>
@@ -276,7 +249,7 @@ export default function VRScene({ modelData, material, sunCycle = false, heldFur
                         heldFurniture={heldFurniture}
                         handlePlaceFurniture={handlePlaceFurniture}
                         allFurniture={allFurniture}
-                        onTeleport={teleportRef}
+                        onTeleportReady={onTeleportReady}
                     >
                         {children}
                     </SceneContent>

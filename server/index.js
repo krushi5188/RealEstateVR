@@ -45,15 +45,12 @@ const server = http.createServer((req, res) => {
 
       try {
         const floorData = [];
-        let firstFloorWallData;
         for (let i = 0; i < floorFiles.length; i++) {
             const file = floorFiles[i];
             const filePath = await saveFile(file);
             const wallData = await extractWallData(filePath);
+            wallData.label = floorLabels[i] || `Floor ${i + 1}`;
             floorData.push(wallData);
-            if (i === 0) {
-                firstFloorWallData = wallData;
-            }
         }
 
         // The model generator will now take an array of wall data objects
@@ -65,7 +62,7 @@ const server = http.createServer((req, res) => {
             vertices: Array.from(model.vertices),
             faces: Array.from(model.faces),
           },
-          wallData: firstFloorWallData // Save the 2D data for analysis
+          wallData: floorData // Save all floors' 2D data
         };
 
         const modelFilename = `${path.basename(floorFiles[0].path, path.extname(floorFiles[0].path))}.json`;
@@ -189,6 +186,11 @@ const server = http.createServer((req, res) => {
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(simplifiedResults));
+        } catch (parseErr) {
+            console.error('Failed to parse model data for circulation analysis:', parseErr);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to parse model data.' }));
+        }
     });
   } else if (req.url.startsWith('/audit-accessibility/') && req.method === 'GET') {
     const filename = req.url.split('/')[2];
