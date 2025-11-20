@@ -8,6 +8,8 @@ import Staircase from './Staircase';
 import Elevator from './Elevator';
 import Roof from './Roof';
 import EnvironmentController from './EnvironmentController';
+import Window from './Window';
+import Door from './Door';
 
 // --- Staircase Tool ---
 function StaircaseTool({ onAddStaircase }) {
@@ -287,6 +289,14 @@ function SceneContent({
             {elevators.map((elevator, index) => (
                 <Elevator key={index} position={elevator.position} />
             ))}
+            {/* Render Windows */}
+            {windows.map((win, index) => (
+                <Window key={`win-${index}`} {...win} />
+            ))}
+            {/* Render Doors */}
+            {doors.map((door, index) => (
+                <Door key={`door-${index}`} {...door} />
+            ))}
             {/* Visual feedback for staircase points */}
             {staircasePoints.map((point, index) => (
                 <mesh key={index} position={point}>
@@ -324,6 +334,8 @@ export default function VRScene({
     const [internalPlacedFurniture, setInternalPlacedFurniture] = useState([]);
     const [staircases, setStaircases] = useState([]);
     const [elevators, setElevators] = useState([]);
+    const [windows, setWindows] = useState([]);
+    const [doors, setDoors] = useState([]);
     const [staircasePoints, setStaircasePoints] = useState([]);
 
     // --- Automatic Detection Logic ---
@@ -331,6 +343,8 @@ export default function VRScene({
         if (wallData) {
             const detectedStaircases = [];
             const detectedElevators = [];
+            const detectedWindows = [];
+            const detectedDoors = [];
             const WALL_HEIGHT = 10; // Must match server
             const floors = Array.isArray(wallData) ? wallData : [wallData];
 
@@ -343,7 +357,6 @@ export default function VRScene({
                         const z = room.center.y * 0.1;
 
                         if (room.type === 'staircase') {
-                             // Heuristic: Calculate a start and end point based on room center
                              const start = new THREE.Vector3(x - 2, yOffset, z);
                              const end = new THREE.Vector3(x + 2, yOffset + WALL_HEIGHT, z);
                              detectedStaircases.push({ start, end });
@@ -352,10 +365,36 @@ export default function VRScene({
                         }
                     });
                 }
+
+                // Process Windows
+                if (floor.windows) {
+                    floor.windows.forEach(win => {
+                        const width = Math.abs(win.x2 - win.x1) * 0.1;
+                        const depth = Math.abs(win.y2 - win.y1) * 0.1;
+                        const x = (win.x1 + win.x2) / 2 * 0.1;
+                        const z = (win.y1 + win.y2) / 2 * 0.1;
+                        const rotation = win.type === 'vertical' ? [0, Math.PI / 2, 0] : [0, 0, 0];
+                        detectedWindows.push({ width: Math.max(width, depth), height: 5, position: [x, yOffset + 5, z], rotation });
+                    });
+                }
+
+                // Process Doors
+                if (floor.doors) {
+                    floor.doors.forEach(door => {
+                        const width = Math.abs(door.x2 - door.x1) * 0.1;
+                        const depth = Math.abs(door.y2 - door.y1) * 0.1;
+                        const x = (door.x1 + door.x2) / 2 * 0.1;
+                        const z = (door.y1 + door.y2) / 2 * 0.1;
+                        const rotation = door.type === 'vertical' ? [0, Math.PI / 2, 0] : [0, 0, 0];
+                        detectedDoors.push({ width: Math.max(width, depth), height: 8, position: [x, yOffset, z], rotation });
+                    });
+                }
             });
 
             setStaircases(detectedStaircases);
             setElevators(detectedElevators);
+            setWindows(detectedWindows);
+            setDoors(detectedDoors);
         }
     }, [wallData]);
 

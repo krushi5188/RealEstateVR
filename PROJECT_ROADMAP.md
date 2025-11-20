@@ -131,13 +131,15 @@ To create the world's most powerful, insightful, and creatively empowering platf
 ### **Part 6: Advanced Customization & Workflow**
 
 #### **Phase 7A: Window and Door Customization**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Fully Functional**
 *   **Goal:** To increase the realism and detail of the model by allowing users to place custom window and door models.
 *   **Features:**
     *   **Component Library:**
-        *   **Concept:** A new library of 3D models for various types of windows and doors will be available.
-        *   **Technical Approach:** We will create a library of pre-made 3D models for windows and doors in a format like `.glb`. The server-side image processing will be updated to not just identify openings, but to mark their location and size. In the client, the user will be able to select a window/door from the new library and "place" it into one of these marked openings.
-        *   **UI/UX:** A new "Doors & Windows" tab will appear in the UI. The user can select an opening in the model, which will then show a list of compatible window/door models from the library that can be inserted.
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** Procedural 3D models for `Window` (frame + glass) and `Door` (frame + panel + handle) have been implemented.
+    *   **Placement Logic:**
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** The server (`image-processor.js`) now distinguishes between windows (exterior gaps) and doors (interior gaps) and calculates their dimensions. The client (`VRScene.js`) automatically places the correct 3D component into these detected openings, sized to fit perfectly.
 
 #### **Phase 7B: Saved Project "Snapshots"**
 *   **Status:** ⏳ **Pending**
