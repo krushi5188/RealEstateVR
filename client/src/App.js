@@ -18,6 +18,7 @@ import AcousticAnalysisReport from './components/AcousticAnalysisReport';
 import LayoutSuggester from './components/LayoutSuggester';
 import MoodBoardUploader from './components/MoodBoardUploader';
 import StaircaseTool from './components/StaircaseTool';
+import RoofTool from './components/RoofTool';
 
 // --- Floor Teleporter UI ---
 function FloorTeleporter({ floorLabels, onTeleport }) {
@@ -75,7 +76,9 @@ function VRView({
   handleAnalyzeCirculation,
   resetToDashboard,
   handleActivateStaircaseMode,
-  isStaircaseMode
+  isStaircaseMode,
+  roofType,
+  handleSetRoofType
 }) {
   const teleportRef = useRef(null);
   return (
@@ -94,6 +97,7 @@ function VRView({
             isStaircaseMode={isStaircaseMode}
             onTeleportReady={(teleportFn) => { teleportRef.current = teleportFn; }}
             wallData={wallData}
+            roofType={roofType}
          >
            <VirtualAgent path={agentPath} />
          </VRScene>
@@ -111,6 +115,7 @@ function VRView({
      <AgentScheduler onScheduleRun={handleRunSimulation} />
      <DesignPhilosophyInput wallData={wallData} onAnalyze={handleDesignPhilosophyAnalysis} />
      <StaircaseTool onActivate={handleActivateStaircaseMode} />
+     <RoofTool currentType={roofType} onSetType={handleSetRoofType} />
      <MoodBoardUploader onPaletteExtracted={handlePaletteExtracted} />
      {moodBoardPalette && (
        <div className="palette-display">
@@ -170,6 +175,7 @@ function App() {
   const [placedFurniture, setPlacedFurniture] = useState([]); // New state for placed items
   const [moodBoardPalette, setMoodBoardPalette] = useState(null);
   const [isStaircaseMode, setIsStaircaseMode] = useState(false);
+  const [roofType, setRoofType] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleActivateStaircaseMode = () => {
@@ -557,6 +563,8 @@ function App() {
           resetToDashboard={resetToDashboard}
           handleActivateStaircaseMode={handleActivateStaircaseMode}
           isStaircaseMode={isStaircaseMode}
+          roofType={roofType}
+          handleSetRoofType={setRoofType}
         />;
       case 'dashboard':
       default:

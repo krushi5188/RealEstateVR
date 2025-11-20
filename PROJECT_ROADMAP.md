@@ -111,13 +111,12 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **Evidence:** A new `Elevator.js` component renders a 3D representation of the elevator shaft and cabin. `VRScene.js` automatically instantiates these models based on the server's detection data.
 
 #### **Phase 6C: Automatic Roof Generator**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Fully Functional**
 *   **Goal:** To allow users to easily add a roof to their building, completing the exterior structure.
 *   **Features:**
     *   **Roof Generation Tool:**
-        *   **Concept:** A simple tool to automatically generate a roof that fits the top floor of the building.
-        *   **Technical Approach:** The server will analyze the perimeter of the top-most floor plan. The user will select a roof type (e.g., "Flat," "Pitched"). The server will then generate the corresponding 3D geometry for the roof, sized and positioned to fit the building perfectly.
-        *   **UI/UX:** A simple "Add Roof" button will appear after a multi-story project is created. The user can select a style, and the roof will be added to the model.
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** A `RoofTool` component has been added to the UI, allowing users to toggle between "Flat" and "Pitched" roof styles. The `Roof` component in `VRScene.js` dynamically calculates the roof's dimensions and position based on the top-most floor of the loaded model, ensuring a perfect fit.
 
 #### **Phase 6D: Simple Exterior Environment**
 *   **Status:** ⏳ **Pending**

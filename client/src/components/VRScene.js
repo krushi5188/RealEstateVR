@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { CSG } from 'three-csg-ts';
 import Staircase from './Staircase';
 import Elevator from './Elevator';
+import Roof from './Roof';
 
 // --- Staircase Tool ---
 function StaircaseTool({ onAddStaircase }) {
@@ -220,7 +221,7 @@ function Sun({ isCycling }) {
 
 function SceneContent({
     modelData, material, sunCycle, heldFurniture, handlePlaceFurniture, allFurniture, children, onTeleportReady,
-    isStaircaseMode, staircasePoints, handleStaircasePointSelect, staircases, elevators
+    isStaircaseMode, staircasePoints, handleStaircasePointSelect, staircases, elevators, roofProps
 }) {
     const { camera, raycaster, scene } = useThree();
 
@@ -302,6 +303,7 @@ function SceneContent({
                 <planeGeometry args={[100, 100]} />
                 <shadowMaterial opacity={0.3} />
             </mesh>
+            {roofProps && <Roof {...roofProps} />}
             <OrbitControls />
             <Grid infiniteGrid cellSize={1} cellThickness={1} />
         </>
@@ -313,7 +315,7 @@ function SceneContent({
 export default function VRScene({
     modelData, material, sunCycle = false, heldFurniture, setHeldFurniture,
     placedFurniture = [], floorLabels = [], onTeleportReady, children,
-    isStaircaseMode, wallData
+    isStaircaseMode, wallData, roofType
 }) {
     const [internalPlacedFurniture, setInternalPlacedFurniture] = useState([]);
     const [staircases, setStaircases] = useState([]);
@@ -322,35 +324,51 @@ export default function VRScene({
 
     // --- Automatic Detection Logic ---
     React.useEffect(() => {
-        if (wallData && wallData.rooms) {
+        if (wallData) {
             const detectedStaircases = [];
             const detectedElevators = [];
             const WALL_HEIGHT = 10; // Must match server
+            const floors = Array.isArray(wallData) ? wallData : [wallData];
 
-            wallData.rooms.forEach(room => {
-                const x = room.center.x * 0.1;
-                const z = room.center.y * 0.1;
+            floors.forEach((floor, floorIndex) => {
+                const yOffset = floorIndex * (WALL_HEIGHT + 0.1); // +0.1 gap
 
-                if (room.type === 'staircase') {
-                     // Heuristic: Calculate a start and end point based on room center
-                     // This is a simplification. Ideally, we'd use the room's orientation.
-                     // For now, assume staircase goes UP from this room
-                     const start = new THREE.Vector3(x - 2, 0, z);
-                     const end = new THREE.Vector3(x + 2, WALL_HEIGHT, z);
-                     detectedStaircases.push({ start, end });
-                } else if (room.type === 'elevator') {
-                    detectedElevators.push({ position: new THREE.Vector3(x, 0, z) });
+                if (floor.rooms) {
+                    floor.rooms.forEach(room => {
+                        const x = room.center.x * 0.1;
+                        const z = room.center.y * 0.1;
+
+                        if (room.type === 'staircase') {
+                             // Heuristic: Calculate a start and end point based on room center
+                             const start = new THREE.Vector3(x - 2, yOffset, z);
+                             const end = new THREE.Vector3(x + 2, yOffset + WALL_HEIGHT, z);
+                             detectedStaircases.push({ start, end });
+                        } else if (room.type === 'elevator') {
+                            detectedElevators.push({ position: new THREE.Vector3(x, yOffset, z) });
+                        }
+                    });
                 }
             });
 
-            if (detectedStaircases.length > 0) {
-                setStaircases(detectedStaircases);
-            }
-            if (detectedElevators.length > 0) {
-                setElevators(detectedElevators);
-            }
+            setStaircases(detectedStaircases);
+            setElevators(detectedElevators);
         }
     }, [wallData]);
+
+    // --- Roof Logic ---
+    const roofProps = useMemo(() => {
+        if (!roofType || !wallData) return null;
+        // Find the top-most floor
+        const floors = Array.isArray(wallData) ? wallData : [wallData];
+        const topFloor = floors[floors.length - 1];
+        const height = floors.length * (10 + 0.1); // WALL_HEIGHT = 10
+        return {
+            width: topFloor.width,
+            depth: topFloor.height,
+            height: height,
+            type: roofType
+        };
+    }, [roofType, wallData]);
 
     const handleStaircasePointSelect = (point) => {
         const newPoints = [...staircasePoints, point];
@@ -393,6 +411,7 @@ export default function VRScene({
                         handleStaircasePointSelect={handleStaircasePointSelect}
                         staircases={staircases}
                         elevators={elevators}
+                        roofProps={roofProps}
                     >
                         {children}
                     </SceneContent>
