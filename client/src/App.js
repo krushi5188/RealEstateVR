@@ -93,6 +93,7 @@ function VRView({
             floorLabels={floorFiles.map(f => f.label)}
             isStaircaseMode={isStaircaseMode}
             onTeleportReady={(teleportFn) => { teleportRef.current = teleportFn; }}
+            wallData={wallData}
          >
            <VirtualAgent path={agentPath} />
          </VRScene>

@@ -5,6 +5,7 @@ import { VRButton, XR, DefaultXRController } from '@react-three/xr';
 import * as THREE from 'three';
 import { CSG } from 'three-csg-ts';
 import Staircase from './Staircase';
+import Elevator from './Elevator';
 
 // --- Staircase Tool ---
 function StaircaseTool({ onAddStaircase }) {
@@ -105,7 +106,7 @@ function FurniturePlacer({ heldFurniture, onPlace, placedItems }) {
 
 
 // A custom component to render the 3D model from raw geometry data
-function Model({ modelData, material, staircases }) {
+function Model({ modelData, material, staircases, elevators }) {
     const geometry = useMemo(() => {
         if (!modelData || !modelData.vertices || !modelData.faces) return null;
 
@@ -114,36 +115,59 @@ function Model({ modelData, material, staircases }) {
         baseGeom.setIndex(new THREE.BufferAttribute(new Uint32Array(modelData.faces), 1));
         baseGeom.computeVertexNormals();
 
-        if (staircases && staircases.length > 0) {
+        if ((staircases && staircases.length > 0) || (elevators && elevators.length > 0)) {
             let modelMesh = new THREE.Mesh(baseGeom);
             modelMesh.updateMatrix(); // Ensure the matrix is up to date
 
-            staircases.forEach(stair => {
-                const stairWidth = 4.0; // Must match Staircase.js
-                const stairLength = new THREE.Vector3(stair.end.x - stair.start.x, 0, stair.end.z - stair.start.z).length();
+            if (staircases) {
+                staircases.forEach(stair => {
+                    const stairWidth = 4.0; // Must match Staircase.js
+                    const stairLength = new THREE.Vector3(stair.end.x - stair.start.x, 0, stair.end.z - stair.start.z).length();
 
-                const holeGeom = new THREE.BoxGeometry(stairLength, 2, stairWidth); // Height of 2 should be enough to cut through a floor
-                const holeMesh = new THREE.Mesh(holeGeom);
+                    const holeGeom = new THREE.BoxGeometry(stairLength, 2, stairWidth); // Height of 2 should be enough to cut through a floor
+                    const holeMesh = new THREE.Mesh(holeGeom);
 
-                // Position and rotate the hole to match the staircase
-                const midPoint = new THREE.Vector3().addVectors(stair.start, stair.end).multiplyScalar(0.5);
-                holeMesh.position.set(midPoint.x, stair.end.y, midPoint.z); // Position it at the upper floor level
+                    // Position and rotate the hole to match the staircase
+                    const midPoint = new THREE.Vector3().addVectors(stair.start, stair.end).multiplyScalar(0.5);
+                    holeMesh.position.set(midPoint.x, stair.end.y, midPoint.z); // Position it at the upper floor level
 
-                const direction = new THREE.Vector3().subVectors(stair.end, stair.start);
-                const angle = Math.atan2(direction.z, direction.x);
-                holeMesh.rotation.y = -angle + Math.PI / 2;
+                    const direction = new THREE.Vector3().subVectors(stair.end, stair.start);
+                    const angle = Math.atan2(direction.z, direction.x);
+                    holeMesh.rotation.y = -angle + Math.PI / 2;
 
-                holeMesh.updateMatrix();
+                    holeMesh.updateMatrix();
 
-                // Perform CSG
-                modelMesh = CSG.subtract(modelMesh, holeMesh);
-            });
+                    // Perform CSG
+                    modelMesh = CSG.subtract(modelMesh, holeMesh);
+                });
+            }
+
+            if (elevators) {
+                elevators.forEach(elevator => {
+                    // Elevator shaft dimensions (must match Elevator.js roughly)
+                    const shaftWidth = 6;
+                    const shaftDepth = 6;
+
+                    // Create a hole for the shaft
+                    const holeGeom = new THREE.BoxGeometry(shaftWidth, 2, shaftDepth);
+                    const holeMesh = new THREE.Mesh(holeGeom);
+
+                    // Position the hole. Assuming elevator position is bottom-center of the shaft on current floor.
+                    // We need to cut the ceiling (which is next floor's floor).
+                    // Elevator height is passed as 10 usually.
+                    const WALL_HEIGHT = 10;
+                    holeMesh.position.set(elevator.position.x, elevator.position.y + WALL_HEIGHT, elevator.position.z);
+
+                    holeMesh.updateMatrix();
+                    modelMesh = CSG.subtract(modelMesh, holeMesh);
+                });
+            }
 
             return modelMesh.geometry;
         }
 
         return baseGeom;
-    }, [modelData, staircases]);
+    }, [modelData, staircases, elevators]);
 
     if (!geometry) return null;
 
@@ -196,7 +220,7 @@ function Sun({ isCycling }) {
 
 function SceneContent({
     modelData, material, sunCycle, heldFurniture, handlePlaceFurniture, allFurniture, children, onTeleportReady,
-    isStaircaseMode, staircasePoints, handleStaircasePointSelect, staircases
+    isStaircaseMode, staircasePoints, handleStaircasePointSelect, staircases, elevators
 }) {
     const { camera, raycaster, scene } = useThree();
 
@@ -246,13 +270,17 @@ function SceneContent({
             <ambientLight intensity={0.5} />
             <Sun isCycling={sunCycle} />
             <DefaultXRController />
-            <Model modelData={modelData} material={material} staircases={staircases} />
+            <Model modelData={modelData} material={material} staircases={staircases} elevators={elevators} />
             <PlacedFurniture items={allFurniture} />
             <FurniturePlacer heldFurniture={heldFurniture} onPlace={handlePlaceFurniture} placedItems={allFurniture} />
             {children}
             {/* Render the staircases */}
             {staircases.map((stair, index) => (
                 <Staircase key={index} start={stair.start} end={stair.end} />
+            ))}
+            {/* Render detected elevators */}
+            {elevators.map((elevator, index) => (
+                <Elevator key={index} position={elevator.position} />
             ))}
             {/* Visual feedback for staircase points */}
             {staircasePoints.map((point, index) => (
@@ -285,11 +313,44 @@ function SceneContent({
 export default function VRScene({
     modelData, material, sunCycle = false, heldFurniture, setHeldFurniture,
     placedFurniture = [], floorLabels = [], onTeleportReady, children,
-    isStaircaseMode
+    isStaircaseMode, wallData
 }) {
     const [internalPlacedFurniture, setInternalPlacedFurniture] = useState([]);
     const [staircases, setStaircases] = useState([]);
+    const [elevators, setElevators] = useState([]);
     const [staircasePoints, setStaircasePoints] = useState([]);
+
+    // --- Automatic Detection Logic ---
+    React.useEffect(() => {
+        if (wallData && wallData.rooms) {
+            const detectedStaircases = [];
+            const detectedElevators = [];
+            const WALL_HEIGHT = 10; // Must match server
+
+            wallData.rooms.forEach(room => {
+                const x = room.center.x * 0.1;
+                const z = room.center.y * 0.1;
+
+                if (room.type === 'staircase') {
+                     // Heuristic: Calculate a start and end point based on room center
+                     // This is a simplification. Ideally, we'd use the room's orientation.
+                     // For now, assume staircase goes UP from this room
+                     const start = new THREE.Vector3(x - 2, 0, z);
+                     const end = new THREE.Vector3(x + 2, WALL_HEIGHT, z);
+                     detectedStaircases.push({ start, end });
+                } else if (room.type === 'elevator') {
+                    detectedElevators.push({ position: new THREE.Vector3(x, 0, z) });
+                }
+            });
+
+            if (detectedStaircases.length > 0) {
+                setStaircases(detectedStaircases);
+            }
+            if (detectedElevators.length > 0) {
+                setElevators(detectedElevators);
+            }
+        }
+    }, [wallData]);
 
     const handleStaircasePointSelect = (point) => {
         const newPoints = [...staircasePoints, point];
@@ -331,6 +392,7 @@ export default function VRScene({
                         staircasePoints={staircasePoints}
                         handleStaircasePointSelect={handleStaircasePointSelect}
                         staircases={staircases}
+                        elevators={elevators}
                     >
                         {children}
                     </SceneContent>

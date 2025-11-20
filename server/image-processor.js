@@ -201,9 +201,20 @@ async function labelRoomsWithOCR(rooms, imagePath) {
         const { data: { text } } = await Tesseract.recognize(croppedImageBuffer, 'eng');
         const label = text.trim().split('\n')[0]; // Take the first line of recognized text
 
+        let type = 'room';
+        if (label) {
+            const upperLabel = label.toUpperCase();
+            if (upperLabel.includes('STAIR') || upperLabel.includes('STR')) {
+                type = 'staircase';
+            } else if (upperLabel.includes('LIFT') || upperLabel.includes('ELEV')) {
+                type = 'elevator';
+            }
+        }
+
         labeledRooms.push({
             ...room,
             label: label || `Room ${room.id}`, // Default label if OCR fails
+            type: type,
         });
     }
 
