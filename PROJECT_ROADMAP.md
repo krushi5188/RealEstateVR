@@ -142,25 +142,30 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **Evidence:** The server (`image-processor.js`) now distinguishes between windows (exterior gaps) and doors (interior gaps) and calculates their dimensions. The client (`VRScene.js`) automatically places the correct 3D component into these detected openings, sized to fit perfectly.
 
 #### **Phase 7B: Saved Project "Snapshots"**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Fully Functional**
 *   **Goal:** To allow users to experiment with different design ideas without losing their original work.
 *   **Features:**
     *   **Versioning System:**
-        *   **Concept:** Users can save different versions, or "snapshots," of their project at any time.
-        *   **Technical Approach:** This will require a change on the server. When a user saves a "snapshot," instead of overwriting the existing model file, the server will save a new version with a timestamp or a user-provided name (e.g., `project_a_snapshot_kitchen_idea_b.json`). The dashboard will be updated to show these snapshots grouped under the main project.
-        *   **UI/UX:** A "Save Snapshot" button will be added to the VR view. The dashboard will be redesigned to show a primary project card, which can be expanded to show all the saved snapshots for that project. Users can then load, view, or delete any snapshot.
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** A `/save-snapshot` endpoint has been implemented on the server to save the current model state as a new file. The client includes a "Save Snapshot" button in the VR view. The `Dashboard` component groups these snapshots under their parent project, allowing users to easily view and load different versions of their design.
 
 ---
 
 ### **Part 7: The Professional Toolkit & Future Vision**
 
 #### **Phase 8A: Financial & Construction Reality**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Fully Functional**
 *   **Goal:** To bridge the gap between the virtual design and its real-world construction and cost implications.
 *   **Features:**
-    *   **Real-Time Cost Estimation:** As users apply materials from the library, the system will calculate a running, real-time estimate of the project's material costs.
-    *   **Bill of Materials Generation:** Users will be able to export a detailed list of all materials and their quantities, ready to be taken to a supplier.
-    *   **Constructability Analysis:** The system will perform a basic check for common construction issues (e.g., identifying load-bearing walls that have been removed, checking for sufficient structural support based on simplified rules).
+    *   **Real-Time Cost Estimation:**
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** The `CostEstimator` component calculates project costs in real-time based on material prices defined in `materials.json`, wall area, roof type, and auto-detected features (stairs, elevators, windows, doors).
+    *   **Bill of Materials Generation:**
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** The `CostEstimator` includes an "Export BOM" function that generates a CSV file detailing the costs of walls, structural elements, fixtures, and roofing.
+    *   **Constructability Analysis:**
+        *   **Status:** ⏳ **Pending**
+        *   **Note:** Basic structural cost analysis is included, but deep constructability checks (load-bearing walls) remain a future enhancement.
 
 #### **Phase 8B: Automated Dimensioning & 2D Plan Export**
 *   **Status:** ⏳ **Pending**
