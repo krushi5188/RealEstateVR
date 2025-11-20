@@ -119,13 +119,12 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **Evidence:** A `RoofTool` component has been added to the UI, allowing users to toggle between "Flat" and "Pitched" roof styles. The `Roof` component in `VRScene.js` dynamically calculates the roof's dimensions and position based on the top-most floor of the loaded model, ensuring a perfect fit.
 
 #### **Phase 6D: Simple Exterior Environment**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Fully Functional**
 *   **Goal:** To improve the sense of realism and immersion by placing the building in a simple environment.
 *   **Features:**
     *   **Ground Plane & Skybox:**
-        *   **Concept:** Users can place their building on a ground plane and select a skybox for the environment.
-        *   **Technical Approach:** In the `VRScene` component, we will add a larger, textured ground plane (e.g., with a grass texture) and a `<Sky>` component from `@react-three/drei`. The user will be able to select from a predefined list of skybox images.
-        *   **UI/UX:** A new "Environment" tab in the VR interface will allow the user to toggle the ground plane and choose a sky (e.g., "Sunny Day," "Night Sky"). This will be especially impactful when looking out of the windows of the model.
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** An `EnvironmentController` component has been integrated into `VRScene.js`. It utilizes `@react-three/drei` components (`<Sky>`, `<Stars>`) to generate dynamic "Day", "Sunset", and "Night" environments. A new `EnvironmentTool` UI allows users to toggle between these modes in real-time.
 
 ---
 

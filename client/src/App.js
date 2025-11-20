@@ -19,6 +19,7 @@ import LayoutSuggester from './components/LayoutSuggester';
 import MoodBoardUploader from './components/MoodBoardUploader';
 import StaircaseTool from './components/StaircaseTool';
 import RoofTool from './components/RoofTool';
+import EnvironmentTool from './components/EnvironmentTool';
 
 // --- Floor Teleporter UI ---
 function FloorTeleporter({ floorLabels, onTeleport }) {
@@ -78,7 +79,9 @@ function VRView({
   handleActivateStaircaseMode,
   isStaircaseMode,
   roofType,
-  handleSetRoofType
+  handleSetRoofType,
+  environmentMode,
+  setEnvironmentMode
 }) {
   const teleportRef = useRef(null);
   return (
@@ -98,6 +101,7 @@ function VRView({
             onTeleportReady={(teleportFn) => { teleportRef.current = teleportFn; }}
             wallData={wallData}
             roofType={roofType}
+            environmentMode={environmentMode}
          >
            <VirtualAgent path={agentPath} />
          </VRScene>
@@ -114,6 +118,7 @@ function VRView({
      <LayoutSuggester wallData={wallData} furnitureLibrary={furnitureLibrary} onLayoutSelect={setPlacedFurniture} />
      <AgentScheduler onScheduleRun={handleRunSimulation} />
      <DesignPhilosophyInput wallData={wallData} onAnalyze={handleDesignPhilosophyAnalysis} />
+     <EnvironmentTool currentMode={environmentMode} onSetMode={setEnvironmentMode} />
      <StaircaseTool onActivate={handleActivateStaircaseMode} />
      <RoofTool currentType={roofType} onSetType={handleSetRoofType} />
      <MoodBoardUploader onPaletteExtracted={handlePaletteExtracted} />
@@ -176,6 +181,7 @@ function App() {
   const [moodBoardPalette, setMoodBoardPalette] = useState(null);
   const [isStaircaseMode, setIsStaircaseMode] = useState(false);
   const [roofType, setRoofType] = useState(null);
+  const [environmentMode, setEnvironmentMode] = useState('Day');
   const fileInputRef = useRef(null);
 
   const handleActivateStaircaseMode = () => {
@@ -565,6 +571,8 @@ function App() {
           isStaircaseMode={isStaircaseMode}
           roofType={roofType}
           handleSetRoofType={setRoofType}
+          environmentMode={environmentMode}
+          setEnvironmentMode={setEnvironmentMode}
         />;
       case 'dashboard':
       default:

@@ -7,6 +7,7 @@ import { CSG } from 'three-csg-ts';
 import Staircase from './Staircase';
 import Elevator from './Elevator';
 import Roof from './Roof';
+import EnvironmentController from './EnvironmentController';
 
 // --- Staircase Tool ---
 function StaircaseTool({ onAddStaircase }) {
@@ -221,7 +222,7 @@ function Sun({ isCycling }) {
 
 function SceneContent({
     modelData, material, sunCycle, heldFurniture, handlePlaceFurniture, allFurniture, children, onTeleportReady,
-    isStaircaseMode, staircasePoints, handleStaircasePointSelect, staircases, elevators, roofProps
+    isStaircaseMode, staircasePoints, handleStaircasePointSelect, staircases, elevators, roofProps, environmentMode
 }) {
     const { camera, raycaster, scene } = useThree();
 
@@ -268,8 +269,11 @@ function SceneContent({
 
     return (
         <>
-            <ambientLight intensity={0.5} />
-            <Sun isCycling={sunCycle} />
+            {/* Lighting is handled by EnvironmentController based on mode */}
+            <EnvironmentController mode={environmentMode} />
+            {!environmentMode && <ambientLight intensity={0.5} />}
+            {!environmentMode && <Sun isCycling={sunCycle} />}
+
             <DefaultXRController />
             <Model modelData={modelData} material={material} staircases={staircases} elevators={elevators} />
             <PlacedFurniture items={allFurniture} />
@@ -315,7 +319,7 @@ function SceneContent({
 export default function VRScene({
     modelData, material, sunCycle = false, heldFurniture, setHeldFurniture,
     placedFurniture = [], floorLabels = [], onTeleportReady, children,
-    isStaircaseMode, wallData, roofType
+    isStaircaseMode, wallData, roofType, environmentMode
 }) {
     const [internalPlacedFurniture, setInternalPlacedFurniture] = useState([]);
     const [staircases, setStaircases] = useState([]);
@@ -412,6 +416,7 @@ export default function VRScene({
                         staircases={staircases}
                         elevators={elevators}
                         roofProps={roofProps}
+                        environmentMode={environmentMode}
                     >
                         {children}
                     </SceneContent>
