@@ -168,13 +168,15 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **Note:** Basic structural cost analysis is included, but deep constructability checks (load-bearing walls) remain a future enhancement.
 
 #### **Phase 8B: Automated Dimensioning & 2D Plan Export**
-*   **Status:** ⏳ **Pending**
+*   **Status:** ✅ **Fully Functional**
 *   **Goal:** To save users significant time by automatically generating professional, dimensioned 2D plans.
 *   **Features:**
     *   **Automated Dimensioning:**
-        *   **Concept:** The system will automatically calculate and draw all necessary dimension lines on the 2D floor plan.
-        *   **Technical Approach:** After the initial wall data is extracted, the server will perform a geometry analysis to identify all wall segments, rooms, windows, and doors. It will calculate their lengths, widths, and positions. This data will be used to generate a new SVG or PDF layer containing standard architectural dimension lines (e.g., lines, arrows, and text labels).
-        *   **UI/UX:** In the 2D view, the user will be able to toggle a "Show Dimensions" overlay. They will also have a button to "Export as PDF," which will generate a clean, professionally formatted 2D technical drawing, complete with a title block and the dimensioned floor plan.
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** The `PlanViewer` component renders a clean 2D blueprint of the floor plan. It uses a `detectedScale` derived from OCR text found on the original plan (e.g., parsing "12x12" labels) to calculate and draw precise dimension lines in feet for every wall segment.
+    *   **PDF Export:**
+        *   **Status:** ✅ **Fully Functional**
+        *   **Evidence:** The `PlanViewer` includes an "Export PDF" feature powered by `jspdf`. It generates a professional landscape PDF containing the dimensioned plan, a title block, and the date of generation.
 
 #### **Phase 9: Creative & Collaborative Power**
 *   **Status:** ⏳ **Pending**

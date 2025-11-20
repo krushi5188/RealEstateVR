@@ -21,6 +21,7 @@ import StaircaseTool from './components/StaircaseTool';
 import RoofTool from './components/RoofTool';
 import EnvironmentTool from './components/EnvironmentTool';
 import CostEstimator from './components/CostEstimator';
+import PlanViewer from './components/PlanViewer';
 
 // --- Floor Teleporter UI ---
 function FloorTeleporter({ floorLabels, onTeleport }) {
@@ -148,6 +149,7 @@ function VRView({
      <EnvironmentTool currentMode={environmentMode} onSetMode={setEnvironmentMode} />
      <StaircaseTool onActivate={handleActivateStaircaseMode} />
      <RoofTool currentType={roofType} onSetType={handleSetRoofType} />
+     <PlanViewer wallData={wallData} />
      <CostEstimator projectData={projectData} />
      <MoodBoardUploader onPaletteExtracted={handlePaletteExtracted} />
      {moodBoardPalette && (

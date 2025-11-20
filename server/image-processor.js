@@ -202,6 +202,8 @@ async function labelRoomsWithOCR(rooms, imagePath) {
         const label = text.trim().split('\n')[0]; // Take the first line of recognized text
 
         let type = 'room';
+        let scale = null;
+
         if (label) {
             const upperLabel = label.toUpperCase();
             if (upperLabel.includes('STAIR') || upperLabel.includes('STR')) {
@@ -209,12 +211,44 @@ async function labelRoomsWithOCR(rooms, imagePath) {
             } else if (upperLabel.includes('LIFT') || upperLabel.includes('ELEV')) {
                 type = 'elevator';
             }
+
+            // Attempt to parse dimensions (e.g., "12x14", "10'6\" x 12'0\"")
+            // Simplified regex for XxY pattern
+            const dimMatch = label.match(/(\d+(?:'\d+")?)\s*[xX]\s*(\d+(?:'\d+")?)/);
+            if (dimMatch) {
+                const widthText = dimMatch[1];
+                const heightText = dimMatch[2];
+
+                // Helper to convert text string to feet
+                const parseDim = (str) => {
+                    if (str.includes("'")) {
+                        const parts = str.split("'");
+                        const feet = parseInt(parts[0], 10);
+                        const inches = parts[1] ? parseInt(parts[1].replace('"', ''), 10) : 0;
+                        return feet + inches / 12;
+                    }
+                    return parseFloat(str); // Assume feet if just number
+                };
+
+                const realWidth = parseDim(widthText);
+                const realHeight = parseDim(heightText);
+
+                // Compare with pixel dimensions to calculate scale (pixels per foot)
+                const pixelWidth = room.bounds.maxX - room.bounds.minX;
+                const pixelHeight = room.bounds.maxY - room.bounds.minY;
+
+                // Average the scale from both dimensions
+                const scaleX = pixelWidth / realWidth;
+                const scaleY = pixelHeight / realHeight;
+                scale = (scaleX + scaleY) / 2;
+            }
         }
 
         labeledRooms.push({
             ...room,
             label: label || `Room ${room.id}`, // Default label if OCR fails
             type: type,
+            detectedScale: scale
         });
     }
 
