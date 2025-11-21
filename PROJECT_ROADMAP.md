@@ -179,12 +179,19 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **Evidence:** The `PlanViewer` includes an "Export PDF" feature powered by `jspdf`. It generates a professional landscape PDF containing the dimensioned plan, a title block, and the date of generation.
 
 #### **Phase 9: Creative & Collaborative Power**
-*   **Status:** ⏳ **Pending**
+*   **Status:** 🚧 **In Progress**
 *   **Goal:** To evolve the platform into a tool for limitless creativity and shared experiences.
 *   **Features:**
-    *   **Multi-User VR Sessions:** Allow multiple users to inhabit the same VR scene simultaneously, enabling real-time collaboration between designers, clients, and contractors.
-    *   **Procedural Content Generation:** Add tools for procedurally generating interior design elements (e.g., shelving layouts, tiling patterns) based on user-defined parameters.
-    *   **Augmented Reality (AR) Overlay:** Develop a mobile app that allows users to project their 3D model into their real-world space using AR, providing a powerful sense of scale and context.
+    *   **Multi-User VR Sessions:**
+        *   **Status:** shelved **Shelved**
+        *   **Note:** Deprioritized to focus on AR capabilities.
+    *   **Procedural Content Generation:**
+        *   **Status:** shelved **Shelved**
+        *   **Note:** Deprioritized to focus on AR capabilities.
+    *   **Augmented Reality (AR) Overlay:**
+        *   **Status:** ⏳ **Pending**
+        *   **Goal:** Implement WebXR-based AR to allow users to project their 3D model into the real world using mobile devices.
+        *   **Technical Approach:** Utilize `@react-three/xr` to support `immersive-ar` sessions.
 
 #### **Phase 10: Future Expansion & Market Leadership**
 *   **Status:** ⏳ **Pending**

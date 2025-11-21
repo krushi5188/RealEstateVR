@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
-import { VRButton, XR, DefaultXRController } from '@react-three/xr';
+import { VRButton, ARButton, XR, DefaultXRController } from '@react-three/xr';
 import * as THREE from 'three';
 import { CSG } from 'three-csg-ts';
 import Staircase from './Staircase';
@@ -437,7 +437,10 @@ export default function VRScene({
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '500px', borderRadius: '8px', overflow: 'hidden' }}>
-            <VRButton />
+            <div style={{ position: 'absolute', zIndex: 1, display: 'flex', gap: '10px', bottom: '20px', left: '20px' }}>
+                <VRButton />
+                <ARButton />
+            </div>
             {/* The 2D UI for the tool is now in App.js, this placeholder is removed */}
             <Canvas shadows camera={{ position: [0, 5, 15] }}>
                 <XR>
