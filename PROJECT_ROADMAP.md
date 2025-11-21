@@ -189,9 +189,9 @@ To create the world's most powerful, insightful, and creatively empowering platf
         *   **Status:** shelved **Shelved**
         *   **Note:** Deprioritized to focus on AR capabilities.
     *   **Augmented Reality (AR) Overlay:**
-        *   **Status:** ⏳ **Pending**
+        *   **Status:** ✅ **Fully Functional**
         *   **Goal:** Implement WebXR-based AR to allow users to project their 3D model into the real world using mobile devices.
-        *   **Technical Approach:** Utilize `@react-three/xr` to support `immersive-ar` sessions.
+        *   **Evidence:** The `VRScene` now incorporates an `ARPlacement` component that utilizes WebXR hit-testing. Users can enter AR mode, scan their environment to detect a surface (visualized by a reticle), and tap to place the 3D model in their real-world context.
 
 #### **Phase 10: Future Expansion & Market Leadership**
 *   **Status:** ⏳ **Pending**

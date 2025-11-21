@@ -92,17 +92,7 @@ function VRView({
   const projectData = {
       wallData: wallData,
       material: selectedMaterial,
-      roofType: roofType,
-      // Note: We are passing empty arrays for dynamic elements because they are currently
-      // state local to VRScene. Ideally, VRScene should lift this state up to App.
-      // For now, this is a limitation. We will address this by passing the props if available,
-      // or by accepting that cost estimation for auto-detected items requires a state lift.
-      // Correction: VRScene is where detection happens. To fix this, VRScene needs to call a
-      // callback when detection finishes.
-      staircases: [],
-      elevators: [],
-      windows: [],
-      doors: []
+      roofType: roofType
   };
   return (
     <div className="upload-card">

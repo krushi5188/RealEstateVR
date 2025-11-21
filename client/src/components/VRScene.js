@@ -10,6 +10,7 @@ import Roof from './Roof';
 import EnvironmentController from './EnvironmentController';
 import Window from './Window';
 import Door from './Door';
+import ARPlacement from './ARPlacement';
 
 // --- Staircase Tool ---
 function StaircaseTool({ onAddStaircase }) {
@@ -444,24 +445,26 @@ export default function VRScene({
             {/* The 2D UI for the tool is now in App.js, this placeholder is removed */}
             <Canvas shadows camera={{ position: [0, 5, 15] }}>
                 <XR>
-                    <SceneContent
-                        modelData={modelData}
-                        material={material}
-                        sunCycle={sunCycle}
-                        heldFurniture={heldFurniture}
-                        handlePlaceFurniture={handlePlaceFurniture}
-                        allFurniture={allFurniture}
-                        onTeleportReady={onTeleportReady}
-                        isStaircaseMode={isStaircaseMode}
-                        staircasePoints={staircasePoints}
-                        handleStaircasePointSelect={handleStaircasePointSelect}
-                        staircases={staircases}
-                        elevators={elevators}
-                        roofProps={roofProps}
-                        environmentMode={environmentMode}
-                    >
-                        {children}
-                    </SceneContent>
+                    <ARPlacement>
+                        <SceneContent
+                            modelData={modelData}
+                            material={material}
+                            sunCycle={sunCycle}
+                            heldFurniture={heldFurniture}
+                            handlePlaceFurniture={handlePlaceFurniture}
+                            allFurniture={allFurniture}
+                            onTeleportReady={onTeleportReady}
+                            isStaircaseMode={isStaircaseMode}
+                            staircasePoints={staircasePoints}
+                            handleStaircasePointSelect={handleStaircasePointSelect}
+                            staircases={staircases}
+                            elevators={elevators}
+                            roofProps={roofProps}
+                            environmentMode={environmentMode}
+                        >
+                            {children}
+                        </SceneContent>
+                    </ARPlacement>
                 </XR>
             </Canvas>
         </div>
