@@ -23,6 +23,9 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Core/Camera.h
     src/Core/ImageProcessor.cpp
     src/Core/ImageProcessor.h
+    src/Core/Project.cpp
+    src/Core/Project.h
+    src/Core/Floor.h
 )
 
 target_link_libraries(ArchNative PRIVATE

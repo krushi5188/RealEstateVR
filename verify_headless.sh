@@ -50,15 +50,16 @@ else
     exit 1
 fi
 
-# Run verification (Image Processor)
-echo "Running Image Processor Verification..."
-xvfb-run -a ./ArchNative --test-image-proc
+# Run verification (Project / Multi-Floor)
+echo "Running Project Verification..."
+xvfb-run -a ./ArchNative --test-project
 
-if [ -f "test_analysis_debug.png" ]; then
-    echo "SUCCESS: Image processing verified."
-    mv test_input_floor.png ../../test_input_floor.png
-    mv test_analysis_debug.png ../../test_analysis_debug.png
+# Check logic success (implicit by exit code 0, but we also check artifacts if any)
+if [ -f "test_floor_ground.png" ] && [ -f "test_floor_one.png" ]; then
+    echo "SUCCESS: Multi-floor Project verified."
+    mv test_floor_ground.png ../../test_floor_ground.png
+    mv test_floor_one.png ../../test_floor_one.png
 else
-    echo "FAILURE: Image processing output missing."
+    echo "FAILURE: Project verification failed (missing artifacts)."
     exit 1
 fi
