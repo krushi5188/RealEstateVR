@@ -14,15 +14,18 @@ To build the ultimate, high-performance, 100% offline architectural design tool.
 ## The Pivot: Native C++ Rewrite
 
 ### **Phase 1N: The Foundation (Setup & Core)**
+*   **Status:** 🚧 **IN PROGRESS**
 *   **Goal:** Establish the native build environment and rendering capability.
 *   **Complexity:** Medium
 *   **Tasks:**
-    *   **1N.1:** Initialize `CMake` project structure with `Qt6` and `OpenCV` dependencies.
-    *   **1N.2:** Implement `MainWindow` with a central `QOpenGLWidget`.
-    *   **1N.3:** Create a Basic Camera controller (Orbit/Pan/Zoom) for the OpenGL viewport.
+    *   **1N.1:** Initialize `CMake` project structure with `Qt6` and `OpenCV` dependencies. ✅ **DONE**
+    *   **1N.2:** Implement `MainWindow` with a central `QOpenGLWidget`. ✅ **DONE**
+    *   **1N.3:** Create a Basic Camera controller (Orbit/Pan/Zoom) for the OpenGL viewport. 🔄 **PENDING**
+    *   **1N.4:** Verify "Hello World" Rendering (RGB Triangle). ✅ **DONE**
     *   **Acceptance Criteria:** Application compiles, runs, and shows a 3D grid that can be rotated.
 
 ### **Phase 2N: The Engine (Image Analysis)**
+*   **Status:** 📅 **PLANNED**
 *   **Goal:** Port the Image Processor logic to C++.
 *   **Complexity:** High
 *   **Tasks:**
@@ -33,6 +36,7 @@ To build the ultimate, high-performance, 100% offline architectural design tool.
     *   **Acceptance Criteria:** Loading a PNG floor plan outputs a `std::vector<Wall>` and `std::vector<Room>` with accurate coordinates.
 
 ### **Phase 3N: Mesh Generation (The Builder)**
+*   **Status:** 📅 **PLANNED**
 *   **Goal:** Convert 2D data into 3D Geometry (VBOs).
 *   **Complexity:** High
 *   **Tasks:**
@@ -43,6 +47,7 @@ To build the ultimate, high-performance, 100% offline architectural design tool.
     *   **Acceptance Criteria:** The 3D Viewport renders the full building structure with correct holes and roof.
 
 ### **Phase 4N: The Professional Tools**
+*   **Status:** 📅 **PLANNED**
 *   **Goal:** Re-implement high-value analysis features.
 *   **Complexity:** Medium
 *   **Tasks:**

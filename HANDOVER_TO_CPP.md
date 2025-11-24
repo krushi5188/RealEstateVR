@@ -1,7 +1,7 @@
 # HANDOVER PROTOCOL: Operation Native Pivot
 
 **Date:** 2025-11-20
-**Status:** REFERENCE IMPLEMENTATION COMPLETE - READY FOR PORTING
+**Status:** IN PROGRESS (Phase 1N)
 **From:** Jules (Web Architect)
 **To:** Native Systems Engineer
 
@@ -26,7 +26,41 @@ You are building a desktop application for Windows and macOS.
 | **Geometry Logic** | three-csg-ts | **OpenCSG / CGAL** | Professional-grade mesh boolean ops. |
 | **Build System** | npm / Webpack | **CMake** | Cross-platform native build management. |
 
-## 3. Logic Migration Map
+## 3. Build & Verification
+We use **CMake** for building. The project is located in `ArchNative/`.
+
+### macOS Compatibility
+*   The `CMakeLists.txt` includes `MACOSX_BUNDLE` property to ensure correct `.app` bundle generation.
+*   The application explicitly requests an OpenGL `CompatibilityProfile` (v2.1) to support legacy drawing commands on macOS.
+
+### Headless Verification (Linux/CI)
+*   A script `verify_headless.sh` is provided.
+*   It uses `xvfb` to simulate a display.
+*   It runs `ArchNative --test-screenshot` which renders one frame and exits, saving `test_output.png`.
+
+## 4. Current C++ Project Structure (Phase 1N)
+
+```
+ArchNative/
+├── CMakeLists.txt              # Master build script (Configured for C++20, Qt6, OpenCV, macOS Bundle)
+├── src/
+│   ├── main.cpp                # QApplication entry point & CLI parsing
+│   ├── Core/
+│   │   ├── Project.h           # Data model (Walls, Floors)
+│   │   ├── ImageProcessor.h    # OpenCV wrapper
+│   │   └── MeshGenerator.h     # VBO generator
+│   ├── UI/
+│   │   ├── MainWindow.h/cpp    # Main Window (Screenshot logic included)
+│   │   ├── ViewportWidget.h/cpp # QOpenGLWidget subclass (Renders RGB Triangle)
+│   │   └── PropertiesDock.h    # QDockWidget for Inspector
+│   └── Analysis/
+│       └── CostEstimator.h     # Pricing logic
+├── assets/
+│   └── shaders/                # GLSL shaders
+└── tests/                      # GoogleTest
+```
+
+## 5. Logic Migration Map (Future Phases)
 
 You must port the logic from the current JS files to C++ classes.
 
@@ -77,60 +111,6 @@ You must port the logic from the current JS files to C++ classes.
         *   `StructureCost = (NumStairs * UnitCost) + (NumElevators * UnitCost)`
         *   `FixtureCost = (NumWindows * UnitCost) + (NumDoors * UnitCost)`
 
-## 4. Proposed C++ Project Structure
-
-```
-ArchNative/
-├── CMakeLists.txt              # Master build script
-├── src/
-│   ├── main.cpp                # QApplication entry point
-│   ├── Core/
-│   │   ├── Project.h           # Data model (Walls, Floors)
-│   │   ├── ImageProcessor.h    # OpenCV wrapper
-│   │   └── MeshGenerator.h     # VBO generator
-│   ├── UI/
-│   │   ├── MainWindow.h        # Main Window (Qt Designer or C++)
-│   │   ├── ViewportWidget.h    # QOpenGLWidget subclass
-│   │   └── PropertiesDock.h    # QDockWidget for Inspector
-│   └── Analysis/
-│       └── CostEstimator.h     # Pricing logic
-├── assets/
-│   └── shaders/                # GLSL shaders
-└── tests/                      # GoogleTest
-```
-
-## 5. CMakeLists.txt Template
-
-```cmake
-cmake_minimum_required(VERSION 3.16)
-project(ArchNative VERSION 1.0 LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-
-find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets)
-find_package(OpenCV REQUIRED)
-find_package(Tesseract REQUIRED)
-
-add_executable(ArchNative
-    src/main.cpp
-    src/Core/ImageProcessor.cpp
-    src/UI/MainWindow.cpp
-    # ... add other sources
-)
-
-target_link_libraries(ArchNative PRIVATE
-    Qt6::Widgets
-    Qt6::OpenGLWidgets
-    ${OpenCV_LIBS}
-    libtesseract
-)
-```
-
-## 6. Immediate Next Steps
-
-1.  **Initialize Repo:** Create the folder structure above.
-2.  **Hello World:** Render a simple window with `Qt6`.
-3.  **Port Phase 1 (Image Loading):** Implement `ImageProcessor::load()` using `cv::imread` and display it in a `QLabel`.
+## 6. Immediate Next Steps for Next Developer
+1.  **Phase 1N Completion:** Implement the Camera Controller (Orbit/Pan/Zoom) in `ViewportWidget`.
+2.  **Phase 2N Start:** Begin implementing `ImageProcessor` to load PNGs using OpenCV.
