@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useThree } from '@react-three/fiber';
-import { Interactive, useHitTest, useXR } from '@react-three/xr';
+import { Interactive, useXRHitTest, useXR } from '@react-three/xr';
+import * as THREE from 'three';
 
 export default function ARPlacement({ children, onPlaced }) {
   const reticleRef = useRef();
@@ -9,15 +10,17 @@ export default function ARPlacement({ children, onPlaced }) {
 
   const isAR = session && session.mode === 'immersive-ar';
 
-  useHitTest((hitMatrix, hit) => {
-    if (isAR && reticleRef.current) {
-      reticleRef.current.matrix.copy(hitMatrix);
-      // If we haven't placed the model yet, show the reticle
-      if (!modelPosition) {
-        reticleRef.current.visible = true;
+  useXRHitTest((results, getWorldMatrix) => {
+      if (isAR && reticleRef.current && results.length > 0) {
+          const hit = results[0];
+          // Apply the matrix to the reticle
+          getWorldMatrix(reticleRef.current.matrix, hit);
+
+          if (!modelPosition) {
+              reticleRef.current.visible = true;
+          }
       }
-    }
-  });
+  }, 'viewer');
 
   const handleSelect = () => {
     if (isAR && reticleRef.current && reticleRef.current.visible) {
