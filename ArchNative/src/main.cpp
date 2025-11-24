@@ -3,6 +3,7 @@
 #include "UI/MainWindow.h"
 #include "Core/ImageProcessor.h"
 #include "Core/Project.h"
+#include "Core/MeshGenerator.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <QFile>
@@ -46,8 +47,19 @@ void runProjectTest() {
         std::cout << "  Floor 0: " << floors[0]->getName() << " | Walls: " << floors[0]->walls.size() << " | Label: " << (floors[0]->rooms.empty() ? "None" : floors[0]->rooms[0].label) << std::endl;
         std::cout << "  Floor 1: " << floors[1]->getName() << " | Walls: " << floors[1]->walls.size() << " | Label: " << (floors[1]->rooms.empty() ? "None" : floors[1]->rooms[0].label) << std::endl;
 
-        // Reuse the debug image output for verification script
-        // We'll just check if the code ran to completion
+        // 4. Generate Mesh (Phase 3N)
+        std::cout << "Generating 3D Mesh..." << std::endl;
+        MeshGenerator meshGen;
+        Mesh mesh = meshGen.generate(project);
+
+        std::cout << "Generated Mesh: " << mesh.vertices.size() << " vertices, " << mesh.indices.size() << " indices." << std::endl;
+
+        if (mesh.vertices.size() > 0) {
+             std::cout << "SUCCESS: Mesh generation verified." << std::endl;
+        } else {
+             std::cerr << "FAILURE: Mesh is empty." << std::endl;
+        }
+
     } else {
         std::cerr << "FAILURE: Project floor count mismatch." << std::endl;
     }

@@ -26,6 +26,9 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Core/Project.cpp
     src/Core/Project.h
     src/Core/Floor.h
+    src/Core/MeshGenerator.cpp
+    src/Core/MeshGenerator.h
+    src/Core/Mesh.h
 )
 
 target_link_libraries(ArchNative PRIVATE

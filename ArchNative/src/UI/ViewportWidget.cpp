@@ -37,7 +37,34 @@ void ViewportWidget::paintGL()
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(m_camera.getViewMatrix().constData());
 
-    drawGrid();
+    if (!m_mesh.vertices.empty()) {
+        drawMesh();
+    } else {
+        drawGrid();
+    }
+}
+
+void ViewportWidget::setMesh(const Mesh& mesh)
+{
+    m_mesh = mesh;
+    update(); // Request redraw
+}
+
+void ViewportWidget::drawMesh()
+{
+    // Simple immediate mode rendering for Phase 3N
+    // In Phase 6N (OpenXR), we will migrate to VBOs
+    glBegin(GL_TRIANGLES);
+    for (unsigned int idx : m_mesh.indices) {
+        if (idx < m_mesh.vertices.size()) {
+            const auto& v = m_mesh.vertices[idx];
+            glNormal3f(v.nx, v.ny, v.nz);
+            // Simple lighting visualization: Color based on Normal
+            glColor3f(0.5f + v.nx*0.5f, 0.5f + v.ny*0.5f, 0.5f + v.nz*0.5f);
+            glVertex3f(v.x, v.y, v.z);
+        }
+    }
+    glEnd();
 }
 
 void ViewportWidget::mousePressEvent(QMouseEvent *event)

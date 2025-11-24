@@ -6,6 +6,7 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include "../Core/Camera.h"
+#include "../Core/Mesh.h"
 
 class ViewportWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -16,6 +17,7 @@ public:
     ~ViewportWidget();
 
     Camera* getCamera() { return &m_camera; }
+    void setMesh(const Mesh& mesh); // To receive geometry
 
 protected:
     void initializeGL() override;
@@ -29,10 +31,12 @@ protected:
 
 private:
     void drawGrid();
+    void drawMesh(); // New render function
 
     Camera m_camera;
     QPoint m_lastMousePos;
     QMatrix4x4 m_projection;
+    Mesh m_mesh; // Stored mesh data
 };
 
 #endif // VIEWPORTWIDGET_H
