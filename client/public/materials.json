@@ -5,7 +5,8 @@
     "color": "#c0c0c0",
     "roughness": 0.8,
     "metalness": 0.1,
-    "acoustic_dampening": 0.8
+    "acoustic_dampening": 0.8,
+    "price_per_sqft": 12.50
   },
   {
     "id": "polished_metal",
@@ -13,7 +14,8 @@
     "color": "#a0a0a0",
     "roughness": 0.1,
     "metalness": 0.9,
-    "acoustic_dampening": 0.6
+    "acoustic_dampening": 0.6,
+    "price_per_sqft": 45.00
   },
   {
     "id": "standard_drywall",
@@ -21,7 +23,8 @@
     "color": "#f5f5f5",
     "roughness": 0.9,
     "metalness": 0.0,
-    "acoustic_dampening": 0.4
+    "acoustic_dampening": 0.4,
+    "price_per_sqft": 5.75
   },
   {
     "id": "glossy_wood",
@@ -29,6 +32,7 @@
     "color": "#8B4513",
     "roughness": 0.3,
     "metalness": 0.0,
-    "acoustic_dampening": 0.5
+    "acoustic_dampening": 0.5,
+    "price_per_sqft": 18.25
   }
 ]

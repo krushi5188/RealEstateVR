@@ -18,6 +18,10 @@ import AcousticAnalysisReport from './components/AcousticAnalysisReport';
 import LayoutSuggester from './components/LayoutSuggester';
 import MoodBoardUploader from './components/MoodBoardUploader';
 import StaircaseTool from './components/StaircaseTool';
+import RoofTool from './components/RoofTool';
+import EnvironmentTool from './components/EnvironmentTool';
+import CostEstimator from './components/CostEstimator';
+import PlanViewer from './components/PlanViewer';
 
 // --- Floor Teleporter UI ---
 function FloorTeleporter({ floorLabels, onTeleport }) {
@@ -75,12 +79,32 @@ function VRView({
   handleAnalyzeCirculation,
   resetToDashboard,
   handleActivateStaircaseMode,
-  isStaircaseMode
+  isStaircaseMode,
+  roofType,
+  handleSetRoofType,
+  environmentMode,
+  setEnvironmentMode,
+  handleSaveSnapshot
 }) {
   const teleportRef = useRef(null);
+
+  // Gather all project data for the cost estimator
+  const projectData = {
+      wallData: wallData,
+      material: selectedMaterial,
+      roofType: roofType
+  };
   return (
     <div className="upload-card">
-       <h1>Your VR Experience is Ready</h1>
+       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+         <h1>Your VR Experience is Ready</h1>
+         <button
+           onClick={handleSaveSnapshot}
+           style={{ padding: '10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+         >
+           Save Snapshot
+         </button>
+       </div>
        <p>Select a material, run an analysis, or simulate a day in the life.</p>
        <div className="vr-scene-container">
          <VRScene
@@ -93,6 +117,9 @@ function VRView({
             floorLabels={floorFiles.map(f => f.label)}
             isStaircaseMode={isStaircaseMode}
             onTeleportReady={(teleportFn) => { teleportRef.current = teleportFn; }}
+            wallData={wallData}
+            roofType={roofType}
+            environmentMode={environmentMode}
          >
            <VirtualAgent path={agentPath} />
          </VRScene>
@@ -109,7 +136,11 @@ function VRView({
      <LayoutSuggester wallData={wallData} furnitureLibrary={furnitureLibrary} onLayoutSelect={setPlacedFurniture} />
      <AgentScheduler onScheduleRun={handleRunSimulation} />
      <DesignPhilosophyInput wallData={wallData} onAnalyze={handleDesignPhilosophyAnalysis} />
+     <EnvironmentTool currentMode={environmentMode} onSetMode={setEnvironmentMode} />
      <StaircaseTool onActivate={handleActivateStaircaseMode} />
+     <RoofTool currentType={roofType} onSetType={handleSetRoofType} />
+     <PlanViewer wallData={wallData} />
+     <CostEstimator projectData={projectData} />
      <MoodBoardUploader onPaletteExtracted={handlePaletteExtracted} />
      {moodBoardPalette && (
        <div className="palette-display">
@@ -169,7 +200,47 @@ function App() {
   const [placedFurniture, setPlacedFurniture] = useState([]); // New state for placed items
   const [moodBoardPalette, setMoodBoardPalette] = useState(null);
   const [isStaircaseMode, setIsStaircaseMode] = useState(false);
+  const [roofType, setRoofType] = useState(null);
+  const [environmentMode, setEnvironmentMode] = useState('Day');
   const fileInputRef = useRef(null);
+
+  const handleSaveSnapshot = async () => {
+    if (!modelData || !modelFilename) return;
+    const name = prompt("Enter a name for this snapshot (optional):");
+
+    const snapshotData = {
+      model: modelData, // We might need to serialize TypedArrays back to arrays if we want pure JSON
+      wallData: wallData,
+      // Include other state like furniture, roof, environment if needed for full restore
+    };
+
+    // Convert TypedArrays to regular arrays for JSON serialization
+    const serializedModel = {
+        vertices: Array.from(modelData.vertices),
+        faces: Array.from(modelData.faces)
+    };
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/save-snapshot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            modelData: { model: serializedModel, wallData },
+            name,
+            baseModelFilename: modelFilename
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessage({ type: 'success', text: `Snapshot saved: ${data.filename}` });
+      } else {
+        throw new Error('Failed to save snapshot');
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    }
+  };
 
   const handleActivateStaircaseMode = () => {
     setIsStaircaseMode(true);
@@ -556,6 +627,11 @@ function App() {
           resetToDashboard={resetToDashboard}
           handleActivateStaircaseMode={handleActivateStaircaseMode}
           isStaircaseMode={isStaircaseMode}
+          roofType={roofType}
+          handleSetRoofType={setRoofType}
+          environmentMode={environmentMode}
+          setEnvironmentMode={setEnvironmentMode}
+          handleSaveSnapshot={handleSaveSnapshot}
         />;
       case 'dashboard':
       default:

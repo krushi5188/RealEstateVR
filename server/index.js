@@ -394,6 +394,37 @@ const server = http.createServer((req, res) => {
             res.end(JSON.stringify({ error: 'Failed to run biophilic design analysis.' }));
         }
     });
+  } else if (req.url === '/save-snapshot' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+        body += chunk.toString();
+    });
+    req.on('end', async () => {
+        try {
+            const { modelData, name, baseModelFilename } = JSON.parse(body);
+            if (!modelData || !baseModelFilename) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Model data and base filename are required.' }));
+                return;
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const snapshotName = name ? name.replace(/[^a-zA-Z0-9._-]/g, '') : `snapshot-${timestamp}`;
+            const projectPrefix = baseModelFilename.split('-test_floor_plan')[0]; // Assuming naming convention
+            const newFilename = `${projectPrefix}-snapshot-${snapshotName}.json`;
+            const filePath = path.join(MODELS_DIR, newFilename);
+
+            await fs.promises.writeFile(filePath, JSON.stringify(modelData, null, 2));
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Snapshot saved successfully.', filename: newFilename }));
+
+        } catch (e) {
+            console.error('Failed to save snapshot:', e);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to save snapshot.' }));
+        }
+    });
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not Found' }));

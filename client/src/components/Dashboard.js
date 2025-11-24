@@ -104,6 +104,30 @@ export default function Dashboard({ onViewChange, onViewModel }) {
     }
   };
 
+  // Group models by project ID (assuming 'project_id-timestamp-original_name.json')
+  // Actually, current naming is 'uuid-original_name.json'
+  // Snapshots are 'uuid-original_name-snapshot-name.json'
+  // So we can group by the prefix before '-snapshot-'
+  const groupedModels = models.reduce((groups, filename) => {
+      let baseName = filename;
+      let isSnapshot = false;
+      if (filename.includes('-snapshot-')) {
+          baseName = filename.split('-snapshot-')[0] + '.json';
+          isSnapshot = true;
+      }
+
+      if (!groups[baseName]) {
+          groups[baseName] = { main: null, snapshots: [] };
+      }
+
+      if (isSnapshot) {
+          groups[baseName].snapshots.push(filename);
+      } else {
+          groups[baseName].main = filename;
+      }
+      return groups;
+  }, {});
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -112,16 +136,33 @@ export default function Dashboard({ onViewChange, onViewModel }) {
       </header>
       {error && <p className="error-message">{error}</p>}
       <div className="project-grid">
-        {models.length > 0 ? (
-          models.map((modelName, index) => (
+        {Object.keys(groupedModels).length > 0 ? (
+          Object.entries(groupedModels).map(([baseName, group], index) => (
             <div key={index} className="project-card">
-              <h2>{modelName.replace('.json', '')}</h2>
-              <p>Generated Model</p>
-              <div className="project-card-actions">
-                <button className="action-btn" onClick={() => handleView(modelName)}>View</button>
-                <button className="action-btn" onClick={() => handleDownload(modelName)}>Download</button>
-                <button className="action-btn delete-btn" onClick={() => handleDelete(modelName)}>Delete</button>
-              </div>
+              {group.main ? (
+                  <>
+                    <h2>{group.main.replace('.json', '').split('-').slice(5).join('-')}</h2>
+                    <p>Original Project</p>
+                    <div className="project-card-actions">
+                        <button className="action-btn" onClick={() => handleView(group.main)}>View Main</button>
+                        <button className="action-btn delete-btn" onClick={() => handleDelete(group.main)}>Delete</button>
+                    </div>
+                  </>
+              ) : (
+                  <h2>Unlinked Snapshots ({baseName})</h2>
+              )}
+
+              {group.snapshots.length > 0 && (
+                  <div className="snapshots-list">
+                      <h4>Snapshots:</h4>
+                      {group.snapshots.map(snap => (
+                          <div key={snap} style={{ marginBottom: '5px' }}>
+                              <span style={{ fontSize: '0.8em' }}>{snap.split('-snapshot-')[1].replace('.json', '')}</span>
+                              <button className="action-btn small" onClick={() => handleView(snap)} style={{ marginLeft: '10px', padding: '2px 5px' }}>Load</button>
+                          </div>
+                      ))}
+                  </div>
+              )}
             </div>
           ))
         ) : (

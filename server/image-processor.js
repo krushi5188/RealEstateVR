@@ -201,9 +201,54 @@ async function labelRoomsWithOCR(rooms, imagePath) {
         const { data: { text } } = await Tesseract.recognize(croppedImageBuffer, 'eng');
         const label = text.trim().split('\n')[0]; // Take the first line of recognized text
 
+        let type = 'room';
+        let scale = null;
+
+        if (label) {
+            const upperLabel = label.toUpperCase();
+            if (upperLabel.includes('STAIR') || upperLabel.includes('STR')) {
+                type = 'staircase';
+            } else if (upperLabel.includes('LIFT') || upperLabel.includes('ELEV')) {
+                type = 'elevator';
+            }
+
+            // Attempt to parse dimensions (e.g., "12x14", "10'6\" x 12'0\"")
+            // Simplified regex for XxY pattern
+            const dimMatch = label.match(/(\d+(?:'\d+")?)\s*[xX]\s*(\d+(?:'\d+")?)/);
+            if (dimMatch) {
+                const widthText = dimMatch[1];
+                const heightText = dimMatch[2];
+
+                // Helper to convert text string to feet
+                const parseDim = (str) => {
+                    if (str.includes("'")) {
+                        const parts = str.split("'");
+                        const feet = parseInt(parts[0], 10);
+                        const inches = parts[1] ? parseInt(parts[1].replace('"', ''), 10) : 0;
+                        return feet + inches / 12;
+                    }
+                    return parseFloat(str); // Assume feet if just number
+                };
+
+                const realWidth = parseDim(widthText);
+                const realHeight = parseDim(heightText);
+
+                // Compare with pixel dimensions to calculate scale (pixels per foot)
+                const pixelWidth = room.bounds.maxX - room.bounds.minX;
+                const pixelHeight = room.bounds.maxY - room.bounds.minY;
+
+                // Average the scale from both dimensions
+                const scaleX = pixelWidth / realWidth;
+                const scaleY = pixelHeight / realHeight;
+                scale = (scaleX + scaleY) / 2;
+            }
+        }
+
         labeledRooms.push({
             ...room,
             label: label || `Room ${room.id}`, // Default label if OCR fails
+            type: type,
+            detectedScale: scale
         });
     }
 
@@ -271,34 +316,59 @@ function identifyRoomsAndWindows(walls, width, height) {
         }
     }
 
-    // Identify windows (gaps in exterior walls)
-    const exteriorWalls = walls.filter(wall => wall.x1 === 0 || wall.x2 === width -1 || wall.y1 === 0 || wall.y2 === height - 1);
-    for(const wall of exteriorWalls) {
-        if(wall.x1 === wall.x2) { //vertical wall
-            let lastY = wall.y1;
-            for(let y = wall.y1; y <= wall.y2; y++) {
-                if(grid[y][wall.x1] === 0) {
-                    if(y - lastY > 5) { //gap of at least 5 pixels
-                        windows.push({ x1: wall.x1, y1: lastY, x2: wall.x1, y2: y });
+    // Identify windows (gaps in exterior walls) and doors (gaps in interior walls)
+    const exteriorWalls = [];
+    const interiorWalls = [];
+
+    walls.forEach(wall => {
+        if (wall.x1 === 0 || wall.x2 === width - 1 || wall.y1 === 0 || wall.y2 === height - 1) {
+            exteriorWalls.push(wall);
+        } else {
+            interiorWalls.push(wall);
+        }
+    });
+
+    const doors = [];
+
+    // Helper to find gaps
+    const findGaps = (wallList, type) => {
+        for(const wall of wallList) {
+            if(wall.x1 === wall.x2) { //vertical wall
+                let lastY = wall.y1;
+                for(let y = wall.y1; y <= wall.y2; y++) {
+                    if(grid[y][wall.x1] === 0) {
+                        if(y - lastY > 5) { //gap of at least 5 pixels
+                            if (type === 'window') {
+                                windows.push({ x1: wall.x1, y1: lastY, x2: wall.x1, y2: y, type: 'vertical' });
+                            } else {
+                                doors.push({ x1: wall.x1, y1: lastY, x2: wall.x1, y2: y, type: 'vertical' });
+                            }
+                        }
+                        lastY = y;
                     }
-                    lastY = y;
                 }
-            }
-        } else { //horizontal wall
-            let lastX = wall.x1;
-            for(let x = wall.x1; x <= wall.x2; x++) {
-                if(grid[wall.y1][x] === 0) {
-                    if(x - lastX > 5) { //gap of at least 5 pixels
-                        windows.push({ x1: lastX, y1: wall.y1, x2: x, y2: wall.y1 });
+            } else { //horizontal wall
+                let lastX = wall.x1;
+                for(let x = wall.x1; x <= wall.x2; x++) {
+                    if(grid[wall.y1][x] === 0) {
+                        if(x - lastX > 5) { //gap of at least 5 pixels
+                             if (type === 'window') {
+                                windows.push({ x1: lastX, y1: wall.y1, x2: x, y2: wall.y1, type: 'horizontal' });
+                            } else {
+                                doors.push({ x1: lastX, y1: wall.y1, x2: x, y2: wall.y1, type: 'horizontal' });
+                            }
+                        }
+                        lastX = x;
                     }
-                    lastX = x;
                 }
             }
         }
-    }
+    };
 
+    findGaps(exteriorWalls, 'window');
+    findGaps(interiorWalls, 'door');
 
-    return { rooms, windows };
+    return { rooms, windows, doors };
 }
 
 
