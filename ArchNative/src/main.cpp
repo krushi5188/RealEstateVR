@@ -22,10 +22,22 @@ void loadStyleSheet(QApplication &app) {
 void runImageProcTest() {
     // 1. Generate Synthetic Floor Plan
     // White background (255), Black walls (0)
-    cv::Mat synthetic = cv::Mat(200, 200, CV_8UC3, cv::Scalar(255, 255, 255));
+    cv::Mat synthetic = cv::Mat(600, 600, CV_8UC3, cv::Scalar(255, 255, 255));
 
-    // Draw a black rectangle (Wall)
-    cv::rectangle(synthetic, cv::Point(50, 50), cv::Point(150, 150), cv::Scalar(0, 0, 0), 5); // Thickness 5
+    // Draw walls: A large square room and a smaller one
+    // Room 1: (50,50) to (300,300)
+    cv::rectangle(synthetic, cv::Point(50, 50), cv::Point(300, 300), cv::Scalar(0, 0, 0), 5);
+
+    // Room 2: (300,50) to (550,300) attached to right
+    cv::rectangle(synthetic, cv::Point(300, 50), cv::Point(550, 300), cv::Scalar(0, 0, 0), 5);
+
+    // Add Text Labels for OCR Testing
+    // Using OpenCV putText to simulate "scanned" text on the floorplan
+    // Scalar(0,0,0) is black text
+    cv::putText(synthetic, "MASTER", cv::Point(100, 150), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
+    cv::putText(synthetic, "BEDROOM", cv::Point(80, 200), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
+
+    cv::putText(synthetic, "KITCHEN", cv::Point(350, 180), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
 
     std::string inputPath = "test_input_floor.png";
     cv::imwrite(inputPath, synthetic);
@@ -34,11 +46,22 @@ void runImageProcTest() {
     // 2. Load and Process
     ImageProcessor proc;
     if (proc.load(inputPath)) {
-        proc.process();
-        if (proc.saveDebug("test_processed.png")) {
-            std::cout << "Saved processed output: test_processed.png" << std::endl;
+        proc.process(); // Runs DetectWalls, DetectRooms, OCR
+
+        // Save the debug image (which contains visual overlays of walls/rooms/text)
+        if (proc.saveDebug("test_analysis_debug.png")) {
+            std::cout << "Saved analysis output: test_analysis_debug.png" << std::endl;
+
+            // Log results
+            std::cout << "Final Report:" << std::endl;
+            std::cout << "  Walls: " << proc.getWalls().size() << std::endl;
+            std::cout << "  Rooms: " << proc.getRooms().size() << std::endl;
+            for(const auto& r : proc.getRooms()) {
+                std::cout << "    - Room: " << r.label << " " << r.bounds << std::endl;
+            }
+
         } else {
-            std::cerr << "Failed to save processed output." << std::endl;
+            std::cerr << "Failed to save analysis output." << std::endl;
         }
     }
 }
