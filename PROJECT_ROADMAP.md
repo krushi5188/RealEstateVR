@@ -9,10 +9,12 @@
 ---
 
 ## Vision Statement
-To build the ultimate, high-performance, **100% offline Architectural Analysis & VR Simulation Suite**. We are moving away from browser constraints to harness the raw power of the GPU and local hardware using C++ and Qt. This tool will automatically convert 2D floor plans into 3D VR-ready environments.
+To build the ultimate, high-performance, **100% offline Architectural Analysis & VR/AR Simulation Suite**. We are moving away from browser constraints to harness the raw power of the GPU and local hardware using C++ and Qt. This tool will automatically convert 2D floor plans into 3D environments ready for **any AR Glasses**.
 
 **Key Strategic Directive:**
-All project outputs must be saved in a **Proprietary Binary Format (`.anvr`)**. This ensures user lock-in, as project files can only be opened and edited within our software ecosystem.
+1.  **Universal AR Support:** The software must work with **ANY AR Glasses** (Meta, Vive, XREAL, HoloLens) via **OpenXR**. This is the most critical feature.
+2.  **Proprietary Lock-in:** All project outputs must be saved in a **Proprietary Binary Format (`.anvr`)**.
+3.  **Future Mobile Expansion:** A standalone **Android AR Companion App** will be built to view `.anvr` files offline on mobile AR glasses (without a PC).
 
 ---
 
@@ -26,10 +28,10 @@ We are recreating the following features from the legacy WebApp:
     *   OCR Room Labeling (Tesseract).
     *   Procedural Roof Generation.
 
-2.  **Immersive "Desktop VR" Interaction:**
-    *   **First-Person Walk Mode:** WASD + Mouse navigation (replacing WebXR).
+2.  **Immersive Interaction (Desktop & AR):**
+    *   **Universal AR Mode:** Hardware-agnostic support for AR Glasses via OpenXR.
+    *   **First-Person Walk Mode:** WASD + Mouse navigation (Desktop fallback).
     *   **Orbit "God View":** Rotating around the model for inspection.
-    *   **Floor Teleportation:** Instantly jumping between levels.
 
 3.  **Advanced Analysis & Simulation (The "Brain"):**
     *   **Natural Light Analysis:** Simulating sun exposure (Raycasting).
@@ -52,7 +54,7 @@ We are recreating the following features from the legacy WebApp:
 *   **Goal:** Establish the native build environment, rendering, and camera control.
 *   **Tasks:**
     *   **1N.1:** Initialize `CMake` project structure (Qt6, OpenCV). ✅
-    *   **1N.2:** Implement `MainWindow` with `QOpenGLWidget`. ✅
+    *   **1N.2:** Implement `MainWindow` with `QOpenGLWidget` & "Apple-like" Styling. ✅
     *   **1N.3:** Implement Camera System (Orbit + FPS). ✅
     *   **1N.4:** Verify "Hello World" Rendering & Camera Movement. ✅
 
@@ -88,3 +90,21 @@ We are recreating the following features from the legacy WebApp:
     *   **5N.1:** Cost Estimator (BOM Calculation).
     *   **5N.2:** PDF Export (Blueprints).
     *   **5N.3:** Furniture Library.
+
+### **Phase 6N: OpenXR Integration (Universal AR)**
+*   **Status:** 📅 **PLANNED**
+*   **Goal:** Enable hardware-agnostic AR support.
+*   **Tasks:**
+    *   **6N.1:** Integrate `libopenxr` into CMake.
+    *   **6N.2:** Implement `OpenXRManager` to handle HMD connection.
+    *   **6N.3:** Render Stereo Views (Left/Right Eye) from `ViewportWidget`.
+    *   **6N.4:** Map OpenXR Controller inputs to Scene Interaction.
+
+### **Phase 7N: Android AR Companion App (Mobile)**
+*   **Status:** 📅 **PLANNED**
+*   **Goal:** Standalone viewer for `.anvr` files on Android AR Glasses.
+*   **Tech:** Qt for Android / OpenXR Mobile Loader (Snapdragon Spaces).
+*   **Tasks:**
+    *   **7N.1:** Port `ArchNative` Core to Android (ARM64).
+    *   **7N.2:** Implement Touch/Gaze input system.
+    *   **7N.3:** Optimize rendering for mobile GPUs (Vulkan).
