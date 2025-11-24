@@ -29,3 +29,9 @@ CMakeFiles/
 cmake_install.cmake
 Makefile
 ArchNative_autogen/
+
+# Temporary Test Artifacts (To be kept per user request)
+# test_output.png
+# test_cam_*.png
+# test_input_floor.png
+# test_processed.png

@@ -57,11 +57,11 @@ We are recreating the following features from the legacy WebApp:
     *   **1N.4:** Verify "Hello World" Rendering & Camera Movement. ✅
 
 ### **Phase 2N: The Engine (Image Analysis)**
-*   **Status:** 📅 **PLANNED**
+*   **Status:** 🚧 **IN PROGRESS**
 *   **Goal:** Port the Computer Vision logic to C++.
 *   **Tasks:**
-    *   **2N.1:** `ImageProcessor::load(path)` (OpenCV).
-    *   **2N.2:** Gap Detection (Windows/Doors) & Room Detection (Flood Fill).
+    *   **2N.1:** `ImageProcessor` Skeleton & Loading Logic. ✅ **DONE**
+    *   **2N.2:** Gap Detection (Windows/Doors) & Room Detection (Flood Fill). 🔄 **PENDING**
     *   **2N.3:** OCR Integration (Tesseract) for room labels.
     *   **2N.4:** Multi-Floor alignment logic.
 

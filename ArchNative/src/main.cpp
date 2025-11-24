@@ -1,6 +1,47 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include "UI/MainWindow.h"
+#include "Core/ImageProcessor.h"
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <QFile>
+#include <QTextStream>
+
+void loadStyleSheet(QApplication &app) {
+    QFile file("assets/styles/macos.qss");
+    if (file.open(QFile::ReadOnly | QFile::Text)) {
+        QTextStream stream(&file);
+        app.setStyleSheet(stream.readAll());
+        file.close();
+        std::cout << "Loaded Apple-like stylesheet." << std::endl;
+    } else {
+        std::cerr << "Warning: Could not load stylesheet from assets/styles/macos.qss" << std::endl;
+    }
+}
+
+void runImageProcTest() {
+    // 1. Generate Synthetic Floor Plan
+    // White background (255), Black walls (0)
+    cv::Mat synthetic = cv::Mat(200, 200, CV_8UC3, cv::Scalar(255, 255, 255));
+
+    // Draw a black rectangle (Wall)
+    cv::rectangle(synthetic, cv::Point(50, 50), cv::Point(150, 150), cv::Scalar(0, 0, 0), 5); // Thickness 5
+
+    std::string inputPath = "test_input_floor.png";
+    cv::imwrite(inputPath, synthetic);
+    std::cout << "Generated test input: " << inputPath << std::endl;
+
+    // 2. Load and Process
+    ImageProcessor proc;
+    if (proc.load(inputPath)) {
+        proc.process();
+        if (proc.saveDebug("test_processed.png")) {
+            std::cout << "Saved processed output: test_processed.png" << std::endl;
+        } else {
+            std::cerr << "Failed to save processed output." << std::endl;
+        }
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -26,10 +67,21 @@ int main(int argc, char *argv[])
     QCommandLineOption cameraTestOption("test-camera", "Run camera movement verification.");
     parser.addOption(cameraTestOption);
 
+    QCommandLineOption imgProcTestOption("test-image-proc", "Run Image Processor verification.");
+    parser.addOption(imgProcTestOption);
+
     parser.process(app);
 
     bool testMode = parser.isSet(testOption);
     bool cameraTestMode = parser.isSet(cameraTestOption);
+    bool imgProcTestMode = parser.isSet(imgProcTestOption);
+
+    if (imgProcTestMode) {
+        runImageProcTest();
+        return 0; // Exit after test (Headless)
+    }
+
+    loadStyleSheet(app);
 
     MainWindow window;
     window.resize(1024, 768);

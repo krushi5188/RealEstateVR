@@ -1,7 +1,7 @@
 # HANDOVER PROTOCOL: Operation Native Pivot
 
 **Date:** 2025-11-20
-**Status:** REFERENCE IMPLEMENTATION COMPLETE - READY FOR PORTING
+**Status:** IN PROGRESS (Phase 2N Started)
 **From:** Jules (Web Architect)
 **To:** Native Systems Engineer
 
@@ -17,7 +17,7 @@ The project stakeholders have mandated a complete architectural pivot. The exist
 
 **Strategic Requirement:** All project files must be saved in a **Proprietary Binary Format (`.anvr`)** to ensure ecosystem lock-in.
 
-## 2. Work Completed (Phase 1N)
+## 2. Work Completed
 The following files have been created/modified in this session. **All work is contained in `ArchNative/`.**
 
 *   **Build System:**
@@ -25,6 +25,7 @@ The following files have been created/modified in this session. **All work is co
 *   **Core Logic:**
     *   `ArchNative/src/main.cpp`: Entry point. Sets OpenGL Compatibility Profile. Handles CLI args.
     *   `ArchNative/src/Core/Camera.h` & `.cpp`: Implements **Orbit** (CAD) and **First-Person** (VR) camera modes.
+    *   `ArchNative/src/Core/ImageProcessor.h` & `.cpp`: **(NEW)** Skeleton implementation for loading and processing images using OpenCV.
 *   **User Interface:**
     *   `ArchNative/src/UI/MainWindow.h` & `.cpp`: Main application window. Handles screenshot verification logic.
     *   `ArchNative/src/UI/ViewportWidget.h` & `.cpp`: The 3D OpenGL drawing surface. Handles Mouse/Keyboard input.
@@ -48,8 +49,9 @@ We use **CMake** for building.
 A script `verify_headless.sh` is provided in the root. It compiles the `ArchNative` project and runs:
 1.  `./ArchNative --test-screenshot`: Verifies the OpenGL context works (draws a grid).
 2.  `./ArchNative --test-camera`: Verifies the Camera rotation logic.
+3.  `./ArchNative --test-image-proc`: **(NEW)** Verifies OpenCV image loading and basic thresholding.
 
-**Artifacts:** `test_output.png`, `test_cam_1.png`, `test_cam_2.png` are generated to visually confirm the state.
+**Artifacts:** `test_output.png`, `test_cam_*.png`, `test_input_floor.png`, `test_processed.png`.
 
 ## 5. Logic Migration Map (Future Phases)
 
@@ -77,4 +79,5 @@ You must port the logic from the current JS files to C++ classes.
 *   **Key Logic:** Natural Light (Raycasting), Circulation (Pathfinding), Acoustic/Biophilic Reports.
 
 ## 6. Immediate Next Steps
-1.  **Phase 2N Start:** Begin implementing `ImageProcessor` to load PNGs using OpenCV.
+1.  **Phase 2N Completion:** Implement the full `extractWallsFromBitmap` logic in `ImageProcessor.cpp` (Hough lines, Contours).
+2.  **Phase 3N Start:** Create `MeshGenerator` to convert wall vectors to OpenGL vertices.

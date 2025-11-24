@@ -21,6 +21,8 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/UI/ViewportWidget.h
     src/Core/Camera.cpp
     src/Core/Camera.h
+    src/Core/ImageProcessor.cpp
+    src/Core/ImageProcessor.h
 )
 
 target_link_libraries(ArchNative PRIVATE
@@ -30,3 +32,8 @@ target_link_libraries(ArchNative PRIVATE
     ${Tesseract_LIBRARIES}
 )
 target_include_directories(ArchNative PRIVATE ${Tesseract_INCLUDE_DIRS})
+
+# Copy assets to build directory
+add_custom_command(TARGET ArchNative POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets)

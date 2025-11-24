@@ -49,3 +49,16 @@ else
     echo "FAILURE: Camera screenshots missing."
     exit 1
 fi
+
+# Run verification (Image Processor)
+echo "Running Image Processor Verification..."
+xvfb-run -a ./ArchNative --test-image-proc
+
+if [ -f "test_processed.png" ]; then
+    echo "SUCCESS: Image processing verified."
+    mv test_input_floor.png ../../test_input_floor.png
+    mv test_processed.png ../../test_processed.png
+else
+    echo "FAILURE: Image processing output missing."
+    exit 1
+fi

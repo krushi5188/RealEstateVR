@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QVBoxLayout>
 #include "ViewportWidget.h"
 
 class MainWindow : public QMainWindow
