@@ -4,6 +4,7 @@
 ViewportWidget::ViewportWidget(QWidget *parent)
     : QOpenGLWidget(parent)
 {
+    setFocusPolicy(Qt::StrongFocus); // Enable keyboard events
 }
 
 ViewportWidget::~ViewportWidget()
@@ -14,17 +15,55 @@ void ViewportWidget::initializeGL()
 {
     initializeOpenGLFunctions();
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f); // Dark gray background
+    glEnable(GL_DEPTH_TEST);
 }
 
 void ViewportWidget::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
+
+    float aspect = float(w) / float(h ? h : 1);
+    m_projection.setToIdentity();
+    m_projection.perspective(45.0f, aspect, 0.1f, 1000.0f);
 }
 
 void ViewportWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(m_projection.constData());
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(m_camera.getViewMatrix().constData());
+
     drawGrid();
+}
+
+void ViewportWidget::mousePressEvent(QMouseEvent *event)
+{
+    m_lastMousePos = event->pos();
+}
+
+void ViewportWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    int dx = event->pos().x() - m_lastMousePos.x();
+    int dy = event->pos().y() - m_lastMousePos.y();
+
+    if (event->buttons() & Qt::RightButton) {
+        // Orbit Rotate
+        m_camera.rotate(-dx * 0.5f, -dy * 0.5f);
+        update();
+    }
+
+    m_lastMousePos = event->pos();
+}
+
+void ViewportWidget::wheelEvent(QWheelEvent *event)
+{
+    float delta = event->angleDelta().y() * 0.01f;
+    m_camera.zoom(delta);
+    update();
 }
 
 void ViewportWidget::drawGrid()

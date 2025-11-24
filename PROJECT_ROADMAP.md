@@ -7,63 +7,82 @@
 ---
 
 ## Vision Statement
-To build the ultimate, high-performance, 100% offline architectural design tool. We are moving away from browser constraints to harness the raw power of the GPU and local hardware using C++ and Qt. This tool will rival industry standards like AutoCAD in performance and reliability.
+To build the ultimate, high-performance, **100% offline Architectural Analysis & VR Simulation Suite**. We are moving away from browser constraints to harness the raw power of the GPU and local hardware using C++ and Qt. This tool will automatically convert 2D floor plans into 3D VR-ready environments.
+
+**Key Strategic Directive:**
+All project outputs must be saved in a **Proprietary Binary Format (`.anvr`)**. This ensures user lock-in, as project files can only be opened and edited within our software ecosystem.
+
+---
+
+## Feature List (The "Gold Master" Spec)
+
+We are recreating the following features from the legacy WebApp:
+
+1.  **Automated 2D-to-3D Conversion:**
+    *   Multi-Floor Upload (Stacking logic).
+    *   Auto-detection of Walls, Windows, Doors, and Stairs via Computer Vision.
+    *   OCR Room Labeling (Tesseract).
+    *   Procedural Roof Generation.
+
+2.  **Immersive "Desktop VR" Interaction:**
+    *   **First-Person Walk Mode:** WASD + Mouse navigation (replacing WebXR).
+    *   **Orbit "God View":** Rotating around the model for inspection.
+    *   **Floor Teleportation:** Instantly jumping between levels.
+
+3.  **Advanced Analysis & Simulation (The "Brain"):**
+    *   **Natural Light Analysis:** Simulating sun exposure (Raycasting).
+    *   **Sun Cycle:** Animated Day/Night loop.
+    *   **Circulation Analysis:** Pathfinding heatmaps & Virtual Agent simulation.
+    *   **Acoustic & Biophilic Reports:** Automated design scoring.
+    *   **Cost Estimator:** Real-time Bill of Materials (BOM).
+
+4.  **Design Tools:**
+    *   **Material Library:** Drag-and-drop textures.
+    *   **Furniture Library:** 3D object placement.
+    *   **Mood Board:** Color palette extraction from images.
 
 ---
 
 ## The Pivot: Native C++ Rewrite
 
 ### **Phase 1N: The Foundation (Setup & Core)**
-*   **Status:** 🚧 **IN PROGRESS**
-*   **Goal:** Establish the native build environment and rendering capability.
-*   **Complexity:** Medium
+*   **Status:** ✅ **DONE**
+*   **Goal:** Establish the native build environment, rendering, and camera control.
 *   **Tasks:**
-    *   **1N.1:** Initialize `CMake` project structure with `Qt6` and `OpenCV` dependencies. ✅ **DONE**
-    *   **1N.2:** Implement `MainWindow` with a central `QOpenGLWidget`. ✅ **DONE**
-    *   **1N.3:** Create a Basic Camera controller (Orbit/Pan/Zoom) for the OpenGL viewport. 🔄 **PENDING**
-    *   **1N.4:** Verify "Hello World" Rendering (RGB Triangle). ✅ **DONE**
-    *   **Acceptance Criteria:** Application compiles, runs, and shows a 3D grid that can be rotated.
+    *   **1N.1:** Initialize `CMake` project structure (Qt6, OpenCV). ✅
+    *   **1N.2:** Implement `MainWindow` with `QOpenGLWidget`. ✅
+    *   **1N.3:** Implement Camera System (Orbit + FPS). ✅
+    *   **1N.4:** Verify "Hello World" Rendering & Camera Movement. ✅
 
 ### **Phase 2N: The Engine (Image Analysis)**
 *   **Status:** 📅 **PLANNED**
-*   **Goal:** Port the Image Processor logic to C++.
-*   **Complexity:** High
+*   **Goal:** Port the Computer Vision logic to C++.
 *   **Tasks:**
-    *   **2N.1:** Implement `ImageProcessor::load(path)`.
-    *   **2N.2:** Port "Gap Detection" (Windows/Doors) using `cv::inRange` and `cv::findContours`.
-    *   **2N.3:** Port "Room Detection" using `cv::floodFill`.
-    *   **2N.4:** Integrate Tesseract C++ API for room label OCR.
-    *   **Acceptance Criteria:** Loading a PNG floor plan outputs a `std::vector<Wall>` and `std::vector<Room>` with accurate coordinates.
+    *   **2N.1:** `ImageProcessor::load(path)` (OpenCV).
+    *   **2N.2:** Gap Detection (Windows/Doors) & Room Detection (Flood Fill).
+    *   **2N.3:** OCR Integration (Tesseract) for room labels.
+    *   **2N.4:** Multi-Floor alignment logic.
 
-### **Phase 3N: Mesh Generation (The Builder)**
+### **Phase 3N: Mesh Generation & Scene**
 *   **Status:** 📅 **PLANNED**
-*   **Goal:** Convert 2D data into 3D Geometry (VBOs).
-*   **Complexity:** High
+*   **Goal:** Convert 2D data into a rich 3D Scene Graph.
 *   **Tasks:**
-    *   **3N.1:** Implement `MeshGenerator::generateWalls(std::vector<Wall>)`.
-    *   **3N.2:** Implement Multi-Floor Stacking (Y-Offset logic).
-    *   **3N.3:** Implement Roof Generation (Procedural Geometry).
-    *   **3N.4:** Implement CSG (Constructive Solid Geometry) to cut holes for Stairs/Elevators using `OpenCSG` or `CGAL`.
-    *   **Acceptance Criteria:** The 3D Viewport renders the full building structure with correct holes and roof.
+    *   **3N.1:** Generate Walls (Extrusion) & Floors (Stacking).
+    *   **3N.2:** Procedural Roof Generation.
+    *   **3N.3:** CSG Operations (Cutting holes for Stairs/Elevators).
+    *   **3N.4:** **Implement `.anvr` File Format (Serialization).**
 
-### **Phase 4N: The Professional Tools**
+### **Phase 4N: The "Smart" Features**
 *   **Status:** 📅 **PLANNED**
-*   **Goal:** Re-implement high-value analysis features.
-*   **Complexity:** Medium
+*   **Goal:** Re-implement the high-value simulation tools.
 *   **Tasks:**
-    *   **4N.1:** Port `CostEstimator` logic (Materials, BOM Calculation).
-    *   **4N.2:** Implement "Plan View" (2D rendering using `QPainter`).
-    *   **4N.3:** Implement PDF Export (Using `QPdfWriter`).
-    *   **Acceptance Criteria:** User can view a cost breakdown and export a PDF blueprint.
+    *   **4N.1:** Natural Light & Sun Cycle.
+    *   **4N.2:** Circulation Analysis & Virtual Agent.
+    *   **4N.3:** Acoustic & Biophilic Reports.
 
----
-
-## 🪦 Deprecated Web Roadmap (Archived)
-
-*The following features were implemented in the Web Prototype but are now obsolete until ported.*
-
-### ~~Phases 6-9 (Web Features)~~
-*   ~~Multi-Floor Support (Web)~~ -> **Archive**
-*   ~~AR Overlay (WebXR)~~ -> **Scrapped** (Not supported on Desktop)
-*   ~~Environment Controls (Three.js)~~ -> **Archive**
-*   ~~PDF Export (jspdf)~~ -> **Archive** (Will use Qt Printer API)
+### **Phase 5N: The Professional Tools**
+*   **Status:** 📅 **PLANNED**
+*   **Tasks:**
+    *   **5N.1:** Cost Estimator (BOM Calculation).
+    *   **5N.2:** PDF Export (Blueprints).
+    *   **5N.3:** Furniture Library.

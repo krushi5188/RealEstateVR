@@ -29,3 +29,14 @@ void MainWindow::captureScreenshot(const QString &filename)
     QImage screenshot = viewport->grabFramebuffer();
     screenshot.save(filename);
 }
+
+void MainWindow::runCameraTest()
+{
+    // Rotate camera programmatically
+    if (viewport) {
+        Camera* cam = viewport->getCamera();
+        cam->rotate(45.0f, 0.0f); // Yaw 45 degrees
+        viewport->repaint();
+        QApplication::processEvents();
+    }
+}

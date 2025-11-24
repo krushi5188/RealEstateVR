@@ -19,6 +19,8 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/UI/MainWindow.h
     src/UI/ViewportWidget.cpp
     src/UI/ViewportWidget.h
+    src/Core/Camera.cpp
+    src/Core/Camera.h
 )
 
 target_link_libraries(ArchNative PRIVATE

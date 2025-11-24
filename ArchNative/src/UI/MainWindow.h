@@ -13,6 +13,7 @@ public:
     ~MainWindow();
 
     void captureScreenshot(const QString &filename);
+    void runCameraTest();
 
 private:
     ViewportWidget *viewport;

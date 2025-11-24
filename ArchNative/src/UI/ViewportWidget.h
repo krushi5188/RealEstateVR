@@ -3,6 +3,9 @@
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
+#include <QMouseEvent>
+#include <QKeyEvent>
+#include "../Core/Camera.h"
 
 class ViewportWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -12,13 +15,24 @@ public:
     ViewportWidget(QWidget *parent = nullptr);
     ~ViewportWidget();
 
+    Camera* getCamera() { return &m_camera; }
+
 protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;
 
+    // Input Events
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
+
 private:
     void drawGrid();
+
+    Camera m_camera;
+    QPoint m_lastMousePos;
+    QMatrix4x4 m_projection;
 };
 
 #endif // VIEWPORTWIDGET_H
