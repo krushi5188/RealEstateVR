@@ -4,6 +4,8 @@
 **The Web/JS Architecture (Phases 1-9) has been DEPRECATED.**
 **The project is shifting to a Native C++ Architecture.**
 
+**IMPORTANT:** The existing `client/` and `server/` folders are **READ-ONLY References**. Do not modify them. All new work happens in `ArchNative/`.
+
 ---
 
 ## Vision Statement

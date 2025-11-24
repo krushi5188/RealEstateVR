@@ -5,6 +5,11 @@
 **From:** Jules (Web Architect)
 **To:** Native Systems Engineer
 
+## ⚠️ CRITICAL WARNING: FILE SAFETY ⚠️
+*   **WORKING DIRECTORY:** You must ONLY work inside the `ArchNative/` directory.
+*   **DO NOT TOUCH:** The `client/` and `server/` directories are the **Gold Master Reference**. They contain the legacy WebApp code which must remain **pristine** and **unmodified**.
+*   **DO NOT DELETE:** Never delete the legacy code. We need it to reverse-engineer the simulation logic.
+
 ## 1. Executive Summary
 The project stakeholders have mandated a complete architectural pivot. The existing Web Stack (React/Node.js/Three.js) is to be **abandoned** in favor of a high-performance, 100% offline, **Native C++ Application**.
 
@@ -12,11 +17,19 @@ The project stakeholders have mandated a complete architectural pivot. The exist
 
 **Strategic Requirement:** All project files must be saved in a **Proprietary Binary Format (`.anvr`)** to ensure ecosystem lock-in.
 
-The current JS codebase (`client/`, `server/`) is the **Gold Master Reference**.
+## 2. Work Completed (Phase 1N)
+The following files have been created/modified in this session. **All work is contained in `ArchNative/`.**
 
-## 2. The New Architecture (C++ Stack)
+*   **Build System:**
+    *   `ArchNative/CMakeLists.txt`: Configured for Qt6, OpenCV, Tesseract, and macOS Bundle support.
+*   **Core Logic:**
+    *   `ArchNative/src/main.cpp`: Entry point. Sets OpenGL Compatibility Profile. Handles CLI args.
+    *   `ArchNative/src/Core/Camera.h` & `.cpp`: Implements **Orbit** (CAD) and **First-Person** (VR) camera modes.
+*   **User Interface:**
+    *   `ArchNative/src/UI/MainWindow.h` & `.cpp`: Main application window. Handles screenshot verification logic.
+    *   `ArchNative/src/UI/ViewportWidget.h` & `.cpp`: The 3D OpenGL drawing surface. Handles Mouse/Keyboard input.
 
-You are building a desktop application for Windows and macOS.
+## 3. The New Architecture (C++ Stack)
 
 | Component | Old Stack (JS) | New Stack (C++) | Rationale |
 | :--- | :--- | :--- | :--- |
@@ -28,32 +41,15 @@ You are building a desktop application for Windows and macOS.
 | **Analysis Logic** | JS Utils (Light, Sound) | **C++ Simulation Engines** | High-performance raycasting/pathfinding. |
 | **File Format** | JSON / GLTF | **Binary Serialization (`.anvr`)** | Proprietary format for IP protection. |
 
-## 3. Build & Verification
-We use **CMake** for building. The project is located in `ArchNative/`.
-
-### macOS Compatibility
-*   `CMakeLists.txt` includes `MACOSX_BUNDLE`.
-*   `main.cpp` requests `QSurfaceFormat::CompatibilityProfile` (v2.1).
+## 4. Build & Verification
+We use **CMake** for building.
 
 ### Headless Verification
-*   `./verify_headless.sh` runs:
-    *   Standard Render Test (`--test-screenshot`)
-    *   Camera Rotation Test (`--test-camera`)
+A script `verify_headless.sh` is provided in the root. It compiles the `ArchNative` project and runs:
+1.  `./ArchNative --test-screenshot`: Verifies the OpenGL context works (draws a grid).
+2.  `./ArchNative --test-camera`: Verifies the Camera rotation logic.
 
-## 4. Current C++ Project Structure (Phase 1N)
-
-```
-ArchNative/
-├── CMakeLists.txt              # Master build script
-├── src/
-│   ├── main.cpp                # Entry point (Test mode logic)
-│   ├── Core/
-│   │   ├── Project.h           # Data Model
-│   │   └── Camera.h/cpp        # Orbit & FPS Camera Logic
-│   ├── UI/
-│   │   ├── MainWindow.h/cpp    # Main GUI
-│   │   └── ViewportWidget.h/cpp # OpenGL Renderer + Input Handling
-```
+**Artifacts:** `test_output.png`, `test_cam_1.png`, `test_cam_2.png` are generated to visually confirm the state.
 
 ## 5. Logic Migration Map (Future Phases)
 
