@@ -26,6 +26,8 @@ bool Project::addFloor(const std::string& imagePath, const std::string& floorNam
     // Copy results to the Floor object
     newFloor->walls = m_processor.getWalls();
     newFloor->rooms = m_processor.getRooms();
+    newFloor->windows = m_processor.getWindows();
+    newFloor->doors = m_processor.getDoors();
 
     m_floors.push_back(newFloor);
     return true;

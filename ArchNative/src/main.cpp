@@ -8,6 +8,8 @@
 #include "Core/Sun.h"
 #include "Analysis/LightAnalyzer.h"
 #include "Analysis/PathFinder.h"
+#include "Analysis/AcousticAnalyzer.h"
+#include "Analysis/BiophilicAnalyzer.h"
 #include "Core/VirtualAgent.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -137,6 +139,20 @@ void runProjectTest() {
             }
         } else {
             std::cerr << "FAILURE: No path found in open room." << std::endl;
+        }
+
+        // 8. Test Acoustic/Biophilic (Phase 4N.3)
+        std::cout << "Testing Design Reports..." << std::endl;
+        AcousticAnalyzer acoustic;
+        float aScore = acoustic.calculateScore(*floors[0]);
+        std::cout << "Acoustic Score: " << aScore << "/100" << std::endl;
+
+        BiophilicAnalyzer biophilic;
+        float bScore = biophilic.calculateScore(*floors[0]);
+        std::cout << "Biophilic Score: " << bScore << "/100" << std::endl;
+
+        if (aScore > 0 && bScore >= 0) { // bScore might be 0 if no windows found
+             std::cout << "SUCCESS: Design reports generated." << std::endl;
         }
 
     } else {

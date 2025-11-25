@@ -39,6 +39,10 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Analysis/PathFinder.h
     src/Core/VirtualAgent.cpp
     src/Core/VirtualAgent.h
+    src/Analysis/AcousticAnalyzer.cpp
+    src/Analysis/AcousticAnalyzer.h
+    src/Analysis/BiophilicAnalyzer.cpp
+    src/Analysis/BiophilicAnalyzer.h
 )
 
 target_link_libraries(ArchNative PRIVATE

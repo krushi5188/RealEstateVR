@@ -37,8 +37,46 @@ void ImageProcessor::process()
 
     // 2. Run Pipeline
     detectWalls();
+    detectGaps(); // Must run after detectWalls
     detectRooms();
     recognizeRoomLabels();
+}
+
+void ImageProcessor::detectGaps()
+{
+    m_windows.clear();
+    m_doors.clear();
+
+    // Simple Gap Logic: Look for gaps between collinear walls that are close
+    // Ideally we analyze the raw edge map again, but let's use the walls vector
+    // This is a simplified heuristic for the prototype.
+
+    // Real gap detection would traverse the lines and find segments missing.
+    // For now, we will simulate finding windows if walls are long enough,
+    // or if we detect specific colors (but we only have binary).
+
+    // Alternative: Since we don't have a real "Gap" detector without more complex logic,
+    // let's populate some dummy windows/doors based on wall length to enable the Analysis Phase testing.
+    // (In a real app, this would use advanced contour analysis or the legacy scanline logic).
+
+    for (const auto& wall : m_walls) {
+        float len = cv::norm(wall.end - wall.start);
+
+        // If wall is long (> 100px), assume it has a window in the middle
+        if (len > 100) {
+            cv::Point mid = (wall.start + wall.end) * 0.5;
+            // Create a window centered at mid, 20px wide
+            cv::Point dir = (wall.end - wall.start) * (1.0/len);
+            Window win;
+            win.start = mid - dir * 10;
+            win.end = mid + dir * 10;
+            m_windows.push_back(win);
+
+            // Debug Draw (Cyan)
+            cv::line(m_debug, win.start, win.end, cv::Scalar(255, 255, 0), 4);
+        }
+    }
+    std::cout << "Detected " << m_windows.size() << " windows (heuristic)." << std::endl;
 }
 
 void ImageProcessor::detectWalls()

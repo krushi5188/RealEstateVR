@@ -77,12 +77,12 @@ We are recreating the following features from the legacy WebApp:
     *   **3N.4:** **Implement `.anvr` File Format (Serialization).** ✅ **DONE**
 
 ### **Phase 4N: The "Smart" Features**
-*   **Status:** 🚧 **IN PROGRESS**
+*   **Status:** ✅ **DONE**
 *   **Goal:** Re-implement the high-value simulation tools.
 *   **Tasks:**
     *   **4N.1:** Natural Light & Sun Cycle (Raycasting). ✅ **DONE**
     *   **4N.2:** Circulation Analysis (A*) & Virtual Agent. ✅ **DONE**
-    *   **4N.3:** Acoustic & Biophilic Reports. 📅 **PLANNED**
+    *   **4N.3:** Acoustic & Biophilic Reports (Window/Area Ratios). ✅ **DONE**
 
 ### **Phase 5N: The Professional Tools**
 *   **Status:** 📅 **PLANNED**

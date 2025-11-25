@@ -17,6 +17,8 @@ public:
     // Data detected by ImageProcessor
     std::vector<Wall> walls;
     std::vector<Room> rooms;
+    std::vector<Window> windows;
+    std::vector<Door> doors;
 
 private:
     int m_level;        // 0 = Ground, 1 = First Floor, etc.
