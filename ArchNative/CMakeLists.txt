@@ -31,6 +31,10 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Core/Mesh.h
     src/Core/Serializer.cpp
     src/Core/Serializer.h
+    src/Core/Sun.cpp
+    src/Core/Sun.h
+    src/Analysis/LightAnalyzer.cpp
+    src/Analysis/LightAnalyzer.h
 )
 
 target_link_libraries(ArchNative PRIVATE

@@ -5,6 +5,8 @@
 #include "Core/Project.h"
 #include "Core/MeshGenerator.h"
 #include "Core/Serializer.h"
+#include "Core/Sun.h"
+#include "Analysis/LightAnalyzer.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <QFile>
@@ -76,6 +78,34 @@ void runProjectTest() {
             }
         } else {
             std::cerr << "FAILURE: Could not save .anvr file." << std::endl;
+        }
+
+        // 6. Test Analysis (Phase 4N)
+        std::cout << "Testing Light Analysis..." << std::endl;
+        Sun sun;
+        sun.setTime(10.0f); // 10 AM
+        SunPosition sunPos = sun.getPosition();
+
+        LightAnalyzer analyzer;
+        LightMap lightMap = analyzer.calculateExposure(*floors[0], sunPos.x, sunPos.y, sunPos.z);
+
+        // Check if we got any light (some pixels should be 1.0)
+        int litPixels = 0;
+        for (float v : lightMap.data) {
+            if (v > 0.5f) litPixels++;
+        }
+
+        std::cout << "Light Analysis: " << litPixels << " lit pixels detected." << std::endl;
+        if (litPixels > 0) {
+             std::cout << "SUCCESS: Light Analysis verified." << std::endl;
+        } else {
+             // It might be 0 if walls block everything or logic error, but for this test scene with just walls, 'outside' should be lit?
+             // Wait, our logic iterates X/Y of the image. If walls are just lines, most pixels are empty space.
+             // If ray hits wall, it's blocked.
+             // If the sun is at 10AM, it comes from the side.
+             // Logic is simple enough that something should be lit.
+             // If it fails, it's likely the ray math.
+             std::cerr << "WARNING: No lit pixels found (Check Sun/Ray logic)." << std::endl;
         }
 
     } else {

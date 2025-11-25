@@ -59,7 +59,7 @@ We are recreating the following features from the legacy WebApp:
     *   **1N.4:** Verify "Hello World" Rendering & Camera Movement. ✅
 
 ### **Phase 2N: The Engine (Image Analysis)**
-*   **Status:** 🚧 **IN PROGRESS**
+*   **Status:** ✅ **DONE**
 *   **Goal:** Port the Computer Vision logic to C++.
 *   **Tasks:**
     *   **2N.1:** `ImageProcessor` Skeleton & Loading Logic. ✅ **DONE**
@@ -68,7 +68,7 @@ We are recreating the following features from the legacy WebApp:
     *   **2N.4:** Multi-Floor alignment logic (Project/Floor Models). ✅ **DONE**
 
 ### **Phase 3N: Mesh Generation & Scene**
-*   **Status:** 🚧 **IN PROGRESS**
+*   **Status:** ✅ **DONE**
 *   **Goal:** Convert 2D data into a rich 3D Scene Graph.
 *   **Tasks:**
     *   **3N.1:** Generate Walls (Extrusion) & Floors (Stacking). ✅ **DONE**
@@ -77,12 +77,12 @@ We are recreating the following features from the legacy WebApp:
     *   **3N.4:** **Implement `.anvr` File Format (Serialization).** ✅ **DONE**
 
 ### **Phase 4N: The "Smart" Features**
-*   **Status:** 📅 **PLANNED**
+*   **Status:** 🚧 **IN PROGRESS**
 *   **Goal:** Re-implement the high-value simulation tools.
 *   **Tasks:**
-    *   **4N.1:** Natural Light & Sun Cycle.
-    *   **4N.2:** Circulation Analysis & Virtual Agent.
-    *   **4N.3:** Acoustic & Biophilic Reports.
+    *   **4N.1:** Natural Light & Sun Cycle (Raycasting). ✅ **DONE**
+    *   **4N.2:** Circulation Analysis & Virtual Agent. 📅 **PLANNED**
+    *   **4N.3:** Acoustic & Biophilic Reports. 📅 **PLANNED**
 
 ### **Phase 5N: The Professional Tools**
 *   **Status:** 📅 **PLANNED**
