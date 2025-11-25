@@ -81,7 +81,7 @@ We are recreating the following features from the legacy WebApp:
 *   **Goal:** Re-implement the high-value simulation tools.
 *   **Tasks:**
     *   **4N.1:** Natural Light & Sun Cycle (Raycasting). ✅ **DONE**
-    *   **4N.2:** Circulation Analysis & Virtual Agent. 📅 **PLANNED**
+    *   **4N.2:** Circulation Analysis (A*) & Virtual Agent. ✅ **DONE**
     *   **4N.3:** Acoustic & Biophilic Reports. 📅 **PLANNED**
 
 ### **Phase 5N: The Professional Tools**

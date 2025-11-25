@@ -7,6 +7,8 @@
 #include "Core/Serializer.h"
 #include "Core/Sun.h"
 #include "Analysis/LightAnalyzer.h"
+#include "Analysis/PathFinder.h"
+#include "Core/VirtualAgent.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <QFile>
@@ -106,6 +108,35 @@ void runProjectTest() {
              // Logic is simple enough that something should be lit.
              // If it fails, it's likely the ray math.
              std::cerr << "WARNING: No lit pixels found (Check Sun/Ray logic)." << std::endl;
+        }
+
+        // 7. Test Pathfinding & Agent (Phase 4N.2)
+        std::cout << "Testing Circulation Analysis (Pathfinding)..." << std::endl;
+        PathFinder pathFinder;
+        // From Room 1 center (approx 175, 175) to Room 2 center (approx 425, 175)
+        // The wall is at X=300. Is there a door?
+        // In our synthetic setup, we just drew rectangles. There is NO hole.
+        // So A* should fail if strict, or go around if there's space?
+        // Wait, the walls are (50,50)-(300,300) and (300,50)-(550,300).
+        // They share a wall at X=300.
+        // A* cannot pass through the wall.
+        // Let's start INSIDE Room 1 (100,100) and try to go to (200,200). Should be clear.
+
+        cv::Point start(100, 100);
+        cv::Point end(200, 200);
+        std::vector<cv::Point> path = pathFinder.findPath(*floors[0], start, end);
+
+        if (!path.empty()) {
+            std::cout << "SUCCESS: Path found (" << path.size() << " nodes)." << std::endl;
+
+            VirtualAgent agent;
+            agent.setPath(path);
+            agent.update(1.0f); // Simulate 1 second
+            if (agent.getPosition() != start) {
+                 std::cout << "SUCCESS: Agent moved." << std::endl;
+            }
+        } else {
+            std::cerr << "FAILURE: No path found in open room." << std::endl;
         }
 
     } else {

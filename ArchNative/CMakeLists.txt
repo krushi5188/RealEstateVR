@@ -35,6 +35,10 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Core/Sun.h
     src/Analysis/LightAnalyzer.cpp
     src/Analysis/LightAnalyzer.h
+    src/Analysis/PathFinder.cpp
+    src/Analysis/PathFinder.h
+    src/Core/VirtualAgent.cpp
+    src/Core/VirtualAgent.h
 )
 
 target_link_libraries(ArchNative PRIVATE
