@@ -1,7 +1,7 @@
 # HANDOVER PROTOCOL: Operation Native Pivot
 
 **Date:** 2025-11-20
-**Status:** IN PROGRESS (Phase 4N Complete)
+**Status:** IN PROGRESS (Phase 5N Active)
 **From:** Jules (Web Architect)
 **To:** Native Systems Engineer
 
@@ -39,8 +39,9 @@ The following files have been created/modified in this session. **All work is co
 *   **Analysis Modules:**
     *   `ArchNative/src/Analysis/LightAnalyzer.h` & `.cpp`: 2D Raycasting for light heatmaps.
     *   `ArchNative/src/Analysis/PathFinder.h` & `.cpp`: A* Pathfinding algorithm.
-    *   `ArchNative/src/Analysis/AcousticAnalyzer.h` & `.cpp`: **(NEW)** Acoustic scoring logic.
-    *   `ArchNative/src/Analysis/BiophilicAnalyzer.h` & `.cpp`: **(NEW)** Window-to-Wall ratio analysis.
+    *   `ArchNative/src/Analysis/AcousticAnalyzer.h` & `.cpp`: Acoustic scoring logic.
+    *   `ArchNative/src/Analysis/BiophilicAnalyzer.h` & `.cpp`: Window-to-Wall ratio analysis.
+    *   `ArchNative/src/Analysis/CostEstimator.h` & `.cpp`: **(NEW)** BOM Calculator (Walls/Windows/Doors).
 *   **User Interface:**
     *   `ArchNative/src/UI/MainWindow.h` & `.cpp`: Main application window with Toolbar and Apple-like styling.
     *   `ArchNative/src/UI/ViewportWidget.h` & `.cpp`: The 3D OpenGL drawing surface. Handles Mouse/Keyboard/Mesh rendering.
@@ -66,7 +67,7 @@ We use **CMake** for building.
 A script `verify_headless.sh` is provided in the root. It compiles the `ArchNative` project and runs:
 1.  `./ArchNative --test-screenshot`: Verifies the OpenGL context works (draws a grid).
 2.  `./ArchNative --test-camera`: Verifies the Camera rotation logic.
-3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen, Serialization, Light Analysis, Pathfinding, and Reports.
+3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen, Serialization, Light Analysis, Pathfinding, Reports, and **Cost Estimation**.
 
 **Artifacts:** `test_output.png`, `test_cam_*.png`, `test_floor_*.png`, `test_project.anvr`.
 **Note:** These artifacts are intentionally committed to the repo per user request.
@@ -98,5 +99,5 @@ You must port the logic from the current JS files to C++ classes.
 *   **Key Logic:** Natural Light (Raycasting), Circulation (Pathfinding), Acoustic/Biophilic Reports.
 
 ## 6. Immediate Next Steps
-1.  **Phase 5N Start:** Implement Cost Estimator (`CostEstimator.h`) and PDF Export.
+1.  **Phase 5N Completion:** Implement PDF Export (`QPdfWriter`).
 2.  **Phase 6N Preparation:** Research `libopenxr-dev` integration.

@@ -43,6 +43,8 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Analysis/AcousticAnalyzer.h
     src/Analysis/BiophilicAnalyzer.cpp
     src/Analysis/BiophilicAnalyzer.h
+    src/Analysis/CostEstimator.cpp
+    src/Analysis/CostEstimator.h
 )
 
 target_link_libraries(ArchNative PRIVATE

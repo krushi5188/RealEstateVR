@@ -10,6 +10,7 @@
 #include "Analysis/PathFinder.h"
 #include "Analysis/AcousticAnalyzer.h"
 #include "Analysis/BiophilicAnalyzer.h"
+#include "Analysis/CostEstimator.h"
 #include "Core/VirtualAgent.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -153,6 +154,20 @@ void runProjectTest() {
 
         if (aScore > 0 && bScore >= 0) { // bScore might be 0 if no windows found
              std::cout << "SUCCESS: Design reports generated." << std::endl;
+        }
+
+        // 9. Test Cost Estimator (Phase 5N.1)
+        std::cout << "Testing Cost Estimator..." << std::endl;
+        CostEstimator estimator;
+        CostReport costReport = estimator.calculate(project);
+        std::cout << "Total Project Cost: $" << costReport.totalCost << std::endl;
+        std::cout << "  - Walls: $" << costReport.breakdown["Walls"] << std::endl;
+        std::cout << "  - Windows: $" << costReport.breakdown["Windows"] << std::endl;
+
+        if (costReport.totalCost > 0) {
+            std::cout << "SUCCESS: Cost estimation complete." << std::endl;
+        } else {
+            std::cerr << "FAILURE: Cost is zero." << std::endl;
         }
 
     } else {

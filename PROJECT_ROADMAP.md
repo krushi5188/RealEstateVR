@@ -85,10 +85,10 @@ We are recreating the following features from the legacy WebApp:
     *   **4N.3:** Acoustic & Biophilic Reports (Window/Area Ratios). ✅ **DONE**
 
 ### **Phase 5N: The Professional Tools**
-*   **Status:** 📅 **PLANNED**
+*   **Status:** 🚧 **IN PROGRESS**
 *   **Tasks:**
-    *   **5N.1:** Cost Estimator (BOM Calculation).
-    *   **5N.2:** PDF Export (Blueprints).
+    *   **5N.1:** Cost Estimator (BOM Calculation). ✅ **DONE**
+    *   **5N.2:** PDF Export (Blueprints). 📅 **PLANNED**
     *   **5N.3:** Furniture Library.
 
 ### **Phase 6N: OpenXR Integration (Universal AR)**
