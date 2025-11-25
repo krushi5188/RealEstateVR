@@ -16,6 +16,9 @@ public:
     // Adds a new floor from an image file
     bool addFloor(const std::string& imagePath, const std::string& floorName);
 
+    // Adds an existing floor object (for loading)
+    void addExistingFloor(std::shared_ptr<Floor> floor) { m_floors.push_back(floor); }
+
     const std::vector<std::shared_ptr<Floor>>& getFloors() const { return m_floors; }
 
     // Future: saveToANVR, loadFromANVR

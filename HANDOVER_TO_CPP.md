@@ -1,7 +1,7 @@
 # HANDOVER PROTOCOL: Operation Native Pivot
 
 **Date:** 2025-11-20
-**Status:** IN PROGRESS (Phase 2N Complete)
+**Status:** IN PROGRESS (Phase 3N Active)
 **From:** Jules (Web Architect)
 **To:** Native Systems Engineer
 
@@ -30,11 +30,13 @@ The following files have been created/modified in this session. **All work is co
     *   `ArchNative/src/main.cpp`: Entry point. Sets OpenGL Compatibility Profile. Handles CLI args. Loads QSS.
     *   `ArchNative/src/Core/Camera.h` & `.cpp`: Implements **Orbit** (CAD) and **First-Person** (VR) camera modes.
     *   `ArchNative/src/Core/ImageProcessor.h` & `.cpp`: Implements `extractWallsFromBitmap` (HoughLines) and OCR (Tesseract).
-    *   `ArchNative/src/Core/Project.h` & `.cpp`: **(NEW)** Manages multi-floor projects.
-    *   `ArchNative/src/Core/Floor.h`: **(NEW)** Data model for a single floor level.
+    *   `ArchNative/src/Core/Project.h` & `.cpp`: Manages multi-floor projects.
+    *   `ArchNative/src/Core/Floor.h`: Data model for a single floor level.
+    *   `ArchNative/src/Core/MeshGenerator.h` & `.cpp`: **(NEW)** Converts Project data to 3D Mesh geometry.
+    *   `ArchNative/src/Core/Serializer.h` & `.cpp`: **(NEW)** Saves/Loads `.anvr` proprietary binary files.
 *   **User Interface:**
     *   `ArchNative/src/UI/MainWindow.h` & `.cpp`: Main application window with Toolbar and Apple-like styling.
-    *   `ArchNative/src/UI/ViewportWidget.h` & `.cpp`: The 3D OpenGL drawing surface. Handles Mouse/Keyboard input.
+    *   `ArchNative/src/UI/ViewportWidget.h` & `.cpp`: The 3D OpenGL drawing surface. Handles Mouse/Keyboard/Mesh rendering.
     *   `ArchNative/assets/styles/macos.qss`: The Stylesheet defining the "Apple-like" look.
 
 ## 3. The New Architecture (C++ Stack)
@@ -57,9 +59,9 @@ We use **CMake** for building.
 A script `verify_headless.sh` is provided in the root. It compiles the `ArchNative` project and runs:
 1.  `./ArchNative --test-screenshot`: Verifies the OpenGL context works (draws a grid).
 2.  `./ArchNative --test-camera`: Verifies the Camera rotation logic.
-3.  `./ArchNative --test-project`: **(NEW)** Verifies loading multiple floors, image processing, and data storage.
+3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen, and Serialization.
 
-**Artifacts:** `test_output.png`, `test_cam_*.png`, `test_floor_*.png`.
+**Artifacts:** `test_output.png`, `test_cam_*.png`, `test_floor_*.png`, `test_project.anvr`.
 **Note:** These artifacts are intentionally committed to the repo per user request.
 
 ## 5. Logic Migration Map (Future Phases)
@@ -89,5 +91,5 @@ You must port the logic from the current JS files to C++ classes.
 *   **Key Logic:** Natural Light (Raycasting), Circulation (Pathfinding), Acoustic/Biophilic Reports.
 
 ## 6. Immediate Next Steps
-1.  **Phase 3N Start:** Create `MeshGenerator` to convert the `Project` data into 3D geometry (vertices/indices).
-2.  **Phase 3N Serialization:** Implement `.anvr` saving/loading.
+1.  **Phase 3N Completion:** Implement CSG operations for holes (Windows/Doors).
+2.  **Phase 6N Preparation:** Research `libopenxr-dev` integration.

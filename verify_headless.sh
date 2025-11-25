@@ -59,6 +59,14 @@ if [ -f "test_floor_ground.png" ] && [ -f "test_floor_one.png" ]; then
     echo "SUCCESS: Multi-floor Project verified."
     mv test_floor_ground.png ../../test_floor_ground.png
     mv test_floor_one.png ../../test_floor_one.png
+
+    if [ -f "test_project.anvr" ]; then
+       echo "SUCCESS: Serialization verified (.anvr created)."
+       mv test_project.anvr ../../test_project.anvr
+    else
+       echo "FAILURE: Serialization failed (.anvr missing)."
+       exit 1
+    fi
 else
     echo "FAILURE: Project verification failed (missing artifacts)."
     exit 1

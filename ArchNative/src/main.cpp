@@ -4,6 +4,7 @@
 #include "Core/ImageProcessor.h"
 #include "Core/Project.h"
 #include "Core/MeshGenerator.h"
+#include "Core/Serializer.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <QFile>
@@ -58,6 +59,23 @@ void runProjectTest() {
              std::cout << "SUCCESS: Mesh generation verified." << std::endl;
         } else {
              std::cerr << "FAILURE: Mesh is empty." << std::endl;
+        }
+
+        // 5. Test Serialization (Phase 3N.4)
+        std::cout << "Testing Serialization (.anvr)..." << std::endl;
+        if (Serializer::save(project, "test_project.anvr")) {
+            Project loadedProject;
+            if (Serializer::load(loadedProject, "test_project.anvr")) {
+                if (loadedProject.getFloors().size() == 2) {
+                    std::cout << "SUCCESS: Project loaded correctly." << std::endl;
+                } else {
+                    std::cerr << "FAILURE: Loaded project floor count mismatch." << std::endl;
+                }
+            } else {
+                std::cerr << "FAILURE: Could not load .anvr file." << std::endl;
+            }
+        } else {
+            std::cerr << "FAILURE: Could not save .anvr file." << std::endl;
         }
 
     } else {

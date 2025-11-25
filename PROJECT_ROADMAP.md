@@ -68,13 +68,13 @@ We are recreating the following features from the legacy WebApp:
     *   **2N.4:** Multi-Floor alignment logic (Project/Floor Models). ✅ **DONE**
 
 ### **Phase 3N: Mesh Generation & Scene**
-*   **Status:** 📅 **PLANNED**
+*   **Status:** 🚧 **IN PROGRESS**
 *   **Goal:** Convert 2D data into a rich 3D Scene Graph.
 *   **Tasks:**
-    *   **3N.1:** Generate Walls (Extrusion) & Floors (Stacking).
-    *   **3N.2:** Procedural Roof Generation.
-    *   **3N.3:** CSG Operations (Cutting holes for Stairs/Elevators).
-    *   **3N.4:** **Implement `.anvr` File Format (Serialization).**
+    *   **3N.1:** Generate Walls (Extrusion) & Floors (Stacking). ✅ **DONE**
+    *   **3N.2:** Procedural Roof Generation. 📅 **PLANNED**
+    *   **3N.3:** CSG Operations (Cutting holes for Stairs/Elevators). 📅 **PLANNED**
+    *   **3N.4:** **Implement `.anvr` File Format (Serialization).** ✅ **DONE**
 
 ### **Phase 4N: The "Smart" Features**
 *   **Status:** 📅 **PLANNED**
