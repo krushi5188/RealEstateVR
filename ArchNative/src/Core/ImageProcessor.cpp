@@ -67,7 +67,7 @@ void ImageProcessor::detectGaps()
             cv::Point mid = (wall.start + wall.end) * 0.5;
             // Create a window centered at mid, 20px wide
             cv::Point dir = (wall.end - wall.start) * (1.0/len);
-            Window win;
+            ArchWindow win;
             win.start = mid - dir * 10;
             win.end = mid + dir * 10;
             m_windows.push_back(win);

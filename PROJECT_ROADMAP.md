@@ -92,12 +92,12 @@ We are recreating the following features from the legacy WebApp:
     *   **5N.3:** Furniture Library.
 
 ### **Phase 6N: OpenXR Integration (Universal AR)**
-*   **Status:** 📅 **PLANNED**
+*   **Status:** 🚧 **IN PROGRESS**
 *   **Goal:** Enable hardware-agnostic AR support.
 *   **Tasks:**
-    *   **6N.1:** Integrate `libopenxr` into CMake.
-    *   **6N.2:** Implement `OpenXRManager` to handle HMD connection.
-    *   **6N.3:** Render Stereo Views (Left/Right Eye) from `ViewportWidget`.
+    *   **6N.1:** Integrate `libopenxr` into CMake. ✅ **DONE**
+    *   **6N.2:** Implement `OpenXRManager` to handle HMD connection. ✅ **DONE** (Skeleton)
+    *   **6N.3:** Render Stereo Views (Left/Right Eye) from `ViewportWidget`. 📅 **PLANNED**
     *   **6N.4:** Map OpenXR Controller inputs to Scene Interaction.
 
 ### **Phase 7N: Android AR Companion App (Mobile)**

@@ -18,13 +18,13 @@ struct Room {
     float getArea() const { return bounds.width * bounds.height; } // Approx
 };
 
-struct Window {
+struct ArchWindow {
     cv::Point start;
     cv::Point end;
     float width() const { return cv::norm(end - start); }
 };
 
-struct Door {
+struct ArchDoor {
     cv::Point start;
     cv::Point end;
     float width() const { return cv::norm(end - start); }
@@ -52,8 +52,8 @@ public:
     int getHeight() const;
     const std::vector<Wall>& getWalls() const { return m_walls; }
     const std::vector<Room>& getRooms() const { return m_rooms; }
-    const std::vector<Window>& getWindows() const { return m_windows; }
-    const std::vector<Door>& getDoors() const { return m_doors; }
+    const std::vector<ArchWindow>& getWindows() const { return m_windows; }
+    const std::vector<ArchDoor>& getDoors() const { return m_doors; }
 
 private:
     cv::Mat m_image;      // Original loaded image
@@ -62,8 +62,8 @@ private:
 
     std::vector<Wall> m_walls;
     std::vector<Room> m_rooms;
-    std::vector<Window> m_windows;
-    std::vector<Door> m_doors;
+    std::vector<ArchWindow> m_windows;
+    std::vector<ArchDoor> m_doors;
 };
 
 #endif // IMAGEPROCESSOR_H

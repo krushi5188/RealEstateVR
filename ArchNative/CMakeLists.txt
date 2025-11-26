@@ -7,11 +7,12 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets PrintSupport)
 find_package(OpenCV REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(Tesseract REQUIRED tesseract)
+pkg_check_modules(OpenXR REQUIRED openxr)
 
 add_executable(ArchNative MACOSX_BUNDLE
     src/main.cpp
@@ -47,6 +48,8 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Analysis/CostEstimator.h
     src/Analysis/BlueprintGenerator.cpp
     src/Analysis/BlueprintGenerator.h
+    src/Core/OpenXRManager.cpp
+    src/Core/OpenXRManager.h
 )
 
 target_link_libraries(ArchNative PRIVATE
@@ -55,8 +58,9 @@ target_link_libraries(ArchNative PRIVATE
     Qt6::PrintSupport
     ${OpenCV_LIBS}
     ${Tesseract_LIBRARIES}
+    ${OpenXR_LIBRARIES}
 )
-target_include_directories(ArchNative PRIVATE ${Tesseract_INCLUDE_DIRS})
+target_include_directories(ArchNative PRIVATE ${Tesseract_INCLUDE_DIRS} ${OpenXR_INCLUDE_DIRS})
 
 # Copy assets to build directory
 add_custom_command(TARGET ArchNative POST_BUILD
