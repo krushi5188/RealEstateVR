@@ -19,6 +19,11 @@ Mesh MeshGenerator::generate(const Project& project)
             addWall(mesh, wall, floor->windows, floor->doors, wallHeight, currentElevation);
         }
 
+        // Add Furniture
+        for (const auto& item : floor->furniture) {
+            addFurnitureGeometry(mesh, item, currentElevation);
+        }
+
         currentElevation += wallHeight;
         // Add slab thickness if we want realism, for now just stack walls
     }
@@ -67,6 +72,52 @@ void MeshGenerator::addWindowGeometry(Mesh& mesh, const ArchWindow& win, float e
     // Note: We don't have materials yet, so this will just be geometry.
     // We'll rely on the ViewportWidget renderer to colorize differently if we tag it?
     // For now, just geometric placeholder (frame).
+}
+
+void MeshGenerator::addFurnitureGeometry(Mesh& mesh, const PlacedFurniture& item, float floorElevation)
+{
+    // Simple Box Geometry for Furniture
+    float x = item.position.x; // Pixel coords
+    float z = item.position.y;
+    float y = floorElevation; // On floor
+
+    // Scale logic: 1 pixel = 0.02 meters (matches CostEstimator assumption)
+    float scale = 1.0f / 0.02f; // Convert meters back to pixels for rendering if mesh is in pixel space?
+    // Wait, my previous MeshGenerator logic:
+    // float x1 = wall.start.x; -> Used raw pixels.
+    // So 600 pixels width.
+    // If real world room is 12m, then 1m = 50 pixels.
+    // CostEstimator used 0.02 scale (50px = 1m).
+    // So we need to scale item width (meters) to pixels.
+
+    float w = item.width * 50.0f;
+    float d = item.depth * 50.0f;
+    float h = item.height * 50.0f;
+
+    float halfW = w / 2.0f;
+    float halfD = d / 2.0f;
+
+    unsigned int startIdx = mesh.vertices.size();
+
+    // Bottom (y)
+    addVertex(mesh, x-halfW, y, z-halfD, 0,1,0);
+    addVertex(mesh, x+halfW, y, z-halfD, 0,1,0);
+    addVertex(mesh, x+halfW, y, z+halfD, 0,1,0);
+    addVertex(mesh, x-halfW, y, z+halfD, 0,1,0);
+
+    // Top (y+h)
+    addVertex(mesh, x-halfW, y+h, z-halfD, 0,1,0);
+    addVertex(mesh, x+halfW, y+h, z-halfD, 0,1,0);
+    addVertex(mesh, x+halfW, y+h, z+halfD, 0,1,0);
+    addVertex(mesh, x-halfW, y+h, z+halfD, 0,1,0);
+
+    // Simple Cube
+    addQuad(mesh, startIdx+0, startIdx+1, startIdx+5, startIdx+4); // Front
+    addQuad(mesh, startIdx+1, startIdx+2, startIdx+6, startIdx+5); // Right
+    addQuad(mesh, startIdx+2, startIdx+3, startIdx+7, startIdx+6); // Back
+    addQuad(mesh, startIdx+3, startIdx+0, startIdx+4, startIdx+7); // Left
+    addQuad(mesh, startIdx+4, startIdx+5, startIdx+6, startIdx+7); // Top
+    // Bottom not visible usually
 }
 
 void MeshGenerator::addWall(Mesh& mesh, const Wall& wall, const std::vector<ArchWindow>& windows, const std::vector<ArchDoor>& doors, float height, float elevation)

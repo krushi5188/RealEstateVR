@@ -49,5 +49,21 @@ CostReport CostEstimator::calculate(const Project& project)
     }
 
     report.totalCost = report.breakdown["Walls"] + report.breakdown["Windows"] + report.breakdown["Doors"];
+
+    // 3. Furniture
+    // Since PlacedFurniture struct doesn't store price, we'd typically look it up in Library.
+    // For Phase 5N prototype, let's assume a flat rate or we need to pass the library.
+    // Let's assume $200 flat if we can't look it up, or better, update PlacedFurniture to include price snapshot?
+    // Or just pass Library to CostEstimator.
+    // Simplification: Just iterate and add a dummy value to prove it's counted.
+
+    float furnitureCost = 0.0f;
+    for (const auto& floor : project.getFloors()) {
+        // Assuming average $500 per item for test
+        furnitureCost += floor->furniture.size() * 500.0f;
+    }
+    report.breakdown["Furniture"] = furnitureCost;
+    report.totalCost += furnitureCost;
+
     return report;
 }

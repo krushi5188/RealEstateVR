@@ -15,6 +15,7 @@ public:
 private:
     void addWall(Mesh& mesh, const Wall& wall, const std::vector<ArchWindow>& windows, const std::vector<ArchDoor>& doors, float floorHeight, float floorElevation);
     void addWindowGeometry(Mesh& mesh, const ArchWindow& win, float elevation, float height);
+    void addFurnitureGeometry(Mesh& mesh, const PlacedFurniture& item, float floorElevation);
 
     // Helper to push a vertex
     void addVertex(Mesh& mesh, float x, float y, float z, float nx, float ny, float nz);

@@ -14,6 +14,7 @@
 #include "Analysis/BlueprintGenerator.h"
 #include "Core/VirtualAgent.h"
 #include "Core/OpenXRManager.h"
+#include "Core/FurnitureLibrary.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <QFile>
@@ -49,6 +50,27 @@ void runProjectTest() {
     Project project;
     project.addFloor("test_floor_ground.png", "Ground Floor");
     project.addFloor("test_floor_one.png", "Level 1");
+
+    // 2.5. Add Furniture (Phase 5N.3)
+    FurnitureLibrary lib;
+    auto bed = lib.getItem("bed_king");
+    if (bed) {
+        PlacedFurniture placed;
+        placed.itemId = bed->id;
+        placed.width = bed->width;
+        placed.depth = bed->depth;
+        placed.height = bed->height;
+        placed.position = cv::Point(175, 175); // Center of Room 1
+        placed.rotation = 0.0f;
+
+        // Add to Ground Floor
+        // We need a way to access the floor to add furniture directly for the test
+        // Project::getFloors returns const vector usually, but shared_ptrs allow modification of content?
+        // getFloors returns const vector<shared_ptr<Floor>>&. The pointers are const, but object is mutable?
+        // Actually shared_ptr<T> allows T modification unless it's shared_ptr<const T>.
+        project.getFloors()[0]->furniture.push_back(placed);
+        std::cout << "Placed furniture: " << bed->name << std::endl;
+    }
 
     // 3. Verify
     const auto& floors = project.getFloors();

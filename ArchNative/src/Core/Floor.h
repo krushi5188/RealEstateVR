@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "ImageProcessor.h" // For Wall and Room structs
+#include "Furniture.h"
 
 class Floor
 {
@@ -19,6 +20,7 @@ public:
     std::vector<Room> rooms;
     std::vector<ArchWindow> windows;
     std::vector<ArchDoor> doors;
+    std::vector<PlacedFurniture> furniture;
 
 private:
     int m_level;        // 0 = Ground, 1 = First Floor, etc.
