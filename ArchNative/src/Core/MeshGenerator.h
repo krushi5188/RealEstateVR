@@ -13,7 +13,8 @@ public:
     Mesh generate(const Project& project);
 
 private:
-    void addWall(Mesh& mesh, const Wall& wall, float floorHeight, float floorElevation);
+    void addWall(Mesh& mesh, const Wall& wall, const std::vector<ArchWindow>& windows, const std::vector<ArchDoor>& doors, float floorHeight, float floorElevation);
+    void addWindowGeometry(Mesh& mesh, const ArchWindow& win, float elevation, float height);
 
     // Helper to push a vertex
     void addVertex(Mesh& mesh, float x, float y, float z, float nx, float ny, float nz);

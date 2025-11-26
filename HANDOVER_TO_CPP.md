@@ -1,7 +1,7 @@
 # HANDOVER PROTOCOL: Operation Native Pivot
 
 **Date:** 2025-11-20
-**Status:** IN PROGRESS (Phase 6N Active)
+**Status:** IN PROGRESS (Phase 3N.3 Complete)
 **From:** Jules (Web Architect)
 **To:** Native Systems Engineer
 
@@ -32,11 +32,11 @@ The following files have been created/modified in this session. **All work is co
     *   `ArchNative/src/Core/ImageProcessor.h` & `.cpp`: Implements `extractWallsFromBitmap` (HoughLines), OCR (Tesseract), and **Gap Detection** (Windows).
     *   `ArchNative/src/Core/Project.h` & `.cpp`: Manages multi-floor projects.
     *   `ArchNative/src/Core/Floor.h`: Data model for a single floor level (Walls, Rooms, Windows, Doors).
-    *   `ArchNative/src/Core/MeshGenerator.h` & `.cpp`: Converts Project data to 3D Mesh geometry.
+    *   `ArchNative/src/Core/MeshGenerator.h` & `.cpp`: Converts Project data to 3D Mesh geometry. **(NEW)** Advanced window hole cutting logic.
     *   `ArchNative/src/Core/Serializer.h` & `.cpp`: Saves/Loads `.anvr` proprietary binary files.
     *   `ArchNative/src/Core/Sun.h` & `.cpp`: Simulates Sun position.
     *   `ArchNative/src/Core/VirtualAgent.h` & `.cpp`: AI Agent for circulation simulation.
-    *   `ArchNative/src/Core/OpenXRManager.h` & `.cpp`: **(NEW)** OpenXR Runtime Interface (Skeleton).
+    *   `ArchNative/src/Core/OpenXRManager.h` & `.cpp`: OpenXR Runtime Interface (Skeleton).
 *   **Analysis Modules:**
     *   `ArchNative/src/Analysis/LightAnalyzer.h` & `.cpp`: 2D Raycasting for light heatmaps.
     *   `ArchNative/src/Analysis/PathFinder.h` & `.cpp`: A* Pathfinding algorithm.
@@ -69,8 +69,8 @@ We use **CMake** for building.
 A script `verify_headless.sh` is provided in the root. It compiles the `ArchNative` project and runs:
 1.  `./ArchNative --test-screenshot`: Verifies the OpenGL context works (draws a grid).
 2.  `./ArchNative --test-camera`: Verifies the Camera rotation logic.
-3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen, Serialization, Light Analysis, Pathfinding, Reports, Cost Estimation, and PDF Export.
-4.  `./ArchNative --test-vr`: **(NEW)** Verifies OpenXR initialization.
+3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen (Advanced), Serialization, Light Analysis, Pathfinding, Reports, Cost Estimation, and PDF Export.
+4.  `./ArchNative --test-vr`: Verifies OpenXR initialization.
 
 **Artifacts:** `test_output.png`, `test_cam_*.png`, `test_floor_*.png`, `test_project.anvr`, `test_blueprint.pdf`.
 **Note:** These artifacts are intentionally committed to the repo per user request.

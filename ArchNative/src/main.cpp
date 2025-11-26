@@ -64,8 +64,19 @@ void runProjectTest() {
 
         std::cout << "Generated Mesh: " << mesh.vertices.size() << " vertices, " << mesh.indices.size() << " indices." << std::endl;
 
-        if (mesh.vertices.size() > 0) {
-             std::cout << "SUCCESS: Mesh generation verified." << std::endl;
+        // Verification for Advanced Mesh Gen (Phase 3N.3)
+        // We expect more vertices than just 8 per wall if windows were found.
+        // 26 windows detected * 3 segments vs 1 segment = significant increase.
+        // Previous run had 1184 vertices.
+        // A wall with a window has 3 blocks (Left, Right, Top, Bottom) = 4 blocks = 32 verts?
+        // Or 3 blocks (Left, Right, Top/Bottom strips).
+        // My logic does Left, Right, Sill, Lintel = 4 blocks. 4 * 8 = 32 verts per window-wall vs 8.
+        // So count should jump.
+
+        if (mesh.vertices.size() > 1200) {
+             std::cout << "SUCCESS: Mesh generation verified (High complexity confirmed)." << std::endl;
+        } else if (mesh.vertices.size() > 0) {
+             std::cout << "WARNING: Mesh generated but complexity low (Windows might not be cut)." << std::endl;
         } else {
              std::cerr << "FAILURE: Mesh is empty." << std::endl;
         }

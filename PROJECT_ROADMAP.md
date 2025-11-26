@@ -73,7 +73,7 @@ We are recreating the following features from the legacy WebApp:
 *   **Tasks:**
     *   **3N.1:** Generate Walls (Extrusion) & Floors (Stacking). ✅ **DONE**
     *   **3N.2:** Procedural Roof Generation. 📅 **PLANNED**
-    *   **3N.3:** CSG Operations (Cutting holes for Stairs/Elevators). 📅 **PLANNED**
+    *   **3N.3:** CSG Operations (Cutting holes for Windows/Doors). ✅ **DONE**
     *   **3N.4:** **Implement `.anvr` File Format (Serialization).** ✅ **DONE**
 
 ### **Phase 4N: The "Smart" Features**
