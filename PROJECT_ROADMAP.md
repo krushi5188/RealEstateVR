@@ -88,7 +88,7 @@ We are recreating the following features from the legacy WebApp:
 *   **Status:** 🚧 **IN PROGRESS**
 *   **Tasks:**
     *   **5N.1:** Cost Estimator (BOM Calculation). ✅ **DONE**
-    *   **5N.2:** PDF Export (Blueprints). 📅 **PLANNED**
+    *   **5N.2:** PDF Export (Blueprints). ✅ **DONE**
     *   **5N.3:** Furniture Library.
 
 ### **Phase 6N: OpenXR Integration (Universal AR)**

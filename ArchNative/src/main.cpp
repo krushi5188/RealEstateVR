@@ -11,6 +11,7 @@
 #include "Analysis/AcousticAnalyzer.h"
 #include "Analysis/BiophilicAnalyzer.h"
 #include "Analysis/CostEstimator.h"
+#include "Analysis/BlueprintGenerator.h"
 #include "Core/VirtualAgent.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -168,6 +169,15 @@ void runProjectTest() {
             std::cout << "SUCCESS: Cost estimation complete." << std::endl;
         } else {
             std::cerr << "FAILURE: Cost is zero." << std::endl;
+        }
+
+        // 10. Test Blueprint Generation (Phase 5N.2)
+        std::cout << "Generating Blueprint PDF..." << std::endl;
+        BlueprintGenerator blueprintGen;
+        if (blueprintGen.generate(project, "test_blueprint.pdf")) {
+            std::cout << "SUCCESS: Blueprint generated." << std::endl;
+        } else {
+            std::cerr << "FAILURE: Could not generate PDF." << std::endl;
         }
 
     } else {

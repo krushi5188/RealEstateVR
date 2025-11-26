@@ -45,11 +45,14 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Analysis/BiophilicAnalyzer.h
     src/Analysis/CostEstimator.cpp
     src/Analysis/CostEstimator.h
+    src/Analysis/BlueprintGenerator.cpp
+    src/Analysis/BlueprintGenerator.h
 )
 
 target_link_libraries(ArchNative PRIVATE
     Qt6::Widgets
     Qt6::OpenGLWidgets
+    Qt6::PrintSupport
     ${OpenCV_LIBS}
     ${Tesseract_LIBRARIES}
 )
