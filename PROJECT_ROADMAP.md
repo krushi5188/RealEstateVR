@@ -73,7 +73,7 @@ We are recreating the following features from the legacy WebApp:
 *   **Tasks:**
     *   **3N.1:** Generate Walls (Extrusion) & Floors (Stacking). ✅ **DONE**
     *   **3N.2:** Procedural Roof Generation. 📅 **PLANNED**
-    *   **3N.3:** CSG Operations (Cutting holes for Windows/Doors). ✅ **DONE**
+    *   **3N.3:** CSG Operations (Cutting holes for Stairs/Elevators). ✅ **DONE**
     *   **3N.4:** **Implement `.anvr` File Format (Serialization).** ✅ **DONE**
 
 ### **Phase 4N: The "Smart" Features**
@@ -96,8 +96,8 @@ We are recreating the following features from the legacy WebApp:
 *   **Goal:** Enable hardware-agnostic AR support.
 *   **Tasks:**
     *   **6N.1:** Integrate `libopenxr` into CMake. ✅ **DONE**
-    *   **6N.2:** Implement `OpenXRManager` to handle HMD connection. ✅ **DONE** (Skeleton)
-    *   **6N.3:** Render Stereo Views (Left/Right Eye) from `ViewportWidget`. 📅 **PLANNED**
+    *   **6N.2:** Implement `OpenXRManager` to handle HMD connection. ✅ **DONE**
+    *   **6N.3:** Render Stereo Views (Left/Right Eye) from `ViewportWidget`. ✅ **DONE**
     *   **6N.4:** Map OpenXR Controller inputs to Scene Interaction.
 
 ### **Phase 7N: Android AR Companion App (Mobile)**

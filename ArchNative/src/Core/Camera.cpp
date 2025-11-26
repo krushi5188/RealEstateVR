@@ -121,6 +121,27 @@ QMatrix4x4 Camera::getViewMatrix() const
     return view;
 }
 
+QMatrix4x4 Camera::getStereoViewMatrix(float offset) const
+{
+    QMatrix4x4 view;
+
+    // Calculate Right Vector
+    QVector3D forward = getForwardVector();
+    QVector3D up(0, 1, 0);
+    QVector3D right = QVector3D::crossProduct(forward, up).normalized();
+
+    // Shift position by offset along Right vector
+    QVector3D eyePos = m_position + (right * offset);
+
+    if (m_mode == Orbit) {
+        view.lookAt(eyePos, m_target, up);
+    } else {
+        // FPS
+        view.lookAt(eyePos, eyePos + forward, up);
+    }
+    return view;
+}
+
 QVector3D Camera::getPosition() const
 {
     return m_position;

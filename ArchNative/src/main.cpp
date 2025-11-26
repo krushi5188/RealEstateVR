@@ -230,6 +230,9 @@ int main(int argc, char *argv[])
     QCommandLineOption vrTestOption("test-vr", "Run OpenXR initialization verification.");
     parser.addOption(vrTestOption);
 
+    QCommandLineOption stereoTestOption("test-stereo", "Run Stereo Rendering verification.");
+    parser.addOption(stereoTestOption);
+
     parser.process(app);
 
     bool testMode = parser.isSet(testOption);
@@ -237,6 +240,7 @@ int main(int argc, char *argv[])
     bool imgProcTestMode = parser.isSet(imgProcTestOption);
     bool projectTestMode = parser.isSet(projectTestOption);
     bool vrTestMode = parser.isSet(vrTestOption);
+    bool stereoTestMode = parser.isSet(stereoTestOption);
 
     if (vrTestMode) {
         std::cout << "Testing OpenXR Integration..." << std::endl;
@@ -246,6 +250,23 @@ int main(int argc, char *argv[])
         } else {
             // Failure is expected in headless, but we verified linkage and logic ran
             std::cout << "NOTICE: OpenXR Initialization failed (Expected in headless/no-HMD env)." << std::endl;
+        }
+        return 0;
+    }
+
+    if (stereoTestMode) {
+        MainWindow w;
+        w.resize(1024, 512); // Wide ratio
+        w.show();
+
+        // Access viewport - tricky via private, but we can findChild
+        ViewportWidget* vp = w.findChild<ViewportWidget*>();
+        if (vp) {
+            vp->setStereoMode(true);
+            w.captureScreenshot("test_stereo_output.png");
+            std::cout << "SUCCESS: Captured Stereo Screenshot." << std::endl;
+        } else {
+            std::cerr << "FAILURE: Could not find Viewport." << std::endl;
         }
         return 0;
     }

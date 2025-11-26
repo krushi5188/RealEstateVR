@@ -18,8 +18,17 @@ void ViewportWidget::initializeGL()
     glEnable(GL_DEPTH_TEST);
 }
 
+void ViewportWidget::setStereoMode(bool enabled)
+{
+    m_stereoMode = enabled;
+    update();
+}
+
 void ViewportWidget::resizeGL(int w, int h)
 {
+    // If stereo, aspect ratio is effectively doubled (half width per eye)
+    // But we set projection dynamically in paintGL usually for VR.
+    // Here, let's just keep standard full window aspect for monoscopic default.
     glViewport(0, 0, w, h);
 
     float aspect = float(w) / float(h ? h : 1);
@@ -31,16 +40,44 @@ void ViewportWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(m_projection.constData());
+    if (m_stereoMode) {
+        int w = width();
+        int h = height();
+        int halfW = w / 2;
+        float aspect = float(halfW) / float(h ? h : 1);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(m_camera.getViewMatrix().constData());
+        QMatrix4x4 stereoProj;
+        stereoProj.perspective(45.0f, aspect, 0.1f, 1000.0f);
 
-    if (!m_mesh.vertices.empty()) {
-        drawMesh();
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrixf(stereoProj.constData());
+
+        // Left Eye
+        glViewport(0, 0, halfW, h);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixf(m_camera.getStereoViewMatrix(-0.5f).constData()); // -0.5 Offset
+        if (!m_mesh.vertices.empty()) drawMesh(); else drawGrid();
+
+        // Right Eye
+        glViewport(halfW, 0, halfW, h);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixf(m_camera.getStereoViewMatrix(0.5f).constData()); // +0.5 Offset
+        if (!m_mesh.vertices.empty()) drawMesh(); else drawGrid();
+
     } else {
-        drawGrid();
+        // Monoscopic
+        glViewport(0, 0, width(), height());
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrixf(m_projection.constData());
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixf(m_camera.getViewMatrix().constData());
+
+        if (!m_mesh.vertices.empty()) {
+            drawMesh();
+        } else {
+            drawGrid();
+        }
     }
 }
 

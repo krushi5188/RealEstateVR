@@ -20,6 +20,7 @@ public:
 
     // View & Projection
     QMatrix4x4 getViewMatrix() const;
+    QMatrix4x4 getStereoViewMatrix(float offset) const; // Offset is +/- IPD/2
     QVector3D getPosition() const;
     QVector3D getForwardVector() const;
 

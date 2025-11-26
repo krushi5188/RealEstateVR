@@ -18,6 +18,7 @@ public:
 
     Camera* getCamera() { return &m_camera; }
     void setMesh(const Mesh& mesh); // To receive geometry
+    void setStereoMode(bool enabled);
 
 protected:
     void initializeGL() override;
@@ -37,6 +38,7 @@ private:
     QPoint m_lastMousePos;
     QMatrix4x4 m_projection;
     Mesh m_mesh; // Stored mesh data
+    bool m_stereoMode = false;
 };
 
 #endif // VIEWPORTWIDGET_H
