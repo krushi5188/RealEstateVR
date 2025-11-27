@@ -1,13 +1,13 @@
 #ifndef OPENXRMANAGER_H
 #define OPENXRMANAGER_H
 
-#define XR_USE_PLATFORM_XLIB
-#define XR_USE_GRAPHICS_API_OPENGL
-#include <vulkan/vulkan.h> // Needed for OpenXR headers sometimes, or just GL
-#include <GL/glx.h>
-#include <openxr/openxr.h>
-#include <openxr/openxr_platform.h>
 #include <iostream>
+#include "VRInput.h"
+
+// Forward decls to avoid OpenXR/X11 headers in public API
+struct XrInstance_T; typedef XrInstance_T* XrInstance;
+struct XrSession_T; typedef XrSession_T* XrSession;
+typedef uint64_t XrSystemId;
 
 class OpenXRManager
 {
@@ -23,13 +23,21 @@ public:
     void update(); // Poll events, update pose
     void render(); // Submit frame
 
+    const VRInputState& getInputState() const { return m_inputState; }
+
     bool isSessionRunning() const { return m_sessionRunning; }
 
 private:
+    void pollActions(); // Check controller inputs
+
     class ViewportWidget* m_viewport = nullptr;
-    XrInstance m_instance = XR_NULL_HANDLE;
-    XrSystemId m_systemId = XR_NULL_SYSTEM_ID;
-    XrSession m_session = XR_NULL_HANDLE;
+    VRInputState m_inputState;
+
+    // Use void* or forward declared types if possible, or just uintptr_t logic if we want to be strictly safe without any Xr types.
+    // But using forward decls of Xr types usually works if we don't need their size.
+    XrInstance m_instance = nullptr; // XR_NULL_HANDLE is 0
+    XrSystemId m_systemId = 0;       // XR_NULL_SYSTEM_ID is 0
+    XrSession m_session = nullptr;   // XR_NULL_HANDLE is 0
     bool m_sessionRunning = false;
 
     bool checkLayers();

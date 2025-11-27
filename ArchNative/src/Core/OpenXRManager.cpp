@@ -1,9 +1,29 @@
+#include "../UI/ViewportWidget.h" // Include Qt headers FIRST
+
+// Define OpenXR platforms
+#define XR_USE_PLATFORM_XLIB
+#define XR_USE_GRAPHICS_API_OPENGL
+
+// Include X11/GL headers
+#include <vulkan/vulkan.h>
+#include <GL/glx.h>
+
+// Include OpenXR headers
+#include <openxr/openxr.h>
+#include <openxr/openxr_platform.h>
+
+// Include our header last
 #include "OpenXRManager.h"
+
 #include <vector>
 #include <cstring>
+#include <cmath>
 
 OpenXRManager::OpenXRManager()
 {
+    // Init input state
+    m_inputState.leftHand = {0,0,0, 0,0,0,1, false, false, 0,0};
+    m_inputState.rightHand = {0,0,0, 0,0,0,1, false, false, 0,0};
 }
 
 OpenXRManager::~OpenXRManager()
@@ -68,11 +88,35 @@ void OpenXRManager::update()
     static float time = 0.0f;
     time += 0.016f; // 60fps
 
-    // Simulate head turning left/right
-    // float yaw = std::sin(time) * 0.5f;
+    pollActions();
 
-    // We would pass this pose to the Camera via Viewport
-    // For now, we assume Viewport handles its own Camera, we just trigger render.
+    // 3. Handle Input
+    // If "Select" is pressed on Right hand, Teleport!
+    if (m_inputState.rightHand.selectPressed) {
+        if (m_viewport) {
+            Camera* cam = m_viewport->getCamera();
+            // Teleport 1 meter forward
+            // In real app, we'd raycast from controller.
+            // Here we just jump to prove the link works.
+            QVector3D current = cam->getPosition();
+            cam->setPosition(current + QVector3D(0, 0, -1.0f));
+            std::cout << "Teleport Triggered! New Pos: " << current.z() - 1.0f << std::endl;
+        }
+    }
+}
+
+void OpenXRManager::pollActions()
+{
+    // Simulate Input
+    static int frameCount = 0;
+    frameCount++;
+
+    // Simulate "Select" press on frame 5
+    if (frameCount == 5) {
+        m_inputState.rightHand.selectPressed = true;
+    } else {
+        m_inputState.rightHand.selectPressed = false;
+    }
 }
 
 void OpenXRManager::render()

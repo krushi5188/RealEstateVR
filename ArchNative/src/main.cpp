@@ -266,15 +266,36 @@ int main(int argc, char *argv[])
 
     if (vrTestMode) {
         std::cout << "Testing OpenXR Integration..." << std::endl;
+
+        // Need a viewport to test camera movement
+        // We can't create a full widget without QApplication event loop processing maybe?
+        // But we can instantiate it.
+        ViewportWidget viewport;
+
         OpenXRManager xrManager;
+        xrManager.setViewport(&viewport);
+
         if (xrManager.initialize()) {
             std::cout << "SUCCESS: OpenXR Initialized." << std::endl;
+
+            // Initial Pos
+            std::cout << "Initial Z: " << viewport.getCamera()->getPosition().z() << std::endl;
 
             // Simulate Loop
             for(int i=0; i<10; i++) {
                 xrManager.update();
                 xrManager.render();
                 std::cout << "VR Frame " << i << " Simulated." << std::endl;
+            }
+
+            // Check if moved
+            float finalZ = viewport.getCamera()->getPosition().z();
+            std::cout << "Final Z: " << finalZ << std::endl;
+
+            if (finalZ < 20.0f) { // Started at 20.0
+                 std::cout << "SUCCESS: Camera Teleported." << std::endl;
+            } else {
+                 std::cerr << "FAILURE: Camera did not move." << std::endl;
             }
 
         } else {

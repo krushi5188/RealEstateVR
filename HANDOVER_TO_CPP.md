@@ -1,7 +1,7 @@
 # HANDOVER PROTOCOL: Operation Native Pivot
 
 **Date:** 2025-11-20
-**Status:** IN PROGRESS (Phase 6N Active)
+**Status:** IN PROGRESS (Phase 6N.4 Complete)
 **From:** Jules (Web Architect)
 **To:** Native Systems Engineer
 
@@ -36,8 +36,9 @@ The following files have been created/modified in this session. **All work is co
     *   `ArchNative/src/Core/Serializer.h` & `.cpp`: Saves/Loads `.anvr` proprietary binary files.
     *   `ArchNative/src/Core/Sun.h` & `.cpp`: Simulates Sun position.
     *   `ArchNative/src/Core/VirtualAgent.h` & `.cpp`: AI Agent for circulation simulation.
-    *   `ArchNative/src/Core/OpenXRManager.h` & `.cpp`: OpenXR Runtime Interface (Init, Loop, Render stubs).
+    *   `ArchNative/src/Core/OpenXRManager.h` & `.cpp`: OpenXR Runtime Interface. Handles **Input Polling** and **Render Loop**.
     *   `ArchNative/src/Core/FurnitureLibrary.h` & `.cpp`: Catalog of furniture items.
+    *   `ArchNative/src/Core/VRInput.h`: **(NEW)** Input state structs.
 *   **Analysis Modules:**
     *   `ArchNative/src/Analysis/LightAnalyzer.h` & `.cpp`: 2D Raycasting for light heatmaps.
     *   `ArchNative/src/Analysis/PathFinder.h` & `.cpp`: A* Pathfinding algorithm.
@@ -71,38 +72,12 @@ A script `verify_headless.sh` is provided in the root. It compiles the `ArchNati
 1.  `./ArchNative --test-screenshot`: Verifies the OpenGL context works (draws a grid).
 2.  `./ArchNative --test-camera`: Verifies the Camera rotation logic.
 3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen, Serialization, Light Analysis, Pathfinding, Reports, Cost Estimation, and PDF Export.
-4.  `./ArchNative --test-vr`: Verifies OpenXR initialization and Render Loop simulation.
+4.  `./ArchNative --test-vr`: Verifies OpenXR initialization, Render Loop, and **Input Mapping** (Teleportation).
 5.  `./ArchNative --test-stereo`: Verifies Stereo (Side-by-Side) rendering for VR.
 
 **Artifacts:** `test_output.png`, `test_cam_*.png`, `test_floor_*.png`, `test_project.anvr`, `test_blueprint.pdf`.
 **Note:** These artifacts are intentionally committed to the repo per user request.
 
-## 5. Logic Migration Map (Future Phases)
-
-You must port the logic from the current JS files to C++ classes.
-
-### A. Image Processor (Phase 2N)
-*   **Source:** `server/image-processor.js`
-*   **Target:** `src/core/ImageProcessor.cpp`
-*   **Key Logic:** `extractWallsFromBitmap`, `labelRoomsWithOCR`.
-
-### B. Mesh Generation & Serialization (Phase 3N)
-*   **Source:** `server/model-generator.js`
-*   **Target:** `src/core/MeshGenerator.cpp`
-*   **Key Logic:** Wall extrusion, Multi-floor stacking, `OpenCSG`.
-*   **Serialization:** Implement `Project::saveToANVR(filename)` and `Project::loadFromANVR(filename)`.
-
-### C. Scene & Interaction (Phase 3N/4N/6N)
-*   **Source:** `client/src/components/VRScene.js`
-*   **Target:** `src/visual/SceneManager.cpp`
-*   **Key Logic:** Staircase/Elevator holes, Sun Cycle, Teleportation.
-*   **New Logic:** **OpenXR Integration** for AR Glasses support.
-
-### D. Simulation & Analysis (Phase 4N - "The Brain")
-*   **Source:** `client/src/analysis/*.js` & `client/src/components/*.js`
-*   **Target:** `src/analysis/`
-*   **Key Logic:** Natural Light (Raycasting), Circulation (Pathfinding), Acoustic/Biophilic Reports.
-
 ## 6. Immediate Next Steps
-1.  **Phase 6N Completion:** Map OpenXR input to `Camera`.
-2.  **Phase 7N:** Android porting investigation.
+1.  **Phase 7N Start:** Set up Android build environment (Docker/NDK).
+2.  **Phase 7N:** Implement Touch Input for mobile viewing.

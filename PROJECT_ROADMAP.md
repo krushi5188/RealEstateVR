@@ -98,7 +98,7 @@ We are recreating the following features from the legacy WebApp:
     *   **6N.1:** Integrate `libopenxr` into CMake. ✅ **DONE**
     *   **6N.2:** Implement `OpenXRManager` to handle HMD connection. ✅ **DONE**
     *   **6N.3:** Render Stereo Views (Left/Right Eye) from `ViewportWidget`. ✅ **DONE**
-    *   **6N.4:** Map OpenXR Controller inputs to Scene Interaction.
+    *   **6N.4:** Map OpenXR Controller inputs to Scene Interaction. ✅ **DONE** (Simulation)
 
 ### **Phase 7N: Android AR Companion App (Mobile)**
 *   **Status:** 📅 **PLANNED**
