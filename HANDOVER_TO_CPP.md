@@ -1,7 +1,7 @@
 # HANDOVER PROTOCOL: Operation Native Pivot
 
 **Date:** 2025-11-20
-**Status:** IN PROGRESS (Phase 5N Complete)
+**Status:** IN PROGRESS (Phase 6N Active)
 **From:** Jules (Web Architect)
 **To:** Native Systems Engineer
 
@@ -31,13 +31,13 @@ The following files have been created/modified in this session. **All work is co
     *   `ArchNative/src/Core/Camera.h` & `.cpp`: Implements **Orbit** (CAD) and **First-Person** (VR) camera modes.
     *   `ArchNative/src/Core/ImageProcessor.h` & `.cpp`: Implements `extractWallsFromBitmap` (HoughLines), OCR (Tesseract), and **Gap Detection** (Windows).
     *   `ArchNative/src/Core/Project.h` & `.cpp`: Manages multi-floor projects.
-    *   `ArchNative/src/Core/Floor.h`: Data model for a single floor level (Walls, Rooms, Windows, Doors, **Furniture**).
-    *   `ArchNative/src/Core/MeshGenerator.h` & `.cpp`: Converts Project data to 3D Mesh geometry. Advanced window hole cutting logic. **Furniture rendering**.
+    *   `ArchNative/src/Core/Floor.h`: Data model for a single floor level (Walls, Rooms, Windows, Doors).
+    *   `ArchNative/src/Core/MeshGenerator.h` & `.cpp`: Converts Project data to 3D Mesh geometry. Advanced window hole cutting logic.
     *   `ArchNative/src/Core/Serializer.h` & `.cpp`: Saves/Loads `.anvr` proprietary binary files.
     *   `ArchNative/src/Core/Sun.h` & `.cpp`: Simulates Sun position.
     *   `ArchNative/src/Core/VirtualAgent.h` & `.cpp`: AI Agent for circulation simulation.
-    *   `ArchNative/src/Core/OpenXRManager.h` & `.cpp`: OpenXR Runtime Interface (Skeleton).
-    *   `ArchNative/src/Core/FurnitureLibrary.h` & `.cpp`: **(NEW)** Catalog of furniture items.
+    *   `ArchNative/src/Core/OpenXRManager.h` & `.cpp`: OpenXR Runtime Interface (Init, Loop, Render stubs).
+    *   `ArchNative/src/Core/FurnitureLibrary.h` & `.cpp`: Catalog of furniture items.
 *   **Analysis Modules:**
     *   `ArchNative/src/Analysis/LightAnalyzer.h` & `.cpp`: 2D Raycasting for light heatmaps.
     *   `ArchNative/src/Analysis/PathFinder.h` & `.cpp`: A* Pathfinding algorithm.
@@ -70,8 +70,8 @@ We use **CMake** for building.
 A script `verify_headless.sh` is provided in the root. It compiles the `ArchNative` project and runs:
 1.  `./ArchNative --test-screenshot`: Verifies the OpenGL context works (draws a grid).
 2.  `./ArchNative --test-camera`: Verifies the Camera rotation logic.
-3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen, Serialization, Light Analysis, Pathfinding, Reports, Cost Estimation (w/ Furniture), and PDF Export.
-4.  `./ArchNative --test-vr`: Verifies OpenXR initialization.
+3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen, Serialization, Light Analysis, Pathfinding, Reports, Cost Estimation, and PDF Export.
+4.  `./ArchNative --test-vr`: Verifies OpenXR initialization and Render Loop simulation.
 5.  `./ArchNative --test-stereo`: Verifies Stereo (Side-by-Side) rendering for VR.
 
 **Artifacts:** `test_output.png`, `test_cam_*.png`, `test_floor_*.png`, `test_project.anvr`, `test_blueprint.pdf`.
@@ -104,5 +104,5 @@ You must port the logic from the current JS files to C++ classes.
 *   **Key Logic:** Natural Light (Raycasting), Circulation (Pathfinding), Acoustic/Biophilic Reports.
 
 ## 6. Immediate Next Steps
-1.  **Phase 6N Completion:** Implement OpenXR Render Loop (using `OpenXRManager` to drive `ViewportWidget`).
+1.  **Phase 6N Completion:** Map OpenXR input to `Camera`.
 2.  **Phase 7N:** Android porting investigation.

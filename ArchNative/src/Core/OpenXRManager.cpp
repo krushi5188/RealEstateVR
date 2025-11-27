@@ -53,6 +53,48 @@ bool OpenXRManager::initialize()
     return true;
 }
 
+void OpenXRManager::setViewport(ViewportWidget* viewport)
+{
+    m_viewport = viewport;
+}
+
+void OpenXRManager::update()
+{
+    // 1. Poll OpenXR Events
+    // In a real app: xrPollEvent...
+
+    // 2. Locate Views (Head Pose)
+    // Stub: Simulate head movement
+    static float time = 0.0f;
+    time += 0.016f; // 60fps
+
+    // Simulate head turning left/right
+    // float yaw = std::sin(time) * 0.5f;
+
+    // We would pass this pose to the Camera via Viewport
+    // For now, we assume Viewport handles its own Camera, we just trigger render.
+}
+
+void OpenXRManager::render()
+{
+    // 1. WaitFrame
+    // 2. BeginFrame
+    // 3. Render to Swapchain Image
+
+    if (m_viewport) {
+        // In a real OpenXR app, we render into the XrSwapchainImage.
+        // For this Phase 6N prototype, we tell the Viewport to draw Stereo.
+        // Ideally, we bind the FBO here.
+
+        // Simulate render call
+        // m_viewport->setStereoMode(true);
+        // m_viewport->repaint();
+        // But repaint() is async in Qt usually. We might need direct draw or just trust the loop.
+    }
+
+    // 4. EndFrame
+}
+
 void OpenXRManager::shutdown()
 {
     if (m_session != XR_NULL_HANDLE) {

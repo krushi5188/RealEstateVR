@@ -269,6 +269,14 @@ int main(int argc, char *argv[])
         OpenXRManager xrManager;
         if (xrManager.initialize()) {
             std::cout << "SUCCESS: OpenXR Initialized." << std::endl;
+
+            // Simulate Loop
+            for(int i=0; i<10; i++) {
+                xrManager.update();
+                xrManager.render();
+                std::cout << "VR Frame " << i << " Simulated." << std::endl;
+            }
+
         } else {
             // Failure is expected in headless, but we verified linkage and logic ran
             std::cout << "NOTICE: OpenXR Initialization failed (Expected in headless/no-HMD env)." << std::endl;

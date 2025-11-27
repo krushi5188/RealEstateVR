@@ -67,6 +67,11 @@ if [ -f "test_floor_ground.png" ] && [ -f "test_floor_one.png" ]; then
        echo "FAILURE: Serialization failed (.anvr missing)."
        exit 1
     fi
+
+# Run verification (OpenXR)
+echo "Running OpenXR Verification..."
+xvfb-run -a ./ArchNative --test-vr
+# We don't check for artifacts here, just exit code and log output
 else
     echo "FAILURE: Project verification failed (missing artifacts)."
     exit 1

@@ -18,9 +18,15 @@ public:
     bool initialize();
     void shutdown();
 
+    // Drive the render loop
+    void setViewport(class ViewportWidget* viewport);
+    void update(); // Poll events, update pose
+    void render(); // Submit frame
+
     bool isSessionRunning() const { return m_sessionRunning; }
 
 private:
+    class ViewportWidget* m_viewport = nullptr;
     XrInstance m_instance = XR_NULL_HANDLE;
     XrSystemId m_systemId = XR_NULL_SYSTEM_ID;
     XrSession m_session = XR_NULL_HANDLE;
