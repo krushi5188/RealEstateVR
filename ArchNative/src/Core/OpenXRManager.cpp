@@ -1,12 +1,19 @@
 #include "../UI/ViewportWidget.h" // Include Qt headers FIRST
 
 // Define OpenXR platforms
-#define XR_USE_PLATFORM_XLIB
-#define XR_USE_GRAPHICS_API_OPENGL
-
-// Include X11/GL headers
-#include <vulkan/vulkan.h>
-#include <GL/glx.h>
+#ifdef __ANDROID__
+    #define XR_USE_PLATFORM_ANDROID
+    #define XR_USE_GRAPHICS_API_OPENGL_ES
+    #include <EGL/egl.h>
+    #include <GLES3/gl3.h>
+    #include <jni.h>
+#else
+    // Linux Desktop
+    #define XR_USE_PLATFORM_XLIB
+    #define XR_USE_GRAPHICS_API_OPENGL
+    #include <vulkan/vulkan.h>
+    #include <GL/glx.h>
+#endif
 
 // Include OpenXR headers
 #include <openxr/openxr.h>

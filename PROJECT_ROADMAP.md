@@ -59,13 +59,14 @@ We are recreating the following features from the legacy WebApp:
     *   **1N.4:** Verify "Hello World" Rendering & Camera Movement. ✅
 
 ### **Phase 2N: The Engine (Image Analysis)**
-*   **Status:** ✅ **DONE**
+*   **Status:** 🚧 **IN PROGRESS**
 *   **Goal:** Port the Computer Vision logic to C++.
 *   **Tasks:**
     *   **2N.1:** `ImageProcessor` Skeleton & Loading Logic. ✅ **DONE**
     *   **2N.2:** Gap Detection (Windows/Doors) & Room Detection (Flood Fill). ✅ **DONE**
     *   **2N.3:** OCR Integration (Tesseract) for room labels. ✅ **DONE**
     *   **2N.4:** Multi-Floor alignment logic (Project/Floor Models). ✅ **DONE**
+    *   **2N.5:** **PDF Import Support (Poppler integration).** ✅ **DONE**
 
 ### **Phase 3N: Mesh Generation & Scene**
 *   **Status:** ✅ **DONE**
@@ -98,7 +99,7 @@ We are recreating the following features from the legacy WebApp:
     *   **6N.1:** Integrate `libopenxr` into CMake. ✅ **DONE**
     *   **6N.2:** Implement `OpenXRManager` to handle HMD connection. ✅ **DONE**
     *   **6N.3:** Render Stereo Views (Left/Right Eye) from `ViewportWidget`. ✅ **DONE**
-    *   **6N.4:** Map OpenXR Controller inputs to Scene Interaction. ✅ **DONE** (Simulation)
+    *   **6N.4:** Map OpenXR Controller inputs to Scene Interaction. ✅ **DONE**
 
 ### **Phase 7N: Android AR Companion App (Mobile)**
 *   **Status:** 📅 **PLANNED**

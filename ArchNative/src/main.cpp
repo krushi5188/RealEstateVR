@@ -210,6 +210,24 @@ void runProjectTest() {
         BlueprintGenerator blueprintGen;
         if (blueprintGen.generate(project, "test_blueprint.pdf")) {
             std::cout << "SUCCESS: Blueprint generated." << std::endl;
+
+            // 11. Test PDF Import (Phase 2N.5)
+            // Now that we have a PDF, let's try to load it back in!
+            std::cout << "Testing PDF Import..." << std::endl;
+            Project pdfProject;
+            if (pdfProject.addFloor("test_blueprint.pdf", "Imported PDF")) {
+                 std::cout << "SUCCESS: PDF Imported and Processed." << std::endl;
+                 // Verify we found stuff in the imported PDF (it was an image of lines)
+                 // The walls should be detected again.
+                 if (!pdfProject.getFloors().empty() && !pdfProject.getFloors()[0]->walls.empty()) {
+                     std::cout << "SUCCESS: Walls detected in imported PDF." << std::endl;
+                 } else {
+                     std::cerr << "WARNING: PDF loaded but no walls detected (Resolution issue?)." << std::endl;
+                 }
+            } else {
+                 std::cerr << "FAILURE: PDF Import failed." << std::endl;
+            }
+
         } else {
             std::cerr << "FAILURE: Could not generate PDF." << std::endl;
         }
