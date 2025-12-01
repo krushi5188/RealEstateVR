@@ -1,0 +1,75 @@
+name: Build ArchNative Release
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Enables manual button click
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.0'
+        host: 'mac'
+        target: 'desktop'
+        modules: 'qtmultimedia qt3d'
+        
+    - name: Install Dependencies
+      run: brew install opencv tesseract openxr cmake
+
+    - name: Configure CMake
+      run: cmake -B build -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Package DMG
+      run: macdeployqt build/ArchNative.app -dmg
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ArchNative-macOS
+        path: build/ArchNative.dmg
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.0'
+        host: 'windows'
+        target: 'desktop'
+        arch: 'win64_msvc2019_64'
+        
+    - name: Install Dependencies (Vcpkg)
+      run: |
+        vcpkg install opencv:x64-windows
+        vcpkg install tesseract:x64-windows
+        vcpkg install openxr-loader:x64-windows
+        vcpkg integrate install
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_PREFIX_PATH=%QT_ROOT_DIR% -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Package
+      run: windeployqt build/Release/ArchNative.exe --dir dist
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ArchNative-Windows
+        path: dist/
