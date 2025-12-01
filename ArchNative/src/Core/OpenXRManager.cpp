@@ -7,8 +7,15 @@
     #include <EGL/egl.h>
     #include <GLES3/gl3.h>
     #include <jni.h>
+#elif defined(_WIN32)
+    #define XR_USE_PLATFORM_WIN32
+    #define XR_USE_GRAPHICS_API_OPENGL
+    #include <windows.h>
+    #include <GL/gl.h>
+    // Note: Windows requires an OpenGL extension loader (like GLEW/GLAD) for modern GL with OpenXR usually,
+    // or we rely on Qt's QOpenGLContext to handle it. For this skeleton, headers are sufficient.
 #else
-    // Linux Desktop
+    // Linux Desktop (X11)
     #define XR_USE_PLATFORM_XLIB
     #define XR_USE_GRAPHICS_API_OPENGL
     #include <vulkan/vulkan.h>

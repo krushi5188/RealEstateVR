@@ -1,4 +1,5 @@
 #include "Project.h"
+#include "PDFConverter.h"
 #include <iostream>
 
 Project::Project()
@@ -16,7 +17,21 @@ bool Project::addFloor(const std::string& imagePath, const std::string& floorNam
 
     std::cout << "Processing Floor " << level << ": " << floorName << " from " << imagePath << "..." << std::endl;
 
-    if (!m_processor.load(imagePath)) {
+    std::string finalPath = imagePath;
+
+    // Check for PDF extension
+    if (imagePath.size() > 4 && imagePath.substr(imagePath.size() - 4) == ".pdf") {
+        std::string pngPath = imagePath + ".converted.png";
+        if (PDFConverter::convertToImage(imagePath, pngPath)) {
+            finalPath = pngPath;
+            std::cout << "PDF converted to: " << finalPath << std::endl;
+        } else {
+            std::cerr << "Failed to convert PDF: " << imagePath << std::endl;
+            return false;
+        }
+    }
+
+    if (!m_processor.load(finalPath)) {
         return false;
     }
 

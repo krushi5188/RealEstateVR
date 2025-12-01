@@ -30,7 +30,7 @@ The following files have been created/modified in this session. **All work is co
     *   `ArchNative/src/main.cpp`: Entry point. Sets OpenGL Compatibility Profile. Handles CLI args. Loads QSS.
     *   `ArchNative/src/Core/Camera.h` & `.cpp`: Implements **Orbit** (CAD) and **First-Person** (VR) camera modes.
     *   `ArchNative/src/Core/ImageProcessor.h` & `.cpp`: Implements `extractWallsFromBitmap` (HoughLines), OCR (Tesseract), and **Gap Detection** (Windows).
-    *   `ArchNative/src/Core/Project.h` & `.cpp`: Manages multi-floor projects.
+    *   `ArchNative/src/Core/Project.h` & `.cpp`: Manages multi-floor projects. Handles **PDF Import** (via conversion).
     *   `ArchNative/src/Core/Floor.h`: Data model for a single floor level (Walls, Rooms, Windows, Doors).
     *   `ArchNative/src/Core/MeshGenerator.h` & `.cpp`: Converts Project data to 3D Mesh geometry. Advanced window hole cutting logic.
     *   `ArchNative/src/Core/Serializer.h` & `.cpp`: Saves/Loads `.anvr` proprietary binary files.
@@ -39,6 +39,7 @@ The following files have been created/modified in this session. **All work is co
     *   `ArchNative/src/Core/OpenXRManager.h` & `.cpp`: OpenXR Runtime Interface (Skeleton & Android Prep).
     *   `ArchNative/src/Core/FurnitureLibrary.h` & `.cpp`: Catalog of furniture items.
     *   `ArchNative/src/Core/VRInput.h`: VR Input structures.
+    *   `ArchNative/src/Core/PDFConverter.h` & `.cpp`: **(NEW)** Wrapper for `pdftoppm` to convert PDFs to Images.
 *   **Analysis Modules:**
     *   `ArchNative/src/Analysis/LightAnalyzer.h` & `.cpp`: 2D Raycasting for light heatmaps.
     *   `ArchNative/src/Analysis/PathFinder.h` & `.cpp`: A* Pathfinding algorithm.
@@ -73,7 +74,7 @@ We use **CMake** for building.
 A script `verify_headless.sh` is provided in the root. It compiles the `ArchNative` project and runs:
 1.  `./ArchNative --test-screenshot`: Verifies the OpenGL context works (draws a grid).
 2.  `./ArchNative --test-camera`: Verifies the Camera rotation logic.
-3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen, Serialization, Light Analysis, Pathfinding, Reports, Cost Estimation, and PDF Export.
+3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen, Serialization, Light Analysis, Pathfinding, Reports, Cost Estimation, PDF Export, and **PDF Import**.
 4.  `./ArchNative --test-vr`: Verifies OpenXR initialization.
 5.  `./ArchNative --test-stereo`: Verifies Stereo (Side-by-Side) rendering for VR.
 
@@ -88,7 +89,7 @@ You must port the logic from the current JS files to C++ classes.
 *   **Source:** `server/image-processor.js`
 *   **Target:** `src/core/ImageProcessor.cpp`
 *   **Key Logic:** `extractWallsFromBitmap`, `labelRoomsWithOCR`.
-*   **Note:** PDF Import currently requires external conversion to PNG. Direct PDF reading via Poppler was scoped out for this phase.
+*   **Note:** PDF Import is handled by `PDFConverter` converting to PNG first.
 
 ### B. Mesh Generation & Serialization (Phase 3N)
 *   **Source:** `server/model-generator.js`

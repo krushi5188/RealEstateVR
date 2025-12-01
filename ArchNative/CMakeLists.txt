@@ -53,6 +53,8 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Analysis/BlueprintGenerator.h
     src/Core/OpenXRManager.cpp
     src/Core/OpenXRManager.h
+    src/Core/PDFConverter.cpp
+    src/Core/PDFConverter.h
 )
 
 target_link_libraries(ArchNative PRIVATE
