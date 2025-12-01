@@ -5,13 +5,13 @@ on:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-  workflow_dispatch: # Enables manual button click
+  workflow_dispatch:
 
 jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4  # Updated to v4
+    - uses: actions/checkout@v4
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v3
@@ -22,19 +22,89 @@ jobs:
         modules: 'qtmultimedia qt3d'
 
     - name: Install Dependencies
-      run: brew install opencv tesseract openxr cmake
+      run: |
+        brew update
+        brew install opencv tesseract cmake pkg-config ninja
+        brew install --cask xquartz
+        
+        # Install OpenXR runtime dependencies
+        brew install libffi glew sdl2
+        
+        # Install Vulkan for optional support
+        brew install vulkan-headers vulkan-loader
+
+    - name: Build and Install OpenXR from source
+      run: |
+        # Create build directory
+        mkdir -p openxr-build
+        cd openxr-build
+        
+        # Clone OpenXR-SDK (loader and headers)
+        git clone https://github.com/KhronosGroup/OpenXR-SDK.git --branch release-1.0 --depth 1
+        mkdir -p OpenXR-SDK/build
+        cd OpenXR-SDK/build
+        
+        # Configure and build OpenXR
+        cmake -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_INSTALL_PREFIX=/usr/local \
+              -DBUILD_TESTS=OFF \
+              -DPRINT_LOADER_DEBUG=OFF \
+              -GNinja ..
+        
+        # Build and install
+        cmake --build . --config Release --target install
+        sudo cmake --install . --prefix /usr/local
+        
+        echo "OpenXR installed to /usr/local"
+
+    - name: Verify OpenXR Installation
+      run: |
+        # Check if OpenXR headers and libraries are installed
+        ls -la /usr/local/include/openxr/
+        ls -la /usr/local/lib/*openxr* 2>/dev/null || echo "Checking for OpenXR libraries..."
+        
+        # Set environment variable for CMake
+        echo "OPENXR_ROOT=/usr/local" >> $GITHUB_ENV
 
     - name: Configure CMake
-      run: cmake -B build -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR
+      run: |
+        # Set up CMake with OpenXR path
+        cmake -B build -G "Unix Makefiles" \
+          -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DOpenXR_ROOT="$OPENXR_ROOT" \
+          -DCMAKE_FIND_FRAMEWORK=LAST
 
     - name: Build
-      run: cmake --build build --config Release
+      run: |
+        cmake --build build --config Release --parallel $(sysctl -n hw.logicalcpu)
+
+    - name: Fix OpenXR library paths for macOS bundle
+      run: |
+        # Find OpenXR library
+        OPENXR_LIB=$(find /usr/local/lib -name "*openxr*" -type f | head -1)
+        if [ -n "$OPENXR_LIB" ]; then
+          echo "Found OpenXR library: $OPENXR_LIB"
+          # Copy OpenXR library to app bundle
+          cp "$OPENXR_LIB" "build/ArchNative.app/Contents/Frameworks/"
+          
+          # Update library paths
+          install_name_tool -change "$OPENXR_LIB" "@executable_path/../Frameworks/$(basename $OPENXR_LIB)" \
+            "build/ArchNative.app/Contents/MacOS/ArchNative"
+        else
+          echo "Warning: OpenXR library not found!"
+        fi
 
     - name: Package DMG
-      run: macdeployqt build/ArchNative.app -dmg
+      run: |
+        # First deploy Qt dependencies
+        macdeployqt build/ArchNative.app -verbose=2 -always-overwrite
+        
+        # Create DMG
+        macdeployqt build/ArchNative.app -dmg
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4  # Changed from v3 to v4
+      uses: actions/upload-artifact@v4
       with:
         name: ArchNative-macOS
         path: build/ArchNative.dmg
@@ -42,7 +112,14 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v4  # Updated to v4
+    - uses: actions/checkout@v4
+
+    - name: Setup Vcpkg
+      run: |
+        if (-not (Test-Path "C:\vcpkg")) {
+          git clone https://github.com/Microsoft/vcpkg.git C:\vcpkg
+          & C:\vcpkg\bootstrap-vcpkg.bat
+        }
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v3
@@ -51,25 +128,54 @@ jobs:
         host: 'windows'
         target: 'desktop'
         arch: 'win64_msvc2019_64'
+        modules: 'qtmultimedia qt3d'
 
     - name: Install Dependencies (Vcpkg)
+      shell: pwsh
       run: |
-        vcpkg install opencv:x64-windows
-        vcpkg install tesseract:x64-windows
-        vcpkg install openxr-loader:x64-windows
-        vcpkg integrate install
+        & C:\vcpkg\vcpkg install opencv:x64-windows
+        & C:\vcpkg\vcpkg install tesseract:x64-windows
+        & C:\vcpkg\vcpkg install openxr-loader:x64-windows
+        & C:\vcpkg\vcpkg integrate install
 
     - name: Configure CMake
-      run: cmake -B build -DCMAKE_PREFIX_PATH=%QT_ROOT_DIR% -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+      shell: pwsh
+      run: |
+        $env:QT_ROOT_DIR = $env:QT_ROOT_DIR -replace '\\', '/'
+        cmake -B build `
+          -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
+          -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_BUILD_TYPE=Release `
+          -DOpenXR_ROOT="C:/vcpkg/installed/x64-windows" `
+          -A x64
 
     - name: Build
-      run: cmake --build build --config Release
+      run: cmake --build build --config Release --parallel
 
     - name: Package
-      run: windeployqt build/Release/ArchNative.exe --dir dist
+      shell: pwsh
+      run: |
+        # Create dist directory
+        if (-not (Test-Path "dist")) {
+          New-Item -ItemType Directory -Path "dist"
+        }
+        
+        # Copy the executable
+        Copy-Item "build/Release/ArchNative.exe" -Destination "dist/"
+        
+        # Run windeployqt
+        windeployqt dist/ArchNative.exe --dir dist --qmldir $env:QT_ROOT_DIR/qml
+        
+        # Copy OpenXR loader
+        Copy-Item "C:/vcpkg/installed/x64-windows/bin/openxr_loader*.dll" -Destination "dist/" -ErrorAction SilentlyContinue
+
+    - name: Zip Windows artifacts
+      shell: pwsh
+      run: |
+        Compress-Archive -Path dist/* -DestinationPath ArchNative-Windows.zip
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4  # Changed from v3 to v4
+      uses: actions/upload-artifact@v4
       with:
         name: ArchNative-Windows
-        path: dist/
+        path: ArchNative-Windows.zip
