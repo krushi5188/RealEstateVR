@@ -1,6 +1,15 @@
 # ArchNative Build Instructions
 
-## Prerequisites
+## Automated Build (Recommended)
+This project includes a **GitHub Actions** workflow.
+1.  Push the code to GitHub.
+2.  Go to the "Actions" tab.
+3.  Wait for the `Build ArchNative Release` workflow to finish.
+4.  Download the `ArchNative-macOS` (.dmg) and `ArchNative-Windows` (.zip) artifacts.
+
+## Manual Build (Local)
+
+### Prerequisites
 
 To build ArchNative for Windows (.exe) or macOS (.dmg), you need the following tools installed on your host machine.
 
@@ -41,37 +50,7 @@ To build ArchNative for Windows (.exe) or macOS (.dmg), you need the following t
 
 ---
 
-## 2. macOS Build (.dmg)
-
-**Requirements:**
-*   Xcode (latest)
-*   Qt 6 for macOS (via Online Installer or Homebrew: `brew install qt@6`)
-*   Dependencies via Homebrew:
-    ```bash
-    brew install opencv tesseract cmake openxr
-    ```
-
-**Steps:**
-1.  Open Terminal.
-2.  Navigate to `ArchNative` directory.
-3.  Generate Xcode project:
-    ```bash
-    mkdir build && cd build
-    cmake .. -G Xcode -DCMAKE_PREFIX_PATH="/usr/local/opt/qt@6"
-    ```
-4.  Build:
-    ```bash
-    cmake --build . --config Release
-    ```
-5.  **Packaging**: Use `macdeployqt` to create the `.dmg`.
-    ```bash
-    /usr/local/opt/qt@6/bin/macdeployqt ArchNative.app -dmg
-    ```
-6.  You will find `ArchNative.dmg` in the build directory.
-
----
-
-## 3. Linux Build
+## 2. Linux Build
 
 **Requirements:**
 *   `build-essential`, `cmake`, `qt6-base-dev`, `libopencv-dev`, `libtesseract-dev`, `libopenxr-dev`
