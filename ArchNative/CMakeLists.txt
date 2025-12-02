@@ -14,7 +14,6 @@ find_package(OpenCV REQUIRED)
 if(WIN32)
     find_package(Tesseract CONFIG REQUIRED)
     find_package(OpenXR CONFIG REQUIRED)
-    # Define alias variables for consistency if needed, but usually we link targets directly
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(Tesseract REQUIRED tesseract)
@@ -74,7 +73,15 @@ target_link_libraries(ArchNative PRIVATE
 
 if(WIN32)
     # Vcpkg targets
-    target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract OpenXR::OpenXR_loader)
+    # Attempt to link against OpenXR::openxr_loader (common Vcpkg target) or OpenXR::OpenXR
+    if(TARGET OpenXR::openxr_loader)
+        target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract OpenXR::openxr_loader)
+    elseif(TARGET OpenXR::OpenXR)
+        target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract OpenXR::OpenXR)
+    else()
+         message(WARNING "Neither OpenXR::openxr_loader nor OpenXR::OpenXR found. Attempting legacy link.")
+         target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract openxr_loader)
+    endif()
 else()
     # PkgConfig variables
     target_link_libraries(ArchNative PRIVATE ${Tesseract_LIBRARIES} ${OpenXR_LIBRARIES})
