@@ -74,7 +74,7 @@ target_link_libraries(ArchNative PRIVATE
 
 if(WIN32)
     # Vcpkg targets
-    target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract OpenXR::OpenXR)
+    target_link_libraries(ArchNative ... OpenXR::openxr_loader)
 else()
     # PkgConfig variables
     target_link_libraries(ArchNative PRIVATE ${Tesseract_LIBRARIES} ${OpenXR_LIBRARIES})
