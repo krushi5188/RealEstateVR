@@ -59,7 +59,7 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 180 # Increased timeout for heavy vcpkg builds
     steps:
     - uses: actions/checkout@v4
 
@@ -71,7 +71,18 @@ jobs:
         target: 'desktop'
         arch: 'win64_msvc2019_64'
 
+    - name: Cache Vcpkg
+      id: cache-vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          C:\vcpkg\installed
+          C:\vcpkg\packages
+          C:\vcpkg\downloads
+        key: ${{ runner.os }}-vcpkg-opencv-tesseract-openxr-v1
+
     - name: Install Dependencies (Vcpkg)
+      if: steps.cache-vcpkg.outputs.cache-hit != 'true'
       run: |
         vcpkg install opencv:x64-windows
         vcpkg install tesseract:x64-windows
