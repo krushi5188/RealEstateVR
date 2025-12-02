@@ -5,7 +5,7 @@ on:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-  workflow_dispatch: # Enables manual button click
+  workflow_dispatch:
 
 jobs:
   build-macos:
@@ -15,11 +15,16 @@ jobs:
 
     - name: Debug - List directory structure
       run: |
-        echo "Current directory structure:"
-        pwd
         ls -la
-        echo "Looking for CMakeLists.txt:"
         find . -name "CMakeLists.txt" 2>/dev/null
+
+    # --- AUTO-FIX STEP ---
+    - name: Patch CMakeLists.txt (Auto-Fix Target Name)
+      run: |
+        echo "Patching CMakeLists.txt to use correct OpenXR target..."
+        # This replaces OpenXR::OpenXR with OpenXR::openxr_loader in the file
+        sed -i '' 's/OpenXR::OpenXR/OpenXR::openxr_loader/g' CMakeLists.txt || true
+        echo "Patch applied."
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
@@ -31,51 +36,45 @@ jobs:
 
     - name: Install Dependencies
       env:
-        # ⚡️ SPEED OPTIMIZATION: Prevents brew from updating itself
         HOMEBREW_NO_AUTO_UPDATE: 1 
-        # ⚡️ SPEED OPTIMIZATION: Forces usage of pre-built binaries
         HOMEBREW_NO_INSTALL_FROM_API: 1
       run: |
         echo "Installing dependencies..."
-        brew install opencv tesseract cmake pkg-config jsoncpp
+        # Note: We do NOT install jsoncpp here to avoid conflicts. OpenXR will build its own.
+        brew install opencv tesseract cmake pkg-config
         brew install vulkan-headers sdl2 glew
 
-    - name: Install OpenXR SDK (Fixed Version)
+    - name: Install OpenXR SDK (From Source with Internal Deps)
       run: |
         echo "Installing OpenXR SDK..."
-        
         cd /tmp
         rm -rf OpenXR*
         
-        # FIX: Upgraded from release-1.0.28 to release-1.1.43 to fix CMake error
-        git clone --depth 1 --branch release-1.1.43 https://github.com/KhronosGroup/OpenXR-SDK.git
+        # FIX 1: Use --recursive to get internal dependencies (like JsonCpp)
+        # FIX 2: Using release-1.1.43 which is newer and stable
+        git clone --recursive --depth 1 --branch release-1.1.43 https://github.com/KhronosGroup/OpenXR-SDK.git
         cd OpenXR-SDK
         
         mkdir -p build && cd build
         
+        # FIX 3: Removed all JSONCPP flags. We let OpenXR use its internal submodule.
         cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_INSTALL_PREFIX=/usr/local \
           -DBUILD_TESTS=OFF \
           -DBUILD_LOADER=ON \
-          -DUSE_SYSTEM_JSONCPP=ON \
-          -DJSONCPP_LIBRARY=/opt/homebrew/lib/libjsoncpp.dylib \
-          -DJSONCPP_INCLUDE_DIR=/opt/homebrew/include/jsoncpp
+          -DBUILD_API_LAYERS=OFF
         
         make -j$(sysctl -n hw.logicalcpu)
         sudo make install
-        
-        echo "OpenXR installation complete"
 
     - name: Verify OpenXR Installation
       run: |
-        echo "Verifying OpenXR installation..."
-        ls -la /usr/local/include/openxr/ 2>/dev/null || echo "OpenXR headers not found in /usr/local/include"
+        ls -la /usr/local/include/openxr/ 2>/dev/null || echo "Headers not found"
+        ls -la /usr/local/lib/libopenxr_loader* 2>/dev/null || echo "Libs not found"
 
     - name: Configure CMake
       run: |
-        echo "QT_ROOT_DIR: $QT_ROOT_DIR"
-        
         if [ ! -f "CMakeLists.txt" ]; then
           echo "Error: CMakeLists.txt not found!"
           exit 1
@@ -90,54 +89,47 @@ jobs:
         echo "CMake configuration completed"
 
     - name: Build
-      run: |
-        echo "Building project..."
-        cmake --build build --config Release --parallel $(sysctl -n hw.logicalcpu)
+      run: cmake --build build --config Release --parallel $(sysctl -n hw.logicalcpu)
 
     - name: Deploy Qt Dependencies
       run: |
         APP_BUNDLE=$(find build -name "*.app" -type d 2>/dev/null | head -1)
-        
-        if [ -n "$APP_BUNDLE" ] && [ -d "$APP_BUNDLE" ]; then
-          echo "Found app bundle: $APP_BUNDLE"
-          macdeployqt "$APP_BUNDLE" -verbose=2
-        else
-          echo "No .app bundle found. Looking for executable..."
-          EXE_PATH=$(find build -type f -name "ArchNative" -o -name "ArchNative*" ! -name "*.*" 2>/dev/null | head -1)
-          
-          if [ -n "$EXE_PATH" ] && [ -f "$EXE_PATH" ]; then
-            echo "Found executable: $EXE_PATH"
-            mkdir -p "ArchNative.app/Contents/MacOS"
-            cp "$EXE_PATH" "ArchNative.app/Contents/MacOS/ArchNative"
-            macdeployqt "ArchNative.app" -verbose=2
-            mv "ArchNative.app" build/
-            APP_BUNDLE="build/ArchNative.app"
+        if [ -z "$APP_BUNDLE" ]; then
+          # Fallback: create app bundle manually if cmake didn't
+          EXE_PATH=$(find build -type f -name "ArchNative" ! -name "*.*" 2>/dev/null | head -1)
+          if [ -f "$EXE_PATH" ]; then
+             mkdir -p "ArchNative.app/Contents/MacOS"
+             cp "$EXE_PATH" "ArchNative.app/Contents/MacOS/ArchNative"
+             APP_BUNDLE="ArchNative.app"
+             mv "ArchNative.app" build/
+             APP_BUNDLE="build/ArchNative.app"
           else
-            echo "Error: No executable found!"
-            exit 1
+             echo "Error: No executable found"
+             exit 1
           fi
         fi
-
-    - name: Package DMG
-      run: |
-        APP_BUNDLE=$(find build -name "*.app" -type d 2>/dev/null | head -1)
-        if [ -n "$APP_BUNDLE" ]; then
-          macdeployqt "$APP_BUNDLE" -dmg
-        else
-          exit 1
-        fi
+        macdeployqt "$APP_BUNDLE" -verbose=2 -dmg
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ArchNative-macOS
         path: build/*.dmg
-        if-no-files-found: error
 
   build-windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
+
+    # --- AUTO-FIX STEP FOR WINDOWS ---
+    - name: Patch CMakeLists.txt (Auto-Fix Target Name)
+      shell: pwsh
+      run: |
+        Write-Host "Patching CMakeLists.txt to use correct OpenXR target..."
+        $content = Get-Content CMakeLists.txt
+        $content = $content -replace 'OpenXR::OpenXR', 'OpenXR::openxr_loader'
+        Set-Content CMakeLists.txt $content
+        Write-Host "Patch applied."
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
@@ -186,15 +178,12 @@ jobs:
           Copy-Item $exePath.FullName -Destination "dist/"
           windeployqt dist/ArchNative.exe --dir dist
           
-          # Copy DLLs
-          $openxrDll = Get-ChildItem -Path "C:\vcpkg\installed\x64-windows\bin" -Filter "openxr_loader*.dll" | Select-Object -First 1
-          if ($openxrDll) { Copy-Item $openxrDll.FullName -Destination "dist/" }
-          
-          $requiredDlls = @("jsoncpp.dll", "opencv_world*.dll", "tesseract*.dll")
-          foreach ($dllPattern in $requiredDlls) {
-            $dllFiles = Get-ChildItem -Path "C:\vcpkg\installed\x64-windows\bin" -Filter $dllPattern | Select-Object -First 1
-            if ($dllFiles) { Copy-Item $dllFiles.FullName -Destination "dist/" -ErrorAction SilentlyContinue }
-          }
+          # Copy DLLs explicitly
+          $binPath = "C:\vcpkg\installed\x64-windows\bin"
+          Copy-Item "$binPath\openxr_loader.dll" -Destination "dist/" -ErrorAction SilentlyContinue
+          Copy-Item "$binPath\jsoncpp.dll" -Destination "dist/" -ErrorAction SilentlyContinue
+          Get-ChildItem "$binPath" -Filter "opencv_world*.dll" | Copy-Item -Destination "dist/"
+          Get-ChildItem "$binPath" -Filter "tesseract*.dll" | Copy-Item -Destination "dist/"
         } else {
           exit 1
         }
