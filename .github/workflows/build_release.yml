@@ -27,8 +27,12 @@ jobs:
         brew install opencv tesseract
         brew install --cask xquartz
         
-        # Install build tools
-        brew install cmake pkg-config ninja
+        # Install newer CMake (minimum 3.5 required by OpenXR)
+        brew install cmake@3.27
+        echo "/usr/local/opt/cmake@3.27/bin" >> $GITHUB_PATH
+        
+        # Install other build tools
+        brew install pkg-config ninja
         
         # Install OpenXR dependencies
         brew install libffi glew sdl2
@@ -36,6 +40,8 @@ jobs:
     - name: Build and Install OpenXR
       run: |
         echo "Building OpenXR from source..."
+        echo "CMake version:"
+        cmake --version
         
         # Download OpenXR SDK source
         cd /tmp
@@ -47,13 +53,14 @@ jobs:
         mkdir build
         cd build
         
-        # Configure OpenXR
+        # Configure OpenXR with explicit CMake policy
         cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_INSTALL_PREFIX=/usr/local \
           -DBUILD_TESTS=OFF \
           -DBUILD_LOADER=ON \
-          -DPRINT_LOADER_DEBUG=OFF
+          -DPRINT_LOADER_DEBUG=OFF \
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5
         
         # Build and install
         make -j$(sysctl -n hw.logicalcpu)
@@ -61,7 +68,13 @@ jobs:
         
         echo "OpenXR installation complete"
 
-    - name: Configure CMake
+    - name: Verify OpenXR Installation
+      run: |
+        echo "Checking OpenXR installation..."
+        ls -la /usr/local/include/openxr/ 2>/dev/null || echo "Headers not found"
+        ls -la /usr/local/lib/*openxr* 2>/dev/null || echo "Libraries not found"
+
+    - name: Configure CMake for ArchNative
       run: |
         # Check current directory and list files
         pwd
@@ -72,46 +85,76 @@ jobs:
           -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
           -DCMAKE_BUILD_TYPE=Release \
           -DOpenXR_ROOT=/usr/local \
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
           -G "Unix Makefiles"
 
-    - name: Build
+    - name: Build ArchNative
       run: |
         cmake --build build --config Release --parallel $(sysctl -n hw.logicalcpu)
 
+    - name: Verify Build
+      run: |
+        echo "Checking build output..."
+        find build -name "*.app" -type d
+        find build -name "ArchNative" -type f
+
     - name: Deploy Qt Dependencies
       run: |
-        # Check if app exists
-        if [ -d "build/ArchNative.app" ]; then
-          macdeployqt build/ArchNative.app -verbose=2
+        # Find the app bundle
+        APP_BUNDLE=$(find build -name "*.app" -type d | head -1)
+        if [ -n "$APP_BUNDLE" ] && [ -d "$APP_BUNDLE" ]; then
+          echo "Found app bundle: $APP_BUNDLE"
+          macdeployqt "$APP_BUNDLE" -verbose=2
         else
-          echo "Error: ArchNative.app not found in build directory"
-          ls -la build/
+          echo "Error: No app bundle found in build directory"
+          find build -type f -name "*.app" || true
           exit 1
         fi
 
     - name: Bundle OpenXR Library
       run: |
-        # Find and bundle OpenXR library
+        # Find the app bundle
+        APP_BUNDLE=$(find build -name "*.app" -type d | head -1)
+        
+        # Find OpenXR library
         OPENXR_LIB=$(find /usr/local/lib -name "libopenxr_loader*.dylib" 2>/dev/null | head -1)
-        if [ -n "$OPENXR_LIB" ]; then
+        if [ -n "$OPENXR_LIB" ] && [ -n "$APP_BUNDLE" ]; then
           echo "Found OpenXR library: $OPENXR_LIB"
-          mkdir -p build/ArchNative.app/Contents/Frameworks
-          cp "$OPENXR_LIB" build/ArchNative.app/Contents/Frameworks/
+          echo "App bundle: $APP_BUNDLE"
+          
+          # Create Frameworks directory if it doesn't exist
+          mkdir -p "$APP_BUNDLE/Contents/Frameworks"
+          
+          # Copy OpenXR library
+          cp "$OPENXR_LIB" "$APP_BUNDLE/Contents/Frameworks/"
           
           LIB_NAME=$(basename "$OPENXR_LIB")
-          install_name_tool -change "$OPENXR_LIB" "@executable_path/../Frameworks/$LIB_NAME" \
-            build/ArchNative.app/Contents/MacOS/ArchNative 2>/dev/null || true
+          EXECUTABLE="$APP_BUNDLE/Contents/MacOS/$(basename "$APP_BUNDLE" .app)"
+          
+          if [ -f "$EXECUTABLE" ]; then
+            install_name_tool -change "$OPENXR_LIB" "@executable_path/../Frameworks/$LIB_NAME" \
+              "$EXECUTABLE" 2>/dev/null || echo "Note: Could not update library path"
+          fi
+        else
+          echo "Warning: OpenXR library or app bundle not found"
         fi
 
     - name: Create DMG
       run: |
-        macdeployqt build/ArchNative.app -dmg
+        APP_BUNDLE=$(find build -name "*.app" -type d | head -1)
+        if [ -n "$APP_BUNDLE" ]; then
+          macdeployqt "$APP_BUNDLE" -dmg
+        else
+          echo "Error: No app bundle found for DMG creation"
+          exit 1
+        fi
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ArchNative-macOS
-        path: build/ArchNative.dmg
+        path: build/*.dmg
+        if-no-files-found: error
 
   build-windows:
     runs-on: windows-latest
@@ -177,6 +220,7 @@ jobs:
           -DCMAKE_PREFIX_PATH="$QT_PATH" `
           -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
           -DCMAKE_BUILD_TYPE=Release `
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5 `
           -A x64
 
     - name: Build
@@ -200,7 +244,7 @@ jobs:
           
           # Run windeployqt
           windeployqt dist/ArchNative.exe --dir dist
-        } else {
+        else {
           Write-Error "ArchNative.exe not found in build directory!"
           Get-ChildItem -Path "build" -Recurse -Filter "*.exe" | ForEach-Object { Write-Host "Found: $($_.FullName)" }
           exit 1
