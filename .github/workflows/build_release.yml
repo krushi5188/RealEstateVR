@@ -42,9 +42,14 @@ jobs:
 
     - name: Package DMG
       run: |
-        # Explicitly tell macdeployqt where to find the Qt Frameworks
-        # Using -verbose=1 to see errors without flooding log
-        macdeployqt build/ArchNative.app -dmg -verbose=1 -libpath=$(brew --prefix qt@6)/lib
+        # Set DYLD paths to force usage of correct Qt frameworks
+        export QT_LIB_DIR="$(brew --prefix qt@6)/lib"
+        export DYLD_FRAMEWORK_PATH="$QT_LIB_DIR:$DYLD_FRAMEWORK_PATH"
+        export DYLD_LIBRARY_PATH="$QT_LIB_DIR:$DYLD_LIBRARY_PATH"
+
+        # Run macdeployqt with minimal verbosity to avoid confusing logs if it succeeds partially
+        # and ensure it looks in the correct libpath.
+        macdeployqt build/ArchNative.app -dmg -libpath=$QT_LIB_DIR -always-overwrite
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
