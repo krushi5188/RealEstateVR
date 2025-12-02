@@ -13,16 +13,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: '6.5.0'
-        host: 'mac'
-        target: 'desktop'
-        modules: 'qtmultimedia qt3d'
+    - name: Install Dependencies (Homebrew)
+      run: |
+        brew update
+        brew install opencv tesseract cmake pkg-config vulkan-headers qt
 
-    - name: Install Dependencies
-      run: brew install opencv tesseract cmake pkg-config vulkan-headers
+        # Link Qt for CMake
+        echo "QT_ROOT_DIR=$(brew --prefix qt)" >> $GITHUB_ENV
 
     - name: Install OpenXR (Vcpkg)
       run: |
@@ -37,7 +34,8 @@ jobs:
       run: cmake --build build --config Release
 
     - name: Package DMG
-      run: macdeployqt build/ArchNative.app -dmg
+      run: |
+        $QT_ROOT_DIR/bin/macdeployqt build/ArchNative.app -dmg
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
