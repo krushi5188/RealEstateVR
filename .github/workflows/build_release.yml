@@ -65,8 +65,12 @@ jobs:
         vcpkg install openxr-loader:x64-windows
         vcpkg integrate install
 
+    - name: Check Source Directory (Debug)
+      run: |
+        ls -R ArchNative
+
     - name: Configure CMake
-      run: cmake -S ArchNative -B build -DCMAKE_PREFIX_PATH=%QT_ROOT_DIR% -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+      run: cmake -S ArchNative -B build -DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
 
     - name: Build
       run: cmake --build build --config Release
