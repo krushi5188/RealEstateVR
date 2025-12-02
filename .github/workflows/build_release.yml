@@ -13,6 +13,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Debug - List directory structure
+      run: |
+        echo "Current directory structure:"
+        pwd
+        ls -la
+        echo "Looking for CMakeLists.txt:"
+        find . -name "CMakeLists.txt" 2>/dev/null
+
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
       with:
@@ -22,35 +30,84 @@ jobs:
         modules: 'qtmultimedia qt3d'
 
     - name: Install Dependencies
-      run: brew install opencv tesseract cmake pkg-config
+      run: |
+        brew update
+        brew install opencv tesseract cmake pkg-config
 
     - name: Install OpenXR SDK (Source)
       run: |
+        # Clean any previous attempts
+        cd /tmp
+        rm -rf OpenXR-SDK
         git clone https://github.com/KhronosGroup/OpenXR-SDK.git
         cd OpenXR-SDK
-        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_API_LAYERS=OFF -DBUILD_TESTS=OFF -DBUILD_LOADER=ON
-        cmake --build build
-        sudo cmake --install build
+        mkdir -p build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_TESTS=OFF
+        cmake --build . --config Release
+        sudo cmake --install .
 
     - name: Configure CMake
-      run: cmake -S ArchNative -B build -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR
+      run: |
+        echo "QT_ROOT_DIR: $QT_ROOT_DIR"
+        echo "Configuring CMake..."
+        # Use current directory (.) instead of ArchNative subdirectory
+        cmake -S . -B build -G "Unix Makefiles" -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       run: cmake --build build --config Release
 
+    - name: Deploy Qt Dependencies
+      run: |
+        # Find the app bundle first
+        if [ -d "build/ArchNative.app" ]; then
+          macdeployqt build/ArchNative.app -verbose=2
+        else
+          echo "Looking for app bundle..."
+          find build -name "*.app" -type d | head -5
+          # If not found, check for executable
+          EXE_PATH=$(find build -name "ArchNative" -type f | head -1)
+          if [ -n "$EXE_PATH" ]; then
+            echo "Found executable at: $EXE_PATH"
+            # Create app bundle structure
+            mkdir -p "ArchNative.app/Contents/MacOS"
+            cp "$EXE_PATH" "ArchNative.app/Contents/MacOS/ArchNative"
+            macdeployqt ArchNative.app -verbose=2
+            mv ArchNative.app build/
+          else
+            echo "Error: No ArchNative executable or app bundle found!"
+            exit 1
+          fi
+        fi
+
     - name: Package DMG
-      run: macdeployqt build/ArchNative.app -dmg
+      run: |
+        if [ -d "build/ArchNative.app" ]; then
+          macdeployqt build/ArchNative.app -dmg
+        else
+          echo "Error: ArchNative.app not found for DMG creation"
+          exit 1
+        fi
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ArchNative-macOS
         path: build/ArchNative.dmg
+        if-no-files-found: error
 
   build-windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
+
+    - name: Debug - List directory structure
+      shell: bash
+      run: |
+        echo "Current directory structure:"
+        pwd
+        ls -la
+        echo "Looking for CMakeLists.txt:"
+        find . -name "CMakeLists.txt" 2>/dev/null
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
@@ -60,24 +117,81 @@ jobs:
         target: 'desktop'
         arch: 'win64_msvc2019_64'
 
-    - name: Install Dependencies (Vcpkg)
+    - name: Setup Vcpkg
+      shell: pwsh
       run: |
-        vcpkg install opencv:x64-windows
-        vcpkg install tesseract:x64-windows
-        vcpkg install openxr-loader:x64-windows
-        vcpkg integrate install
+        Write-Host "Setting up vcpkg..."
+        # Check if vcpkg exists, if not install it
+        if (-not (Test-Path "C:\vcpkg")) {
+          git clone https://github.com/Microsoft/vcpkg.git C:\vcpkg
+          & C:\vcpkg\bootstrap-vcpkg.bat
+        }
+
+    - name: Install Dependencies (Vcpkg)
+      shell: pwsh
+      run: |
+        Write-Host "Installing dependencies..."
+        & C:\vcpkg\vcpkg install opencv:x64-windows
+        & C:\vcpkg\vcpkg install tesseract:x64-windows
+        & C:\vcpkg\vcpkg install openxr-loader:x64-windows
+        & C:\vcpkg\vcpkg integrate install
 
     - name: Configure CMake
-      run: cmake -S ArchNative -B build -DCMAKE_PREFIX_PATH=%QT_ROOT_DIR% -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+      shell: pwsh
+      run: |
+        Write-Host "Configuring CMake..."
+        Write-Host "QT_ROOT_DIR: $env:QT_ROOT_DIR"
+        
+        # Use current directory (.) instead of ArchNative subdirectory
+        cmake -S . -B build `
+          -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
+          -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       run: cmake --build build --config Release
 
     - name: Package
-      run: windeployqt build/Release/ArchNative.exe --dir dist
+      shell: pwsh
+      run: |
+        # Create dist directory
+        if (-not (Test-Path "dist")) {
+          New-Item -ItemType Directory -Path "dist"
+        }
+        
+        # Find the executable
+        $exePath = Get-ChildItem -Path "build" -Filter "ArchNative.exe" -Recurse | Select-Object -First 1
+        if ($exePath) {
+          Write-Host "Found executable: $($exePath.FullName)"
+          Copy-Item $exePath.FullName -Destination "dist/"
+          
+          # Deploy Qt dependencies
+          windeployqt dist/ArchNative.exe --dir dist
+          
+          # Copy OpenXR loader
+          $openxrDll = Get-ChildItem -Path "C:\vcpkg\installed\x64-windows\bin" -Filter "openxr_loader*.dll" | Select-Object -First 1
+          if ($openxrDll) {
+            Copy-Item $openxrDll.FullName -Destination "dist/"
+          }
+        } else {
+          Write-Error "ArchNative.exe not found!"
+          Write-Host "Searching for any .exe files:"
+          Get-ChildItem -Path "build" -Recurse -Filter "*.exe" | ForEach-Object { Write-Host "  $($_.FullName)" }
+          exit 1
+        }
+
+    - name: Zip Windows artifacts
+      shell: pwsh
+      run: |
+        if (Test-Path "dist") {
+          Compress-Archive -Path dist\* -DestinationPath ArchNative-Windows.zip -Force
+        } else {
+          Write-Error "dist directory not found!"
+          exit 1
+        }
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ArchNative-Windows
-        path: dist/
+        path: ArchNative-Windows.zip
