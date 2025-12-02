@@ -10,9 +10,16 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets PrintSupport)
 find_package(OpenCV REQUIRED)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(Tesseract REQUIRED tesseract)
-pkg_check_modules(OpenXR REQUIRED openxr)
+# Dependency Resolution (Hybrid: Config for Windows/Vcpkg, PkgConfig for Linux/Mac)
+if(WIN32)
+    find_package(Tesseract CONFIG REQUIRED)
+    find_package(OpenXR CONFIG REQUIRED)
+    # Define alias variables for consistency if needed, but usually we link targets directly
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(Tesseract REQUIRED tesseract)
+    pkg_check_modules(OpenXR REQUIRED openxr)
+endif()
 
 add_executable(ArchNative MACOSX_BUNDLE
     src/main.cpp
@@ -57,15 +64,23 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Core/PDFConverter.h
 )
 
+# Link Libraries
 target_link_libraries(ArchNative PRIVATE
     Qt6::Widgets
     Qt6::OpenGLWidgets
     Qt6::PrintSupport
     ${OpenCV_LIBS}
-    ${Tesseract_LIBRARIES}
-    ${OpenXR_LIBRARIES}
 )
-target_include_directories(ArchNative PRIVATE ${Tesseract_INCLUDE_DIRS} ${OpenXR_INCLUDE_DIRS})
+
+if(WIN32)
+    # Vcpkg targets
+    target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract OpenXR::OpenXR)
+else()
+    # PkgConfig variables
+    target_link_libraries(ArchNative PRIVATE ${Tesseract_LIBRARIES} ${OpenXR_LIBRARIES})
+    target_include_directories(ArchNative PRIVATE ${Tesseract_INCLUDE_DIRS} ${OpenXR_INCLUDE_DIRS})
+endif()
+
 
 # Copy assets to build directory
 add_custom_command(TARGET ArchNative POST_BUILD
