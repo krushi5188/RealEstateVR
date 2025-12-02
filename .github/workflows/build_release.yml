@@ -9,12 +9,11 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-13 # Intel Mac (x64)
+    runs-on: macos-13 # Intel Mac (x64) - Best compatibility for OpenXR
     timeout-minutes: 60
     env:
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
-      # Explicitly set Vcpkg Root
       VCPKG_ROOT: /usr/local/share/vcpkg
     steps:
     - uses: actions/checkout@v4
@@ -29,26 +28,32 @@ jobs:
       run: |
         $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
 
-    # --- FIX FOR "GL/glx.h not found" ---
-    - name: Patch C++ Code for macOS
+    # --- CRITICAL FIX FOR MACOS VR ---
+    - name: Patch C++ Code for macOS Platform
       run: |
-        echo "Patching OpenXRManager.cpp to remove Linux-specific GLX header..."
-        # Replaces #include <GL/glx.h> with #include <OpenGL/gl.h>
+        echo "Converting Linux (X11) code to macOS (Cocoa)..."
+        
+        # 1. Replace the Linux macro with the Mac macro in the source file
+        # This stops openxr_platform.h from looking for 'Display*' and 'GLXContext'
+        sed -i '' 's/XR_USE_PLATFORM_XLIB/XR_USE_PLATFORM_MACOS/g' ArchNative/src/Core/OpenXRManager.cpp || true
+        
+        # 2. Replace the Linux header with the Mac OpenGL header
         sed -i '' 's|#include <GL/glx.h>|#include <OpenGL/gl.h>|g' ArchNative/src/Core/OpenXRManager.cpp || true
         
-        # Also fix the CMakeLists.txt target name issue if it exists
+        # 3. Fix the CMake target name (Common issue with Vcpkg on Mac)
         sed -i '' 's/OpenXR::OpenXR/OpenXR::openxr_loader/g' ArchNative/CMakeLists.txt || true
-        echo "Patches applied."
+        
+        echo "Patches applied. Source is now configured for macOS."
 
     - name: Configure CMake
       run: |
-        # Added -DGL_SILENCE_DEPRECATION to hide the wall of warnings
+        # We explicitly define XR_USE_PLATFORM_MACOS here to ensure the build system knows the target
         cmake -S ArchNative -B build \
           -G "Unix Makefiles" \
           -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
           -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
           -DVCPKG_TARGET_TRIPLET=x64-osx \
-          -DCMAKE_CXX_FLAGS="-DGL_SILENCE_DEPRECATION"
+          -DCMAKE_CXX_FLAGS="-DGL_SILENCE_DEPRECATION -DXR_USE_PLATFORM_MACOS -DXR_USE_GRAPHICS_API_OPENGL"
 
     - name: Build
       run: cmake --build build --config Release
@@ -85,21 +90,16 @@ jobs:
         vcpkg integrate install
 
     - name: Configure CMake
-      # Added -A x64 for architecture safety
       run: cmake -S ArchNative -B build -A x64 -DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
 
     - name: Build
       run: cmake --build build --config Release
 
-    # --- FIX FOR WINDOWS CRASHES (DLLs) ---
     - name: Package & Copy DLLs
       shell: pwsh
       run: |
-        # 1. Run standard Qt deploy
         windeployqt build/Release/ArchNative.exe --dir dist
         
-        # 2. Manually copy Vcpkg DLLs (OpenCV, Tesseract, OpenXR)
-        # Without this, the app will fail to launch
         Write-Host "Copying Vcpkg DLLs..."
         $vcpkgBin = "C:\vcpkg\installed\x64-windows\bin"
         
@@ -107,8 +107,6 @@ jobs:
         Copy-Item "$vcpkgBin\jsoncpp.dll" -Destination "dist/" -ErrorAction SilentlyContinue
         Get-ChildItem "$vcpkgBin" -Filter "opencv_world*.dll" | Copy-Item -Destination "dist/"
         Get-ChildItem "$vcpkgBin" -Filter "tesseract*.dll" | Copy-Item -Destination "dist/"
-        
-        Write-Host "Packaging complete."
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
