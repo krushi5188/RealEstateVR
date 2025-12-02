@@ -15,11 +15,26 @@ endif()
 find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets PrintSupport)
 find_package(OpenCV REQUIRED)
 
-# Dependency Resolution (Hybrid: Config for Windows/Vcpkg, PkgConfig for Linux/Mac)
-if(WIN32)
-    find_package(Tesseract CONFIG REQUIRED)
+# Dependency Resolution (Hybrid: Config for Windows/Mac(Vcpkg), PkgConfig for Linux)
+if(WIN32 OR APPLE)
+    # Windows and macOS (via Vcpkg) use CONFIG mode
+    # Note: Tesseract might still be pkg-config on Mac if installed via brew,
+    # but we are moving towards Vcpkg for OpenXR.
+    # Let's try CONFIG first, fallback to PkgConfig if needed.
+
     find_package(OpenXR CONFIG REQUIRED)
+
+    # Tesseract: On Windows -> CONFIG (Vcpkg). On Mac -> brew (PkgConfig) or Vcpkg?
+    # Our CI installs Tesseract via brew on Mac. So checking CONFIG might fail on Mac for Tesseract.
+    if(WIN32)
+        find_package(Tesseract CONFIG REQUIRED)
+    else() # APPLE
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(Tesseract REQUIRED tesseract)
+    endif()
+
 else()
+    # Linux (Standard PkgConfig)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(Tesseract REQUIRED tesseract)
     pkg_check_modules(OpenXR REQUIRED openxr)
@@ -76,19 +91,27 @@ target_link_libraries(ArchNative PRIVATE
     ${OpenCV_LIBS}
 )
 
-if(WIN32)
-    # Vcpkg targets
-    # Attempt to link against OpenXR::openxr_loader (common Vcpkg target) or OpenXR::OpenXR
+if(WIN32 OR APPLE)
+    # Vcpkg targets (OpenXR)
     if(TARGET OpenXR::openxr_loader)
-        target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract OpenXR::openxr_loader)
+        target_link_libraries(ArchNative PRIVATE OpenXR::openxr_loader)
     elseif(TARGET OpenXR::OpenXR)
-        target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract OpenXR::OpenXR)
+        target_link_libraries(ArchNative PRIVATE OpenXR::OpenXR)
     else()
          message(WARNING "Neither OpenXR::openxr_loader nor OpenXR::OpenXR found. Attempting legacy link.")
-         target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract openxr_loader)
+         target_link_libraries(ArchNative PRIVATE openxr_loader)
     endif()
+
+    # Tesseract linkage
+    if(WIN32)
+        target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract)
+    else() # APPLE
+        target_link_libraries(ArchNative PRIVATE ${Tesseract_LIBRARIES})
+        target_include_directories(ArchNative PRIVATE ${Tesseract_INCLUDE_DIRS})
+    endif()
+
 else()
-    # PkgConfig variables
+    # Linux (PkgConfig)
     target_link_libraries(ArchNative PRIVATE ${Tesseract_LIBRARIES} ${OpenXR_LIBRARIES})
     target_include_directories(ArchNative PRIVATE ${Tesseract_INCLUDE_DIRS} ${OpenXR_INCLUDE_DIRS})
 endif()
