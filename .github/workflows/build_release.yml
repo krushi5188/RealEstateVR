@@ -5,67 +5,50 @@ on:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-  workflow_dispatch:
+  workflow_dispatch: # Enables manual button click
 
 jobs:
   build-macos:
-    runs-on: macos-13 # Intel Mac (x64) - Best compatibility for OpenXR
-    timeout-minutes: 60
+    runs-on: macos-13 # Force Intel (x64) for compatibility
+    timeout-minutes: 60 # Prevent infinite hangs
     env:
-      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_AUTO_UPDATE: 1 # Skip lengthy brew updates
       HOMEBREW_NO_INSTALL_CLEANUP: 1
-      VCPKG_ROOT: /usr/local/share/vcpkg
     steps:
     - uses: actions/checkout@v4
 
     - name: Install Dependencies (Homebrew)
       run: |
+        # install specific versions or bottled packages to speed up
         brew install opencv tesseract cmake pkg-config vulkan-headers qt@6
+
+        # Link Qt for CMake (qt@6 is keg-only)
         echo "QT_ROOT_DIR=$(brew --prefix qt@6)" >> $GITHUB_ENV
+        # Add Qt bin to PATH for macdeployqt
         echo "$(brew --prefix qt@6)/bin" >> $GITHUB_PATH
 
     - name: Install OpenXR (Vcpkg)
       run: |
-        $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
-
-    # --- CRITICAL FIX FOR MACOS VR ---
-    - name: Patch C++ Code for macOS Platform
-      run: |
-        echo "Converting Linux (X11) code to macOS (Cocoa)..."
-        
-        # 1. Replace the Linux macro with the Mac macro in the source file
-        # This stops openxr_platform.h from looking for 'Display*' and 'GLXContext'
-        sed -i '' 's/XR_USE_PLATFORM_XLIB/XR_USE_PLATFORM_MACOS/g' ArchNative/src/Core/OpenXRManager.cpp || true
-        
-        # 2. Replace the Linux header with the Mac OpenGL header
-        sed -i '' 's|#include <GL/glx.h>|#include <OpenGL/gl.h>|g' ArchNative/src/Core/OpenXRManager.cpp || true
-        
-        # 3. Fix the CMake target name (Common issue with Vcpkg on Mac)
-        sed -i '' 's/OpenXR::OpenXR/OpenXR::openxr_loader/g' ArchNative/CMakeLists.txt || true
-        
-        echo "Patches applied. Source is now configured for macOS."
+        vcpkg install openxr-loader --triplet=x64-osx
 
     - name: Configure CMake
       run: |
-        # We explicitly define XR_USE_PLATFORM_MACOS here to ensure the build system knows the target
-        cmake -S ArchNative -B build \
-          -G "Unix Makefiles" \
-          -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
-          -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
-          -DVCPKG_TARGET_TRIPLET=x64-osx \
-          -DCMAKE_CXX_FLAGS="-DGL_SILENCE_DEPRECATION -DXR_USE_PLATFORM_MACOS -DXR_USE_GRAPHICS_API_OPENGL"
+        export PKG_CONFIG_PATH=$VCPKG_INSTALLATION_ROOT/installed/x64-osx/lib/pkgconfig:$PKG_CONFIG_PATH
+        # Added VCPKG Toolchain file to ensure OpenXR is found
+        cmake -S ArchNative -B build -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-osx
 
     - name: Build
       run: cmake --build build --config Release
 
     - name: Package DMG
-      run: macdeployqt build/ArchNative.app -dmg -verbose=1
+      run: |
+        macdeployqt build/ArchNative.app -dmg
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ArchNative-macOS
-        path: build/*.dmg
+        path: build/ArchNative.dmg
 
   build-windows:
     runs-on: windows-latest
@@ -86,27 +69,29 @@ jobs:
         vcpkg install opencv:x64-windows
         vcpkg install tesseract:x64-windows
         vcpkg install openxr-loader:x64-windows
-        vcpkg install jsoncpp:x64-windows
         vcpkg integrate install
 
+    - name: Check Source Directory (Debug)
+      run: |
+        ls -R ArchNative
+
     - name: Configure CMake
-      run: cmake -S ArchNative -B build -A x64 -DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+      run: cmake -S ArchNative -B build -DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
 
     - name: Build
       run: cmake --build build --config Release
 
-    - name: Package & Copy DLLs
-      shell: pwsh
+    - name: Package
       run: |
         windeployqt build/Release/ArchNative.exe --dir dist
-        
-        Write-Host "Copying Vcpkg DLLs..."
-        $vcpkgBin = "C:\vcpkg\installed\x64-windows\bin"
-        
-        Copy-Item "$vcpkgBin\openxr_loader.dll" -Destination "dist/" -ErrorAction SilentlyContinue
-        Copy-Item "$vcpkgBin\jsoncpp.dll" -Destination "dist/" -ErrorAction SilentlyContinue
-        Get-ChildItem "$vcpkgBin" -Filter "opencv_world*.dll" | Copy-Item -Destination "dist/"
-        Get-ChildItem "$vcpkgBin" -Filter "tesseract*.dll" | Copy-Item -Destination "dist/"
+
+        # Copy Vcpkg DLLs to dist folder
+        # We use a wildcard copy to ensure all dependencies (opencv, tesseract, openxr, etc.) are included.
+        # Note: In a real prod environment, we would be more selective, but this ensures functionality.
+        Copy-Item -Path "C:/vcpkg/installed/x64-windows/bin/*.dll" -Destination "dist/" -Force
+
+        echo "Dist folder contents:"
+        ls dist
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4

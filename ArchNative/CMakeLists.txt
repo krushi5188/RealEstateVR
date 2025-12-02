@@ -7,6 +7,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+# Silence macOS OpenGL deprecation warnings
+if(APPLE)
+    add_compile_definitions(GL_SILENCE_DEPRECATION)
+endif()
+
 find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets PrintSupport)
 find_package(OpenCV REQUIRED)
 
