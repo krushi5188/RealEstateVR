@@ -9,17 +9,9 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-13 # Force Intel (x64) for compatibility
     steps:
     - uses: actions/checkout@v4
-
-    - name: Debug - List directory structure
-      run: |
-        echo "Current directory structure:"
-        pwd
-        ls -la
-        echo "Looking for CMakeLists.txt:"
-        find . -name "CMakeLists.txt" 2>/dev/null
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
@@ -30,162 +22,33 @@ jobs:
         modules: 'qtmultimedia qt3d'
 
     - name: Install Dependencies
-      run: |
-        brew update
-        brew install opencv tesseract cmake pkg-config jsoncpp
-        
-        # Install additional dependencies for OpenXR
-        brew install vulkan-headers sdl2 glew
+      run: brew install opencv tesseract cmake pkg-config vulkan-headers
 
-    - name: Install OpenXR SDK (Simplified)
+    - name: Install OpenXR (Vcpkg)
       run: |
-        echo "Installing OpenXR SDK..."
-        
-        # Use a simpler approach - download pre-built binaries or build with fewer dependencies
-        cd /tmp
-        rm -rf OpenXR*
-        
-        # Clone a specific version that might work better
-        git clone --depth 1 --branch release-1.0.28 https://github.com/KhronosGroup/OpenXR-SDK.git
-        cd OpenXR-SDK
-        
-        # Create build directory with specific options
-        mkdir -p build && cd build
-        
-        # Configure with minimal dependencies
-        cmake .. \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_INSTALL_PREFIX=/usr/local \
-          -DBUILD_TESTS=OFF \
-          -DBUILD_LOADER=ON \
-          -DUSE_SYSTEM_JSONCPP=ON \
-          -DJSONCPP_LIBRARY=/opt/homebrew/lib/libjsoncpp.dylib \
-          -DJSONCPP_INCLUDE_DIR=/opt/homebrew/include/jsoncpp
-        
-        # Build and install
-        make -j$(sysctl -n hw.logicalcpu)
-        sudo make install
-        
-        echo "OpenXR installation complete"
-
-    - name: Verify OpenXR Installation
-      run: |
-        echo "Verifying OpenXR installation..."
-        ls -la /usr/local/include/openxr/ 2>/dev/null || echo "OpenXR headers not found in /usr/local/include"
-        find /usr/local -name "*openxr*" -type f 2>/dev/null || echo "Searching for OpenXR files..."
-        
-        # Try alternative locations
-        find /opt/homebrew -name "*openxr*" 2>/dev/null | head -5
+        vcpkg install openxr-loader --triplet=x64-osx
 
     - name: Configure CMake
       run: |
-        echo "QT_ROOT_DIR: $QT_ROOT_DIR"
-        echo "Configuring CMake..."
-        
-        # First, check if CMakeLists.txt exists
-        if [ ! -f "CMakeLists.txt" ]; then
-          echo "Error: CMakeLists.txt not found in current directory!"
-          find . -name "CMakeLists.txt" 2>/dev/null
-          exit 1
-        fi
-        
-        # Configure with OpenXR support
-        cmake -S . -B build \
-          -G "Unix Makefiles" \
-          -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DOpenXR_ROOT=/usr/local
-        
-        echo "CMake configuration completed"
+        export PKG_CONFIG_PATH=$VCPKG_INSTALLATION_ROOT/installed/x64-osx/lib/pkgconfig:$PKG_CONFIG_PATH
+        cmake -S ArchNative -B build -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR
 
     - name: Build
-      run: |
-        echo "Building project..."
-        cmake --build build --config Release --parallel $(sysctl -n hw.logicalcpu)
-        
-        echo "Build completed. Checking outputs:"
-        find build -type f -name "ArchNative*" 2>/dev/null || true
-
-    - name: Deploy Qt Dependencies
-      run: |
-        echo "Looking for built application..."
-        
-        # First, look for .app bundle
-        APP_BUNDLE=$(find build -name "*.app" -type d 2>/dev/null | head -1)
-        
-        if [ -n "$APP_BUNDLE" ] && [ -d "$APP_BUNDLE" ]; then
-          echo "Found app bundle: $APP_BUNDLE"
-          macdeployqt "$APP_BUNDLE" -verbose=2
-        else
-          echo "No .app bundle found. Looking for executable..."
-          
-          # Look for executable
-          EXE_PATH=$(find build -type f -name "ArchNative" -o -name "ArchNative*" ! -name "*.*" 2>/dev/null | head -1)
-          
-          if [ -n "$EXE_PATH" ] && [ -f "$EXE_PATH" ]; then
-            echo "Found executable: $EXE_PATH"
-            
-            # Create a simple .app bundle
-            mkdir -p "ArchNative.app/Contents/MacOS"
-            cp "$EXE_PATH" "ArchNative.app/Contents/MacOS/ArchNative"
-            
-            # Deploy Qt dependencies
-            macdeployqt "ArchNative.app" -verbose=2
-            
-            # Move to build directory
-            mv "ArchNative.app" build/
-            APP_BUNDLE="build/ArchNative.app"
-          else
-            echo "Error: No executable found!"
-            echo "Build directory contents:"
-            find build -type f 2>/dev/null | head -20
-            exit 1
-          fi
-        fi
+      run: cmake --build build --config Release
 
     - name: Package DMG
-      run: |
-        APP_BUNDLE=$(find build -name "*.app" -type d 2>/dev/null | head -1)
-        
-        if [ -n "$APP_BUNDLE" ] && [ -d "$APP_BUNDLE" ]; then
-          echo "Creating DMG from: $APP_BUNDLE"
-          macdeployqt "$APP_BUNDLE" -dmg
-          
-          # Check if DMG was created
-          DMG_FILE=$(find build -name "*.dmg" 2>/dev/null | head -1)
-          if [ -n "$DMG_FILE" ]; then
-            echo "DMG created successfully: $DMG_FILE"
-            ls -la "$DMG_FILE"
-          else
-            echo "Warning: DMG not found. Trying alternative method..."
-            # Alternative DMG creation
-            hdiutil create -volname "ArchNative" -srcfolder "$APP_BUNDLE" -ov -format UDZO "build/ArchNative.dmg"
-          fi
-        else
-          echo "Error: No app bundle found for DMG creation"
-          exit 1
-        fi
+      run: macdeployqt build/ArchNative.app -dmg
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ArchNative-macOS
-        path: build/*.dmg
-        if-no-files-found: error
+        path: build/ArchNative.dmg
 
   build-windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
-
-    - name: Debug - List directory structure
-      shell: bash
-      run: |
-        echo "Current directory structure:"
-        pwd
-        ls -la
-        echo "Looking for CMakeLists.txt:"
-        find . -name "CMakeLists.txt" 2>/dev/null
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
@@ -195,106 +58,24 @@ jobs:
         target: 'desktop'
         arch: 'win64_msvc2019_64'
 
-    - name: Setup Vcpkg
-      shell: pwsh
-      run: |
-        Write-Host "Setting up vcpkg..."
-        # Check if vcpkg exists, if not install it
-        if (-not (Test-Path "C:\vcpkg")) {
-          git clone https://github.com/Microsoft/vcpkg.git C:\vcpkg
-          & C:\vcpkg\bootstrap-vcpkg.bat
-        }
-
     - name: Install Dependencies (Vcpkg)
-      shell: pwsh
       run: |
-        Write-Host "Installing dependencies..."
-        & C:\vcpkg\vcpkg install opencv:x64-windows
-        & C:\vcpkg\vcpkg install tesseract:x64-windows
-        & C:\vcpkg\vcpkg install openxr-loader:x64-windows
-        & C:\vcpkg\vcpkg install jsoncpp:x64-windows
-        & C:\vcpkg\vcpkg integrate install
+        vcpkg install opencv:x64-windows
+        vcpkg install tesseract:x64-windows
+        vcpkg install openxr-loader:x64-windows
+        vcpkg integrate install
 
     - name: Configure CMake
-      shell: pwsh
-      run: |
-        Write-Host "Configuring CMake..."
-        Write-Host "QT_ROOT_DIR: $env:QT_ROOT_DIR"
-        
-        # Check if CMakeLists.txt exists
-        if (-not (Test-Path "CMakeLists.txt")) {
-          Write-Error "CMakeLists.txt not found in current directory!"
-          # Look for it in subdirectories
-          Get-ChildItem -Recurse -Filter "CMakeLists.txt" | Select-Object -First 5
-          exit 1
-        }
-        
-        # Configure with vcpkg toolchain
-        cmake -S . -B build `
-          -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
-          -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
-          -DCMAKE_BUILD_TYPE=Release `
-          -A x64
+      run: cmake -S ArchNative -B build -DCMAKE_PREFIX_PATH=%QT_ROOT_DIR% -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
 
     - name: Build
-      run: cmake --build build --config Release --parallel
+      run: cmake --build build --config Release
 
     - name: Package
-      shell: pwsh
-      run: |
-        # Create dist directory
-        if (-not (Test-Path "dist")) {
-          New-Item -ItemType Directory -Path "dist"
-        }
-        
-        # Find the executable
-        $exePath = Get-ChildItem -Path "build" -Filter "ArchNative.exe" -Recurse | Select-Object -First 1
-        if ($exePath) {
-          Write-Host "Found executable: $($exePath.FullName)"
-          Copy-Item $exePath.FullName -Destination "dist/"
-          
-          # Deploy Qt dependencies
-          windeployqt dist/ArchNative.exe --dir dist
-          
-          # Copy OpenXR loader
-          $openxrDll = Get-ChildItem -Path "C:\vcpkg\installed\x64-windows\bin" -Filter "openxr_loader*.dll" | Select-Object -First 1
-          if ($openxrDll) {
-            Copy-Item $openxrDll.FullName -Destination "dist/"
-          }
-          
-          # Copy other required DLLs
-          $requiredDlls = @("jsoncpp.dll", "opencv_world*.dll", "tesseract*.dll")
-          foreach ($dllPattern in $requiredDlls) {
-            $dllFiles = Get-ChildItem -Path "C:\vcpkg\installed\x64-windows\bin" -Filter $dllPattern | Select-Object -First 1
-            if ($dllFiles) {
-              Copy-Item $dllFiles.FullName -Destination "dist/" -ErrorAction SilentlyContinue
-            }
-          }
-        } else {
-          Write-Error "ArchNative.exe not found!"
-          Write-Host "Searching for any .exe files:"
-          Get-ChildItem -Path "build" -Recurse -Filter "*.exe" | ForEach-Object { Write-Host "  $($_.FullName)" }
-          exit 1
-        }
-
-    - name: Zip Windows artifacts
-      shell: pwsh
-      run: |
-        if (Test-Path "dist") {
-          $files = Get-ChildItem -Path "dist" -File
-          if ($files.Count -gt 0) {
-            Compress-Archive -Path dist\* -DestinationPath ArchNative-Windows.zip -Force
-            Write-Host "Created zip with $($files.Count) files"
-          } else {
-            Write-Error "dist directory is empty!"
-          }
-        } else {
-          Write-Error "dist directory not found!"
-          exit 1
-        }
+      run: windeployqt build/Release/ArchNative.exe --dir dist
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ArchNative-Windows
-        path: ArchNative-Windows.zip
+        path: dist/
