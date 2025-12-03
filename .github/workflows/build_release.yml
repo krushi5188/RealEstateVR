@@ -20,29 +20,27 @@ jobs:
 
     - name: Install Dependencies (Homebrew)
       run: |
-        # Install Qt6 and dependencies
         brew install opencv tesseract cmake pkg-config vulkan-headers qt@6
         
-        # Set Environment variables for Homebrew Qt
-        echo "QT_ROOT_DIR=$(brew --prefix qt@6)" >> $GITHUB_ENV
-        echo "Qt6_DIR=$(brew --prefix qt@6)/lib/cmake/Qt6" >> $GITHUB_ENV
+        # Resolve REAL paths (No Symlinks) to help macdeployqt
+        QT_REAL_PATH=$(realpath $(brew --prefix qt@6))
         
-        # Add Qt bin to PATH
-        echo "$(brew --prefix qt@6)/bin" >> $GITHUB_PATH
+        echo "QT_ROOT_DIR=$QT_REAL_PATH" >> $GITHUB_ENV
+        echo "Qt6_DIR=$QT_REAL_PATH/lib/cmake/Qt6" >> $GITHUB_ENV
+        echo "QT_LIB_DIR=$QT_REAL_PATH/lib" >> $GITHUB_ENV
+        echo "$QT_REAL_PATH/bin" >> $GITHUB_PATH
 
     - name: Install OpenXR (Vcpkg)
       run: |
         $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
 
-    # --- COMPILATION FIXES ---
+    # --- COMPILATION PATCHES ---
     - name: Patch C++ Code for macOS
       run: |
         echo "Patching source for macOS..."
-        # 1. Force Mac Platform Macro
         sed -i '' 's/XR_USE_PLATFORM_XLIB/XR_USE_PLATFORM_MACOS/g' ArchNative/src/Core/OpenXRManager.cpp || true
-        # 2. Swap Linux Header for Mac Header
         sed -i '' 's|#include <GL/glx.h>|#include <OpenGL/gl.h>|g' ArchNative/src/Core/OpenXRManager.cpp || true
-        # 3. Inject fake X11 typedefs (Safety Net)
+        # Inject typedefs
         sed -i '' '1i\
         #if defined(__APPLE__)\
         typedef void* Display;\
@@ -51,38 +49,37 @@ jobs:
         typedef void* GLXContext;\
         #endif\
         ' ArchNative/src/Core/OpenXRManager.cpp
-        # 4. Patch CMake target name
+        # Fix CMake Target
         sed -i '' 's/OpenXR::OpenXR/OpenXR::openxr_loader/g' ArchNative/CMakeLists.txt || true
 
     - name: Configure CMake
       run: |
+        # We explicitly set CMAKE_INSTALL_RPATH to the Qt Lib dir.
+        # This bakes the path into the binary so macdeployqt doesn't get lost.
         cmake -S ArchNative -B build \
           -G "Unix Makefiles" \
           -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
           -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
           -DVCPKG_TARGET_TRIPLET=x64-osx \
+          -DCMAKE_INSTALL_RPATH="$QT_LIB_DIR" \
+          -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
           -DCMAKE_CXX_FLAGS="-DGL_SILENCE_DEPRECATION -DXR_USE_PLATFORM_MACOS -DXR_USE_GRAPHICS_API_OPENGL"
 
     - name: Build
       run: cmake --build build --config Release
 
-    # --- DEPLOYMENT FIX (The Final Piece) ---
-    - name: Package DMG (Homebrew Fix)
+    # --- DEPLOYMENT FIX ---
+    - name: Package DMG
       run: |
         echo "Packaging..."
+        # We explicitly set the library path for macdeployqt
+        # We use the REAL path resolved in the install step
         
-        # Calculate paths dynamically
-        QT_PREFIX=$(brew --prefix qt@6)
-        QT_LIB="$QT_PREFIX/lib"
-        QT_PLUGINS="$QT_PREFIX/share/qt/plugins"
+        # Debug: Check if the directory actually exists
+        ls -la "$QT_LIB_DIR"
         
-        # CRITICAL: Force macdeployqt to look here using environment variables
-        export DYLD_FRAMEWORK_PATH="$QT_LIB"
-        export DYLD_LIBRARY_PATH="$QT_LIB"
-        
-        # We assume the binary already has the RPATH (cmake did it), so we skip install_name_tool
-        # We run macdeployqt with -libpath to be extra sure
-        macdeployqt build/ArchNative.app -dmg -verbose=1 -libpath="$QT_LIB"
+        # Run macdeployqt with -libpath pointing to the Frameworks location
+        macdeployqt build/ArchNative.app -dmg -verbose=1 -libpath="$QT_LIB_DIR"
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
