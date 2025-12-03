@@ -22,25 +22,22 @@ jobs:
       run: |
         brew install opencv tesseract cmake pkg-config vulkan-headers qt@6
         
-        # Resolve REAL paths (No Symlinks) to help macdeployqt
+        # Resolve REAL paths
         QT_REAL_PATH=$(realpath $(brew --prefix qt@6))
-        
         echo "QT_ROOT_DIR=$QT_REAL_PATH" >> $GITHUB_ENV
-        echo "Qt6_DIR=$QT_REAL_PATH/lib/cmake/Qt6" >> $GITHUB_ENV
         echo "QT_LIB_DIR=$QT_REAL_PATH/lib" >> $GITHUB_ENV
+        echo "QT_PLUGIN_DIR=$QT_REAL_PATH/share/qt/plugins" >> $GITHUB_ENV
         echo "$QT_REAL_PATH/bin" >> $GITHUB_PATH
 
     - name: Install OpenXR (Vcpkg)
       run: |
         $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
 
-    # --- COMPILATION PATCHES ---
     - name: Patch C++ Code for macOS
       run: |
-        echo "Patching source for macOS..."
+        # Patching to force Mac Cocoa/OpenGL backend instead of Linux X11
         sed -i '' 's/XR_USE_PLATFORM_XLIB/XR_USE_PLATFORM_MACOS/g' ArchNative/src/Core/OpenXRManager.cpp || true
         sed -i '' 's|#include <GL/glx.h>|#include <OpenGL/gl.h>|g' ArchNative/src/Core/OpenXRManager.cpp || true
-        # Inject typedefs
         sed -i '' '1i\
         #if defined(__APPLE__)\
         typedef void* Display;\
@@ -49,13 +46,10 @@ jobs:
         typedef void* GLXContext;\
         #endif\
         ' ArchNative/src/Core/OpenXRManager.cpp
-        # Fix CMake Target
         sed -i '' 's/OpenXR::OpenXR/OpenXR::openxr_loader/g' ArchNative/CMakeLists.txt || true
 
     - name: Configure CMake
       run: |
-        # We explicitly set CMAKE_INSTALL_RPATH to the Qt Lib dir.
-        # This bakes the path into the binary so macdeployqt doesn't get lost.
         cmake -S ArchNative -B build \
           -G "Unix Makefiles" \
           -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
@@ -68,18 +62,28 @@ jobs:
     - name: Build
       run: cmake --build build --config Release
 
-    # --- DEPLOYMENT FIX ---
-    - name: Package DMG
+    # --- THE FIX: MANUAL FRAMEWORK COPYING ---
+    - name: Package DMG (Pre-Copy Fix)
       run: |
         echo "Packaging..."
-        # We explicitly set the library path for macdeployqt
-        # We use the REAL path resolved in the install step
+        APP_BUNDLE="build/ArchNative.app"
+        FRAMEWORKS_DIR="$APP_BUNDLE/Contents/Frameworks"
         
-        # Debug: Check if the directory actually exists
-        ls -la "$QT_LIB_DIR"
+        # 1. Create Frameworks directory
+        mkdir -p "$FRAMEWORKS_DIR"
         
-        # Run macdeployqt with -libpath pointing to the Frameworks location
-        macdeployqt build/ArchNative.app -dmg -verbose=1 -libpath="$QT_LIB_DIR"
+        # 2. Manually copy the Qt Frameworks into the bundle
+        # This forces macdeployqt to find them locally instead of searching the system
+        echo "Pre-copying Qt Frameworks from $QT_LIB_DIR..."
+        cp -R "$QT_LIB_DIR/"Qt*.framework "$FRAMEWORKS_DIR/"
+        
+        # 3. Clean up any 'Headers' symlinks to save space/confusion (Optional but good practice)
+        find "$FRAMEWORKS_DIR" -name "Headers" -delete
+        
+        # 4. Run macdeployqt
+        # -always-overwrite tells it to use the files we just copied
+        # We DO NOT pass -libpath here to avoid confusing it further
+        macdeployqt "$APP_BUNDLE" -dmg -verbose=1 -always-overwrite
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
@@ -89,9 +93,16 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
+    env:
+      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/github-script@v7
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
@@ -101,18 +112,11 @@ jobs:
         target: 'desktop'
         arch: 'win64_msvc2019_64'
 
-    - name: Cache Vcpkg
-      id: cache-vcpkg
-      uses: actions/cache@v4
-      with:
-        path: |
-          C:\vcpkg\installed
-          C:\vcpkg\packages
-          C:\vcpkg\downloads
-        key: ${{ runner.os }}-vcpkg-opencv-tesseract-openxr-v1
+    - name: Setup Vcpkg
+      run: vcpkg integrate install
 
     - name: Install Dependencies (Vcpkg)
-      if: steps.cache-vcpkg.outputs.cache-hit != 'true'
+      shell: pwsh
       run: |
         vcpkg install opencv:x64-windows
         vcpkg install tesseract:x64-windows
