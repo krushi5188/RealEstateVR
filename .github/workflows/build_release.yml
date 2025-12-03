@@ -14,52 +14,61 @@ jobs:
     env:
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
-      # Explicitly set Vcpkg Root
       VCPKG_ROOT: /usr/local/share/vcpkg
     steps:
     - uses: actions/checkout@v4
 
-    # STRATEGY A: Use Official Qt (Fixes 'Cannot resolve rpath')
-    - name: Install Qt (Official)
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: '6.5.0'
-        host: 'mac'
-        target: 'desktop'
-        # We explicitly rely on this action to set up QT_ROOT_DIR
+    # REMOVED: jurplel/install-qt-action (Causes Version Mismatch)
 
     - name: Install Dependencies (Homebrew)
       run: |
-        # We DO NOT install qt@6 here. We use the official one above.
-        brew install opencv tesseract cmake pkg-config vulkan-headers
+        # We install qt@6 here explicitly. OpenCV will use this same version.
+        brew install opencv tesseract cmake pkg-config vulkan-headers qt@6
+        
+        # Set Environment variables for Homebrew Qt
+        echo "QT_ROOT_DIR=$(brew --prefix qt@6)" >> $GITHUB_ENV
+        echo "Qt6_DIR=$(brew --prefix qt@6)/lib/cmake/Qt6" >> $GITHUB_ENV
+        
+        # Add Qt bin to PATH so 'moc' and 'macdeployqt' are found
+        echo "$(brew --prefix qt@6)/bin" >> $GITHUB_PATH
 
     - name: Install OpenXR (Vcpkg)
       run: |
         $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
 
-    # --- CRITICAL FIX FOR WORKING VR ---
-    # This converts the Linux X11 code to Native macOS Cocoa/OpenGL code
+    # --- CRITICAL FIXES FOR COMPILATION ---
     - name: Patch C++ Code for macOS Platform
       run: |
-        echo "Converting Linux (X11) code to macOS (Cocoa)..."
+        echo "Patching source for macOS..."
         
-        # 1. Switch OpenXR Platform macro from Linux (XLIB) to Mac
+        # 1. Force Mac Platform Macro (stops looking for Linux X11)
         sed -i '' 's/XR_USE_PLATFORM_XLIB/XR_USE_PLATFORM_MACOS/g' ArchNative/src/Core/OpenXRManager.cpp || true
         
-        # 2. Switch Headers: GLX (Linux) -> OpenGL (Mac)
+        # 2. Swap Linux Header for Mac Header
         sed -i '' 's|#include <GL/glx.h>|#include <OpenGL/gl.h>|g' ArchNative/src/Core/OpenXRManager.cpp || true
         
-        # 3. Patch CMake target (Vcpkg naming fix)
+        # 3. SAFETY NET: Inject fake X11 typedefs just in case code uses them directly
+        # This prevents "unknown type name 'Display'" errors
+        sed -i '' '1i\
+        #if defined(__APPLE__)\
+        typedef void* Display;\
+        typedef void* GLXFBConfig;\
+        typedef void* GLXDrawable;\
+        typedef void* GLXContext;\
+        #endif\
+        ' ArchNative/src/Core/OpenXRManager.cpp
+        
+        # 4. Patch CMake target name for OpenXR
         sed -i '' 's/OpenXR::OpenXR/OpenXR::openxr_loader/g' ArchNative/CMakeLists.txt || true
         
-        echo "Source patched for macOS."
+        echo "Patches applied."
 
     - name: Configure CMake
       run: |
-        # -DXR_USE_PLATFORM_MACOS is required for the compiler to pick up the patch
+        # We point CMake to the Homebrew Qt we set up in env vars
         cmake -S ArchNative -B build \
           -G "Unix Makefiles" \
-          -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" \
+          -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
           -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
           -DVCPKG_TARGET_TRIPLET=x64-osx \
           -DCMAKE_CXX_FLAGS="-DGL_SILENCE_DEPRECATION -DXR_USE_PLATFORM_MACOS -DXR_USE_GRAPHICS_API_OPENGL"
@@ -67,10 +76,20 @@ jobs:
     - name: Build
       run: cmake --build build --config Release
 
-    - name: Package DMG
+    # --- CRITICAL FIX FOR DEPLOYMENT (Strategy B) ---
+    - name: Package DMG (Homebrew Fix)
       run: |
-        # macdeployqt works perfectly here because we used the official installer
-        macdeployqt build/ArchNative.app -dmg -verbose=1
+        echo "Preparing to package..."
+        QT_LIB_DIR="$(brew --prefix qt@6)/lib"
+        APP_PATH="build/ArchNative.app"
+        EXE_PATH="$APP_PATH/Contents/MacOS/ArchNative"
+        
+        # 1. Manual RPATH Injection (Helps macdeployqt find libs)
+        install_name_tool -add_rpath "$QT_LIB_DIR" "$EXE_PATH" || true
+        
+        # 2. Run macdeployqt with explicit library path
+        # -libpath tells it exactly where to look for the framework dependencies
+        macdeployqt "$APP_PATH" -dmg -verbose=1 -libpath="$QT_LIB_DIR"
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
@@ -119,13 +138,8 @@ jobs:
 
     - name: Package
       run: |
-        # 1. Deploy Qt dependencies
         windeployqt build/Release/ArchNative.exe --dir dist
-
-        # 2. Bulk Copy ALL Vcpkg DLLs
-        # This ensures OpenCV, Tesseract, OpenXR, and JSONCPP are present
         Copy-Item -Path "C:/vcpkg/installed/x64-windows/bin/*.dll" -Destination "dist/" -Force
-
         echo "Dist folder contents:"
         ls dist
 
