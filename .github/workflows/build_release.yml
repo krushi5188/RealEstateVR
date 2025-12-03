@@ -20,9 +20,7 @@ jobs:
 
     - name: Install Dependencies (Homebrew)
       run: |
-        # Install dylibbundler (The magic tool to fix missing libs)
         brew install opencv tesseract cmake pkg-config vulkan-headers qt@6 dylibbundler
-        
         QT_REAL_PATH=$(realpath $(brew --prefix qt@6))
         echo "QT_ROOT_DIR=$QT_REAL_PATH" >> $GITHUB_ENV
         echo "QT_LIB_DIR=$QT_REAL_PATH/lib" >> $GITHUB_ENV
@@ -74,7 +72,7 @@ jobs:
         
         mkdir -p "$FRAMEWORKS" "$PLUGINS"
         
-        # 1. Copy Qt Frameworks (Manual)
+        # 1. Copy Qt Frameworks
         echo "Copying Qt Frameworks..."
         cp -R "$QT_LIB_DIR/QtCore.framework" "$FRAMEWORKS/"
         cp -R "$QT_LIB_DIR/QtGui.framework" "$FRAMEWORKS/"
@@ -107,19 +105,21 @@ jobs:
             install_name_tool -change "@rpath/QtWidgets.framework/Versions/A/QtWidgets" "@rpath/QtWidgets.framework/Versions/A/QtWidgets" "$plugin"
         done
 
-        # 5. THE FIX: Use dylibbundler to pull in OpenCV, Tesseract, OpenXR
-        echo "Running dylibbundler to fix missing libraries..."
-        # -od: Overwrite directory
-        # -b: Bundle found libs
-        # -x: Fix the executable
-        # -s: Search in /usr/local/lib (Homebrew)
-        dylibbundler -od -b -x -i /usr/local/lib -s /usr/local/lib -f -p "@executable_path/../Frameworks/" -d "$FRAMEWORKS" -x "$EXECUTABLE"
+        # 5. FIX: dylibbundler (Corrected Syntax)
+        echo "Running dylibbundler..."
+        # -of: Overwrite files (NOT directory)
+        # -b: Bundle dependencies
+        # -x: The executable to fix (Must come right after -x)
+        # -d: Destination
+        # -p: Install path (@rpath)
+        # -s: Search path
+        dylibbundler -of -b -x "$EXECUTABLE" -d "$FRAMEWORKS" -p "@executable_path/../Frameworks/" -s /usr/local/lib
 
         # 6. Fix Permissions
         echo "Fixing Permissions..."
         chmod -R 755 "$APP_BUNDLE"
 
-        # 7. Ad-Hoc Code Signing
+        # 7. Code Signing
         echo "Signing..."
         codesign --force --deep --sign - "$APP_BUNDLE"
 
