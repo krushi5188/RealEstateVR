@@ -18,37 +18,31 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # REMOVED: jurplel/install-qt-action (Causes Version Mismatch)
-
     - name: Install Dependencies (Homebrew)
       run: |
-        # We install qt@6 here explicitly. OpenCV will use this same version.
+        # Install Qt6 and dependencies
         brew install opencv tesseract cmake pkg-config vulkan-headers qt@6
         
         # Set Environment variables for Homebrew Qt
         echo "QT_ROOT_DIR=$(brew --prefix qt@6)" >> $GITHUB_ENV
         echo "Qt6_DIR=$(brew --prefix qt@6)/lib/cmake/Qt6" >> $GITHUB_ENV
         
-        # Add Qt bin to PATH so 'moc' and 'macdeployqt' are found
+        # Add Qt bin to PATH
         echo "$(brew --prefix qt@6)/bin" >> $GITHUB_PATH
 
     - name: Install OpenXR (Vcpkg)
       run: |
         $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
 
-    # --- CRITICAL FIXES FOR COMPILATION ---
-    - name: Patch C++ Code for macOS Platform
+    # --- COMPILATION FIXES ---
+    - name: Patch C++ Code for macOS
       run: |
         echo "Patching source for macOS..."
-        
-        # 1. Force Mac Platform Macro (stops looking for Linux X11)
+        # 1. Force Mac Platform Macro
         sed -i '' 's/XR_USE_PLATFORM_XLIB/XR_USE_PLATFORM_MACOS/g' ArchNative/src/Core/OpenXRManager.cpp || true
-        
         # 2. Swap Linux Header for Mac Header
         sed -i '' 's|#include <GL/glx.h>|#include <OpenGL/gl.h>|g' ArchNative/src/Core/OpenXRManager.cpp || true
-        
-        # 3. SAFETY NET: Inject fake X11 typedefs just in case code uses them directly
-        # This prevents "unknown type name 'Display'" errors
+        # 3. Inject fake X11 typedefs (Safety Net)
         sed -i '' '1i\
         #if defined(__APPLE__)\
         typedef void* Display;\
@@ -57,15 +51,11 @@ jobs:
         typedef void* GLXContext;\
         #endif\
         ' ArchNative/src/Core/OpenXRManager.cpp
-        
-        # 4. Patch CMake target name for OpenXR
+        # 4. Patch CMake target name
         sed -i '' 's/OpenXR::OpenXR/OpenXR::openxr_loader/g' ArchNative/CMakeLists.txt || true
-        
-        echo "Patches applied."
 
     - name: Configure CMake
       run: |
-        # We point CMake to the Homebrew Qt we set up in env vars
         cmake -S ArchNative -B build \
           -G "Unix Makefiles" \
           -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
@@ -76,20 +66,23 @@ jobs:
     - name: Build
       run: cmake --build build --config Release
 
-    # --- CRITICAL FIX FOR DEPLOYMENT (Strategy B) ---
+    # --- DEPLOYMENT FIX (The Final Piece) ---
     - name: Package DMG (Homebrew Fix)
       run: |
-        echo "Preparing to package..."
-        QT_LIB_DIR="$(brew --prefix qt@6)/lib"
-        APP_PATH="build/ArchNative.app"
-        EXE_PATH="$APP_PATH/Contents/MacOS/ArchNative"
+        echo "Packaging..."
         
-        # 1. Manual RPATH Injection (Helps macdeployqt find libs)
-        install_name_tool -add_rpath "$QT_LIB_DIR" "$EXE_PATH" || true
+        # Calculate paths dynamically
+        QT_PREFIX=$(brew --prefix qt@6)
+        QT_LIB="$QT_PREFIX/lib"
+        QT_PLUGINS="$QT_PREFIX/share/qt/plugins"
         
-        # 2. Run macdeployqt with explicit library path
-        # -libpath tells it exactly where to look for the framework dependencies
-        macdeployqt "$APP_PATH" -dmg -verbose=1 -libpath="$QT_LIB_DIR"
+        # CRITICAL: Force macdeployqt to look here using environment variables
+        export DYLD_FRAMEWORK_PATH="$QT_LIB"
+        export DYLD_LIBRARY_PATH="$QT_LIB"
+        
+        # We assume the binary already has the RPATH (cmake did it), so we skip install_name_tool
+        # We run macdeployqt with -libpath to be extra sure
+        macdeployqt build/ArchNative.app -dmg -verbose=1 -libpath="$QT_LIB"
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
@@ -140,7 +133,6 @@ jobs:
       run: |
         windeployqt build/Release/ArchNative.exe --dir dist
         Copy-Item -Path "C:/vcpkg/installed/x64-windows/bin/*.dll" -Destination "dist/" -Force
-        echo "Dist folder contents:"
         ls dist
 
     - name: Upload Artifact
