@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-13 # Intel Mac (x64)
+    runs-on: macos-13
     timeout-minutes: 60
     env:
       HOMEBREW_NO_AUTO_UPDATE: 1
@@ -21,8 +21,6 @@ jobs:
     - name: Install Dependencies (Homebrew)
       run: |
         brew install opencv tesseract cmake pkg-config vulkan-headers qt@6
-        
-        # Resolve REAL paths
         QT_REAL_PATH=$(realpath $(brew --prefix qt@6))
         echo "QT_ROOT_DIR=$QT_REAL_PATH" >> $GITHUB_ENV
         echo "QT_LIB_DIR=$QT_REAL_PATH/lib" >> $GITHUB_ENV
@@ -30,12 +28,10 @@ jobs:
         echo "$QT_REAL_PATH/bin" >> $GITHUB_PATH
 
     - name: Install OpenXR (Vcpkg)
-      run: |
-        $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
+      run: $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
 
-    - name: Patch C++ Code for macOS
+    - name: Patch C++ Code
       run: |
-        # Patching to force Mac Cocoa/OpenGL backend instead of Linux X11
         sed -i '' 's/XR_USE_PLATFORM_XLIB/XR_USE_PLATFORM_MACOS/g' ArchNative/src/Core/OpenXRManager.cpp || true
         sed -i '' 's|#include <GL/glx.h>|#include <OpenGL/gl.h>|g' ArchNative/src/Core/OpenXRManager.cpp || true
         sed -i '' '1i\
@@ -55,35 +51,73 @@ jobs:
           -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
           -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
           -DVCPKG_TARGET_TRIPLET=x64-osx \
-          -DCMAKE_INSTALL_RPATH="$QT_LIB_DIR" \
+          -DCMAKE_INSTALL_RPATH="@executable_path/../Frameworks" \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
           -DCMAKE_CXX_FLAGS="-DGL_SILENCE_DEPRECATION -DXR_USE_PLATFORM_MACOS -DXR_USE_GRAPHICS_API_OPENGL"
 
     - name: Build
       run: cmake --build build --config Release
 
-    # --- THE FIX: MANUAL FRAMEWORK COPYING ---
-    - name: Package DMG (Pre-Copy Fix)
+    # --- THE NUCLEAR OPTION: MANUAL BUNDLING ---
+    - name: Manual Bundle & DMG Creation
       run: |
-        echo "Packaging..."
-        APP_BUNDLE="build/ArchNative.app"
-        FRAMEWORKS_DIR="$APP_BUNDLE/Contents/Frameworks"
+        echo "Starting Manual Bundling..."
         
-        # 1. Create Frameworks directory
-        mkdir -p "$FRAMEWORKS_DIR"
+        APP_NAME="ArchNative"
+        APP_BUNDLE="build/$APP_NAME.app"
+        CONTENTS="$APP_BUNDLE/Contents"
+        FRAMEWORKS="$CONTENTS/Frameworks"
+        PLUGINS="$CONTENTS/PlugIns"
+        MACOS="$CONTENTS/MacOS"
         
-        # 2. Manually copy the Qt Frameworks into the bundle
-        # This forces macdeployqt to find them locally instead of searching the system
-        echo "Pre-copying Qt Frameworks from $QT_LIB_DIR..."
-        cp -R "$QT_LIB_DIR/"Qt*.framework "$FRAMEWORKS_DIR/"
+        mkdir -p "$FRAMEWORKS" "$PLUGINS"
         
-        # 3. Clean up any 'Headers' symlinks to save space/confusion (Optional but good practice)
-        find "$FRAMEWORKS_DIR" -name "Headers" -delete
+        # 1. Copy Frameworks
+        echo "Copying Frameworks..."
+        cp -R "$QT_LIB_DIR/QtCore.framework" "$FRAMEWORKS/"
+        cp -R "$QT_LIB_DIR/QtGui.framework" "$FRAMEWORKS/"
+        cp -R "$QT_LIB_DIR/QtWidgets.framework" "$FRAMEWORKS/"
+        cp -R "$QT_LIB_DIR/QtOpenGL.framework" "$FRAMEWORKS/"
+        cp -R "$QT_LIB_DIR/QtOpenGLWidgets.framework" "$FRAMEWORKS/"
+        # Clean junk
+        find "$FRAMEWORKS" -name "Headers" -depth -exec rm -rf {} \;
         
-        # 4. Run macdeployqt
-        # -always-overwrite tells it to use the files we just copied
-        # We DO NOT pass -libpath here to avoid confusing it further
-        macdeployqt "$APP_BUNDLE" -dmg -verbose=1 -always-overwrite
+        # 2. Copy Critical Plugins
+        echo "Copying Plugins..."
+        mkdir -p "$PLUGINS/platforms"
+        mkdir -p "$PLUGINS/imageformats"
+        cp "$QT_PLUGIN_DIR/platforms/libqcocoa.dylib" "$PLUGINS/platforms/"
+        cp "$QT_PLUGIN_DIR/imageformats/libqjpeg.dylib" "$PLUGINS/imageformats/"
+        
+        # 3. Patch the Main Executable
+        echo "Patching Executable..."
+        install_name_tool -add_rpath "@executable_path/../Frameworks" "$MACOS/$APP_NAME" || true
+        
+        # 4. Patch the Frameworks to look inside the bundle
+        echo "Patching Frameworks ID..."
+        for fw in QtCore QtGui QtWidgets QtOpenGL QtOpenGLWidgets; do
+            TARGET="$FRAMEWORKS/$fw.framework/Versions/A/$fw"
+            install_name_tool -id "@rpath/$fw.framework/Versions/A/$fw" "$TARGET"
+            # Update internal links (Qt dependencies on each other)
+            install_name_tool -change "@rpath/QtCore.framework/Versions/A/QtCore" "@rpath/QtCore.framework/Versions/A/QtCore" "$TARGET" || true
+            install_name_tool -change "@rpath/QtGui.framework/Versions/A/QtGui" "@rpath/QtGui.framework/Versions/A/QtGui" "$TARGET" || true
+        done
+
+        # 5. Patch the Plugins (The step macdeployqt failed at)
+        echo "Patching Plugins..."
+        for plugin in "$PLUGINS/platforms/libqcocoa.dylib" "$PLUGINS/imageformats/libqjpeg.dylib"; do
+            install_name_tool -add_rpath "@executable_path/../../Frameworks" "$plugin" || true
+            # Force plugin to look for Qt in the bundle, not /usr/local
+            install_name_tool -change "@rpath/QtCore.framework/Versions/A/QtCore" "@rpath/QtCore.framework/Versions/A/QtCore" "$plugin"
+            install_name_tool -change "@rpath/QtGui.framework/Versions/A/QtGui" "@rpath/QtGui.framework/Versions/A/QtGui" "$plugin"
+            install_name_tool -change "@rpath/QtWidgets.framework/Versions/A/QtWidgets" "@rpath/QtWidgets.framework/Versions/A/QtWidgets" "$plugin"
+        done
+
+        # 6. Create DMG using hdiutil (Native Mac Tool)
+        echo "Creating DMG..."
+        hdiutil create -volname "$APP_NAME" -srcfolder "$APP_BUNDLE" -ov -format UDZO "build/$APP_NAME.dmg"
+        
+        echo "Done!"
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
@@ -103,7 +137,6 @@ jobs:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
       with:
@@ -111,11 +144,9 @@ jobs:
         host: 'windows'
         target: 'desktop'
         arch: 'win64_msvc2019_64'
-
     - name: Setup Vcpkg
       run: vcpkg integrate install
-
-    - name: Install Dependencies (Vcpkg)
+    - name: Install Dependencies
       shell: pwsh
       run: |
         vcpkg install opencv:x64-windows
@@ -123,21 +154,15 @@ jobs:
         vcpkg install openxr-loader:x64-windows
         vcpkg install jsoncpp:x64-windows
         vcpkg integrate install
-
-    - name: Configure CMake
+    - name: Configure
       run: cmake -S ArchNative -B build -DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
-
     - name: Build
       run: cmake --build build --config Release
-
     - name: Package
       run: |
         windeployqt build/Release/ArchNative.exe --dir dist
         Copy-Item -Path "C:/vcpkg/installed/x64-windows/bin/*.dll" -Destination "dist/" -Force
-        ls dist
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v4
       with:
         name: ArchNative-Windows
         path: dist/
