@@ -53,10 +53,11 @@ jobs:
         CONTENTS="$APP_BUNDLE/Contents"
         FRAMEWORKS="$CONTENTS/Frameworks"
         PLUGINS="$CONTENTS/PlugIns"
+        RESOURCES="$CONTENTS/Resources"
         MACOS="$CONTENTS/MacOS"
         EXECUTABLE="$MACOS/$APP_NAME"
 
-        mkdir -p "$FRAMEWORKS" "$PLUGINS"
+        mkdir -p "$FRAMEWORKS" "$PLUGINS" "$RESOURCES"
 
         # 1. Copy Qt Frameworks
         echo "Copying Qt Frameworks..."
@@ -77,8 +78,8 @@ jobs:
 
         # 3. Create qt.conf to force plugin loading from bundle
         echo "Creating qt.conf..."
-        echo "[Paths]" > "$CONTENTS/Resources/qt.conf"
-        echo "Plugins = PlugIns" >> "$CONTENTS/Resources/qt.conf"
+        echo "[Paths]" > "$RESOURCES/qt.conf"
+        echo "Plugins = PlugIns" >> "$RESOURCES/qt.conf"
 
         # 4. Patch Qt Framework IDs
         echo "Patching Qt IDs..."
