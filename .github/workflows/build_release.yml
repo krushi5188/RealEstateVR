@@ -30,20 +30,6 @@ jobs:
     - name: Install OpenXR (Vcpkg)
       run: $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
 
-    - name: Patch C++ Code for macOS
-      run: |
-        sed -i '' 's/XR_USE_PLATFORM_XLIB/XR_USE_PLATFORM_MACOS/g' ArchNative/src/Core/OpenXRManager.cpp || true
-        sed -i '' 's|#include <GL/glx.h>|#include <OpenGL/gl.h>|g' ArchNative/src/Core/OpenXRManager.cpp || true
-        sed -i '' '1i\
-        #if defined(__APPLE__)\
-        typedef void* Display;\
-        typedef void* GLXFBConfig;\
-        typedef void* GLXDrawable;\
-        typedef void* GLXContext;\
-        #endif\
-        ' ArchNative/src/Core/OpenXRManager.cpp
-        sed -i '' 's/OpenXR::OpenXR/OpenXR::openxr_loader/g' ArchNative/CMakeLists.txt || true
-
     - name: Configure CMake
       run: |
         cmake -S ArchNative -B build \
@@ -61,7 +47,7 @@ jobs:
     - name: Manual Bundle & Dependency Fix
       run: |
         echo "Starting Bundling Process..."
-        
+
         APP_NAME="ArchNative"
         APP_BUNDLE="build/$APP_NAME.app"
         CONTENTS="$APP_BUNDLE/Contents"
@@ -69,9 +55,9 @@ jobs:
         PLUGINS="$CONTENTS/PlugIns"
         MACOS="$CONTENTS/MacOS"
         EXECUTABLE="$MACOS/$APP_NAME"
-        
+
         mkdir -p "$FRAMEWORKS" "$PLUGINS"
-        
+
         # 1. Copy Qt Frameworks
         echo "Copying Qt Frameworks..."
         cp -R "$QT_LIB_DIR/QtCore.framework" "$FRAMEWORKS/"
@@ -79,17 +65,19 @@ jobs:
         cp -R "$QT_LIB_DIR/QtWidgets.framework" "$FRAMEWORKS/"
         cp -R "$QT_LIB_DIR/QtOpenGL.framework" "$FRAMEWORKS/"
         cp -R "$QT_LIB_DIR/QtOpenGLWidgets.framework" "$FRAMEWORKS/"
+        cp -R "$QT_LIB_DIR/QtPrintSupport.framework" "$FRAMEWORKS/"
+        cp -R "$QT_LIB_DIR/QtDBus.framework" "$FRAMEWORKS/"
         find "$FRAMEWORKS" -name "Headers" -depth -exec rm -rf {} \;
-        
+
         # 2. Copy Qt Plugins
         echo "Copying Qt Plugins..."
         mkdir -p "$PLUGINS/platforms" "$PLUGINS/imageformats"
         cp "$QT_PLUGIN_DIR/platforms/libqcocoa.dylib" "$PLUGINS/platforms/"
         cp "$QT_PLUGIN_DIR/imageformats/libqjpeg.dylib" "$PLUGINS/imageformats/"
-        
+
         # 3. Patch Qt Framework IDs
         echo "Patching Qt IDs..."
-        for fw in QtCore QtGui QtWidgets QtOpenGL QtOpenGLWidgets; do
+        for fw in QtCore QtGui QtWidgets QtOpenGL QtOpenGLWidgets QtPrintSupport QtDBus; do
             TARGET="$FRAMEWORKS/$fw.framework/Versions/A/$fw"
             install_name_tool -id "@rpath/$fw.framework/Versions/A/$fw" "$TARGET"
             install_name_tool -change "@rpath/QtCore.framework/Versions/A/QtCore" "@rpath/QtCore.framework/Versions/A/QtCore" "$TARGET" || true
@@ -105,21 +93,15 @@ jobs:
             install_name_tool -change "@rpath/QtWidgets.framework/Versions/A/QtWidgets" "@rpath/QtWidgets.framework/Versions/A/QtWidgets" "$plugin"
         done
 
-        # 5. FIX: dylibbundler (Corrected Syntax)
+        # 5. FIX: dylibbundler (Bundle external libs like OpenCV)
         echo "Running dylibbundler..."
-        # -of: Overwrite files (NOT directory)
-        # -b: Bundle dependencies
-        # -x: The executable to fix (Must come right after -x)
-        # -d: Destination
-        # -p: Install path (@rpath)
-        # -s: Search path
         dylibbundler -of -b -x "$EXECUTABLE" -d "$FRAMEWORKS" -p "@executable_path/../Frameworks/" -s /usr/local/lib
 
         # 6. Fix Permissions
         echo "Fixing Permissions..."
         chmod -R 755 "$APP_BUNDLE"
 
-        # 7. Code Signing
+        # 7. Code Signing (Ad-hoc)
         echo "Signing..."
         codesign --force --deep --sign - "$APP_BUNDLE"
 
