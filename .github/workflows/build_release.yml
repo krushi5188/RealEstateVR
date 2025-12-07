@@ -50,24 +50,31 @@ jobs:
       run: |
         echo "Starting Bundling Process..."
 
+        # dist/ArchNative.app was created by cmake --install
         APP_PATH="dist/ArchNative.app"
 
-        # 1. Use macdeployqt with explicit -libpath to handle Homebrew Qt
-        # Using -no-strip to avoid breaking signatures if any
-        macdeployqt "$APP_PATH" -verbose=1 -libpath=$QT_LIB_DIR
+        # 1. Use macdeployqt for Qt libs.
+        # Ignore errors (exit 0) because it might choke on OpenCV libs, which we fix later.
+        # We pass -libpath to help it find Qt.
+        macdeployqt "$APP_PATH" -verbose=1 -libpath=$QT_LIB_DIR || true
 
-        # 2. Bundle External Libs (OpenCV, Tesseract) using dylibbundler
-        # -cd: Create directory if missing (dest)
-        # -b: Bundle
-        # -x: Executable
-        # -d: Destination for libs
-        # -p: @executable_path/../Frameworks/
+        # 2. Bundle External Libs (OpenCV, Tesseract, OpenXR) using dylibbundler
+        # This fixes what macdeployqt missed or broke regarding non-Qt libs.
         dylibbundler -of -b -x "$APP_PATH/Contents/MacOS/ArchNative" \
           -d "$APP_PATH/Contents/Frameworks" \
           -p "@executable_path/../Frameworks/" \
-          -s /usr/local/lib
+          -s /usr/local/lib \
+          -s $VCPKG_ROOT/installed/x64-osx/lib
 
-        # 3. Create Entitlements (Required for ad-hoc signing)
+        # 3. Create qt.conf (macdeployqt usually creates this, but we ensure it matches our structure)
+        # It usually puts PlugIns in Contents/PlugIns.
+        if [ ! -f "$APP_PATH/Contents/Resources/qt.conf" ]; then
+            mkdir -p "$APP_PATH/Contents/Resources"
+            echo "[Paths]" > "$APP_PATH/Contents/Resources/qt.conf"
+            echo "Plugins = PlugIns" >> "$APP_PATH/Contents/Resources/qt.conf"
+        fi
+
+        # 4. Create Entitlements (Required for ad-hoc signing)
         cat <<EOF > entitlements.plist
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -81,10 +88,11 @@ jobs:
         </plist>
         EOF
 
-        # 4. Sign Everything (Deep)
+        # 5. Sign Everything (Deep)
+        # Signing 'force' is important to overwrite broken signatures from dylibbundler copy
         codesign --force --deep --sign - --entitlements entitlements.plist "$APP_PATH"
 
-        # 5. Create DMG
+        # 6. Create DMG
         hdiutil create -volname "ArchNative" -srcfolder "$APP_PATH" -ov -format UDZO "ArchNative.dmg"
 
     - name: Upload Artifact
