@@ -18,14 +18,8 @@ find_package(OpenCV REQUIRED)
 # Dependency Resolution (Hybrid: Config for Windows/Mac(Vcpkg), PkgConfig for Linux)
 if(WIN32 OR APPLE)
     # Windows and macOS (via Vcpkg) use CONFIG mode
-    # Note: Tesseract might still be pkg-config on Mac if installed via brew,
-    # but we are moving towards Vcpkg for OpenXR.
-    # Let's try CONFIG first, fallback to PkgConfig if needed.
-
     find_package(OpenXR CONFIG REQUIRED)
 
-    # Tesseract: On Windows -> CONFIG (Vcpkg). On Mac -> brew (PkgConfig) or Vcpkg?
-    # Our CI installs Tesseract via brew on Mac. So checking CONFIG might fail on Mac for Tesseract.
     if(WIN32)
         find_package(Tesseract CONFIG REQUIRED)
     else() # APPLE
@@ -39,6 +33,16 @@ else()
     pkg_check_modules(Tesseract REQUIRED tesseract)
     pkg_check_modules(OpenXR REQUIRED openxr)
 endif()
+
+# macOS Bundle Properties (Ensures valid Info.plist)
+set_target_properties(ArchNative PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.archnative.app"
+    MACOSX_BUNDLE_BUNDLE_NAME "ArchNative"
+    MACOSX_BUNDLE_BUNDLE_VERSION "1.0"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
+)
 
 add_executable(ArchNative MACOSX_BUNDLE
     src/main.cpp
@@ -116,6 +120,12 @@ else()
     target_include_directories(ArchNative PRIVATE ${Tesseract_INCLUDE_DIRS} ${OpenXR_INCLUDE_DIRS})
 endif()
 
+
+# Install instruction to create bundle structure
+install(TARGETS ArchNative
+    BUNDLE DESTINATION .
+    RUNTIME DESTINATION bin
+)
 
 # Copy assets to build directory
 add_custom_command(TARGET ArchNative POST_BUILD
