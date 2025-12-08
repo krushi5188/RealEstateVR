@@ -34,16 +34,6 @@ else()
     pkg_check_modules(OpenXR REQUIRED openxr)
 endif()
 
-# macOS Bundle Properties (Ensures valid Info.plist)
-set_target_properties(ArchNative PROPERTIES
-    MACOSX_BUNDLE TRUE
-    MACOSX_BUNDLE_GUI_IDENTIFIER "com.archnative.app"
-    MACOSX_BUNDLE_BUNDLE_NAME "ArchNative"
-    MACOSX_BUNDLE_BUNDLE_VERSION "1.0"
-    MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
-    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
-)
-
 add_executable(ArchNative MACOSX_BUNDLE
     src/main.cpp
     src/UI/MainWindow.cpp
@@ -85,6 +75,17 @@ add_executable(ArchNative MACOSX_BUNDLE
     src/Core/OpenXRManager.h
     src/Core/PDFConverter.cpp
     src/Core/PDFConverter.h
+)
+
+# macOS Bundle Properties (Ensures valid Info.plist)
+# Must be called AFTER add_executable
+set_target_properties(ArchNative PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.archnative.app"
+    MACOSX_BUNDLE_BUNDLE_NAME "ArchNative"
+    MACOSX_BUNDLE_BUNDLE_VERSION "1.0"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
 )
 
 # Link Libraries
