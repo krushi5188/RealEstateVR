@@ -27,6 +27,10 @@ jobs:
         echo "QT_PLUGIN_DIR=$QT_REAL_PATH/share/qt/plugins" >> $GITHUB_ENV
         echo "$QT_REAL_PATH/bin" >> $GITHUB_PATH
 
+        # Export paths for dylibbundler
+        echo "OPENCV_LIB_DIR=$(brew --prefix opencv)/lib" >> $GITHUB_ENV
+        echo "TESSERACT_LIB_DIR=$(brew --prefix tesseract)/lib" >> $GITHUB_ENV
+
     - name: Install OpenXR (Vcpkg)
       run: $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
 
@@ -50,24 +54,23 @@ jobs:
       run: |
         echo "Starting Bundling Process..."
 
-        # dist/ArchNative.app was created by cmake --install
         APP_PATH="dist/ArchNative.app"
 
         # 1. Use macdeployqt for Qt libs.
-        # Ignore errors (exit 0) because it might choke on OpenCV libs, which we fix later.
-        # We pass -libpath to help it find Qt.
-        macdeployqt "$APP_PATH" -verbose=1 -libpath=$QT_LIB_DIR || true
+        # -always-overwrite: Force overwriting to ensure clean state
+        macdeployqt "$APP_PATH" -verbose=1 -libpath=$QT_LIB_DIR -always-overwrite || true
 
         # 2. Bundle External Libs (OpenCV, Tesseract, OpenXR) using dylibbundler
-        # This fixes what macdeployqt missed or broke regarding non-Qt libs.
+        # Explicitly adding search paths for OpenCV and Tesseract to fix resolution warnings
         dylibbundler -of -b -x "$APP_PATH/Contents/MacOS/ArchNative" \
           -d "$APP_PATH/Contents/Frameworks" \
           -p "@executable_path/../Frameworks/" \
           -s /usr/local/lib \
-          -s $VCPKG_ROOT/installed/x64-osx/lib
+          -s $VCPKG_ROOT/installed/x64-osx/lib \
+          -s $OPENCV_LIB_DIR \
+          -s $TESSERACT_LIB_DIR
 
-        # 3. Create qt.conf (macdeployqt usually creates this, but we ensure it matches our structure)
-        # It usually puts PlugIns in Contents/PlugIns.
+        # 3. Create qt.conf
         if [ ! -f "$APP_PATH/Contents/Resources/qt.conf" ]; then
             mkdir -p "$APP_PATH/Contents/Resources"
             echo "[Paths]" > "$APP_PATH/Contents/Resources/qt.conf"
@@ -89,7 +92,8 @@ jobs:
         EOF
 
         # 5. Sign Everything (Deep)
-        # Signing 'force' is important to overwrite broken signatures from dylibbundler copy
+        # Using --force to overwrite existing signatures (from brew/vcpkg/macdeployqt)
+        # Using --deep to sign recursive frameworks/plugins
         codesign --force --deep --sign - --entitlements entitlements.plist "$APP_PATH"
 
         # 6. Create DMG
