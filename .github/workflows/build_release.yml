@@ -9,8 +9,8 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-13 # Intel Mac (x64)
-    timeout-minutes: 360 # Increased from 60 to prevent timeouts
+    runs-on: macos-15 # Trying latest version as macos-13 is retired
+    timeout-minutes: 60
     env:
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
@@ -31,16 +31,13 @@ jobs:
         echo "OPENCV_LIB_DIR=$(brew --prefix opencv)/lib" >> $GITHUB_ENV
         echo "TESSERACT_LIB_DIR=$(brew --prefix tesseract)/lib" >> $GITHUB_ENV
 
-    # Cache Vcpkg to speed up OpenXR build
-    - name: Cache Vcpkg
-      id: cache-vcpkg-mac
-      uses: actions/cache@v4
-      with:
-        path: /usr/local/share/vcpkg/installed
-        key: ${{ runner.os }}-vcpkg-openxr-v1
-
     - name: Install OpenXR (Vcpkg)
-      if: steps.cache-vcpkg-mac.outputs.cache-hit != 'true'
+      # Vcpkg on ARM64 runners usually defaults to arm64-osx.
+      # We explicitly request x64-osx if we want Intel, but the runner might be ARM.
+      # If we are on macos-15 (ARM), building x64 is cross-compiling.
+      # Ideally we build for the runner's architecture to be safe/easy.
+      # If the user has Intel Mac, they need x64.
+      # Attempting to build x64 on ARM runner via Rosetta (implied by triplet).
       run: $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
 
     - name: Configure CMake
@@ -50,6 +47,7 @@ jobs:
           -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
           -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
           -DVCPKG_TARGET_TRIPLET=x64-osx \
+          -DCMAKE_OSX_ARCHITECTURES=x86_64 \
           -DCMAKE_INSTALL_PREFIX=dist \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
           -DCMAKE_CXX_FLAGS="-DGL_SILENCE_DEPRECATION -DXR_USE_PLATFORM_MACOS -DXR_USE_GRAPHICS_API_OPENGL"
@@ -131,19 +129,9 @@ jobs:
         host: 'windows'
         target: 'desktop'
         arch: 'win64_msvc2019_64'
-    - name: Cache Vcpkg
-      id: cache-vcpkg-win
-      uses: actions/cache@v4
-      with:
-        path: |
-          C:\vcpkg\installed
-          C:\vcpkg\packages
-          C:\vcpkg\downloads
-        key: ${{ runner.os }}-vcpkg-opencv-tesseract-openxr-v2
     - name: Setup Vcpkg
       run: vcpkg integrate install
     - name: Install Dependencies
-      if: steps.cache-vcpkg-win.outputs.cache-hit != 'true'
       shell: pwsh
       run: |
         vcpkg install opencv:x64-windows
