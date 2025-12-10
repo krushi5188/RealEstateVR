@@ -9,8 +9,8 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-15 # Trying latest version as macos-13 is retired
-    timeout-minutes: 60
+    runs-on: macos-15 # ARM64 runner
+    timeout-minutes: 360 # Long timeout for Vcpkg builds
     env:
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
@@ -18,27 +18,33 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Dependencies (Homebrew)
+    - name: Install Qt (Homebrew)
       run: |
-        brew install opencv tesseract cmake pkg-config vulkan-headers qt@6 dylibbundler
+        # Only installing Qt via brew. Everything else via Vcpkg for x64 compat.
+        brew install cmake pkg-config vulkan-headers qt@6 dylibbundler
         QT_REAL_PATH=$(realpath $(brew --prefix qt@6))
         echo "QT_ROOT_DIR=$QT_REAL_PATH" >> $GITHUB_ENV
         echo "QT_LIB_DIR=$QT_REAL_PATH/lib" >> $GITHUB_ENV
         echo "QT_PLUGIN_DIR=$QT_REAL_PATH/share/qt/plugins" >> $GITHUB_ENV
         echo "$QT_REAL_PATH/bin" >> $GITHUB_PATH
 
-        # Export paths for dylibbundler
-        echo "OPENCV_LIB_DIR=$(brew --prefix opencv)/lib" >> $GITHUB_ENV
-        echo "TESSERACT_LIB_DIR=$(brew --prefix tesseract)/lib" >> $GITHUB_ENV
+    # Cache Vcpkg to speed up build (Crucial for OpenCV/Tesseract)
+    - name: Cache Vcpkg
+      id: cache-vcpkg-mac
+      uses: actions/cache@v4
+      with:
+        path: /usr/local/share/vcpkg/installed
+        key: ${{ runner.os }}-vcpkg-opencv-tesseract-openxr-x64-v1
 
-    - name: Install OpenXR (Vcpkg)
-      # Vcpkg on ARM64 runners usually defaults to arm64-osx.
-      # We explicitly request x64-osx if we want Intel, but the runner might be ARM.
-      # If we are on macos-15 (ARM), building x64 is cross-compiling.
-      # Ideally we build for the runner's architecture to be safe/easy.
-      # If the user has Intel Mac, they need x64.
-      # Attempting to build x64 on ARM runner via Rosetta (implied by triplet).
-      run: $VCPKG_INSTALLATION_ROOT/vcpkg install openxr-loader --triplet=x64-osx
+    - name: Install Dependencies (Vcpkg)
+      if: steps.cache-vcpkg-mac.outputs.cache-hit != 'true'
+      # Force x64-osx triplet to cross-compile for Intel on the ARM runner
+      run: |
+        $VCPKG_INSTALLATION_ROOT/vcpkg install \
+          openxr-loader:x64-osx \
+          opencv:x64-osx \
+          tesseract:x64-osx \
+          jsoncpp:x64-osx
 
     - name: Configure CMake
       run: |
@@ -60,22 +66,18 @@ jobs:
     - name: Bundle & Deploy
       run: |
         echo "Starting Bundling Process..."
-
         APP_PATH="dist/ArchNative.app"
 
         # 1. Use macdeployqt for Qt libs.
-        # -always-overwrite: Force overwriting to ensure clean state
         macdeployqt "$APP_PATH" -verbose=1 -libpath=$QT_LIB_DIR -always-overwrite || true
 
-        # 2. Bundle External Libs (OpenCV, Tesseract, OpenXR) using dylibbundler
-        # Explicitly adding search paths for OpenCV and Tesseract to fix resolution warnings
+        # 2. Bundle External Libs (Vcpkg) using dylibbundler
+        # Now search in the Vcpkg x64-osx lib folder
         dylibbundler -of -b -x "$APP_PATH/Contents/MacOS/ArchNative" \
           -d "$APP_PATH/Contents/Frameworks" \
           -p "@executable_path/../Frameworks/" \
           -s /usr/local/lib \
-          -s $VCPKG_ROOT/installed/x64-osx/lib \
-          -s $OPENCV_LIB_DIR \
-          -s $TESSERACT_LIB_DIR
+          -s $VCPKG_ROOT/installed/x64-osx/lib
 
         # 3. Create qt.conf
         if [ ! -f "$APP_PATH/Contents/Resources/qt.conf" ]; then
@@ -84,7 +86,7 @@ jobs:
             echo "Plugins = PlugIns" >> "$APP_PATH/Contents/Resources/qt.conf"
         fi
 
-        # 4. Create Entitlements (Required for ad-hoc signing)
+        # 4. Create Entitlements
         cat <<EOF > entitlements.plist
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -98,7 +100,7 @@ jobs:
         </plist>
         EOF
 
-        # 5. Sign Everything (Deep)
+        # 5. Sign Everything
         codesign --force --deep --sign - --entitlements entitlements.plist "$APP_PATH"
 
         # 6. Create DMG

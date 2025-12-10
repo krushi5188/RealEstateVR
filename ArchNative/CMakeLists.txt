@@ -17,16 +17,10 @@ find_package(OpenCV REQUIRED)
 
 # Dependency Resolution (Hybrid: Config for Windows/Mac(Vcpkg), PkgConfig for Linux)
 if(WIN32 OR APPLE)
-    # Windows and macOS (via Vcpkg) use CONFIG mode
+    # Windows and macOS (via Vcpkg) use CONFIG mode for all deps
+    # We moved OpenCV and Tesseract to Vcpkg on macOS to ensure x86_64 compat on ARM runners
     find_package(OpenXR CONFIG REQUIRED)
-
-    if(WIN32)
-        find_package(Tesseract CONFIG REQUIRED)
-    else() # APPLE
-        find_package(PkgConfig REQUIRED)
-        pkg_check_modules(Tesseract REQUIRED tesseract)
-    endif()
-
+    find_package(Tesseract CONFIG REQUIRED)
 else()
     # Linux (Standard PkgConfig)
     find_package(PkgConfig REQUIRED)
@@ -107,13 +101,9 @@ if(WIN32 OR APPLE)
          target_link_libraries(ArchNative PRIVATE openxr_loader)
     endif()
 
-    # Tesseract linkage
-    if(WIN32)
-        target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract)
-    else() # APPLE
-        target_link_libraries(ArchNative PRIVATE ${Tesseract_LIBRARIES})
-        target_include_directories(ArchNative PRIVATE ${Tesseract_INCLUDE_DIRS})
-    endif()
+    # Vcpkg targets (Tesseract)
+    # Vcpkg usually exports Tesseract::libtesseract
+    target_link_libraries(ArchNative PRIVATE Tesseract::libtesseract)
 
 else()
     # Linux (PkgConfig)
