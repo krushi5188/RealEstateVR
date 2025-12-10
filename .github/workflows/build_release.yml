@@ -10,7 +10,7 @@ on:
 jobs:
   build-macos:
     runs-on: macos-15 # ARM64 runner
-    timeout-minutes: 360 # Long timeout for Vcpkg builds
+    timeout-minutes: 360
     env:
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
@@ -18,17 +18,23 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Qt (Homebrew)
-      run: |
-        # Only installing Qt via brew. Everything else via Vcpkg for x64 compat.
-        brew install cmake pkg-config vulkan-headers qt@6 dylibbundler
-        QT_REAL_PATH=$(realpath $(brew --prefix qt@6))
-        echo "QT_ROOT_DIR=$QT_REAL_PATH" >> $GITHUB_ENV
-        echo "QT_LIB_DIR=$QT_REAL_PATH/lib" >> $GITHUB_ENV
-        echo "QT_PLUGIN_DIR=$QT_REAL_PATH/share/qt/plugins" >> $GITHUB_ENV
-        echo "$QT_REAL_PATH/bin" >> $GITHUB_PATH
+    # Install Qt x86_64 via official action (Works on ARM runners via Rosetta)
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.5.0' # Sticking to stable LTS
+        host: 'mac'
+        target: 'desktop'
+        arch: 'clang_64' # Intel 64-bit architecture
 
-    # Cache Vcpkg to speed up build (Crucial for OpenCV/Tesseract)
+    - name: Install Tools (Homebrew)
+      run: |
+        # Only install tools, NOT libraries that link to ARM64 Qt/OpenCV
+        brew install cmake pkg-config vulkan-headers dylibbundler
+        # Export paths for dylibbundler
+        # Note: Vcpkg paths will be set later
+
+    # Cache Vcpkg to speed up build
     - name: Cache Vcpkg
       id: cache-vcpkg-mac
       uses: actions/cache@v4
@@ -38,7 +44,7 @@ jobs:
 
     - name: Install Dependencies (Vcpkg)
       if: steps.cache-vcpkg-mac.outputs.cache-hit != 'true'
-      # Force x64-osx triplet to cross-compile for Intel on the ARM runner
+      # Force x64-osx triplet to cross-compile for Intel
       run: |
         $VCPKG_INSTALLATION_ROOT/vcpkg install \
           openxr-loader:x64-osx \
@@ -68,18 +74,18 @@ jobs:
         echo "Starting Bundling Process..."
         APP_PATH="dist/ArchNative.app"
 
-        # 1. Use macdeployqt for Qt libs.
-        macdeployqt "$APP_PATH" -verbose=1 -libpath=$QT_LIB_DIR -always-overwrite || true
+        # 1. Use macdeployqt from the installed Qt action
+        # It handles Qt frameworks correctly for the installed version
+        macdeployqt "$APP_PATH" -verbose=1 -always-overwrite || true
 
         # 2. Bundle External Libs (Vcpkg) using dylibbundler
-        # Now search in the Vcpkg x64-osx lib folder
         dylibbundler -of -b -x "$APP_PATH/Contents/MacOS/ArchNative" \
           -d "$APP_PATH/Contents/Frameworks" \
           -p "@executable_path/../Frameworks/" \
           -s /usr/local/lib \
           -s $VCPKG_ROOT/installed/x64-osx/lib
 
-        # 3. Create qt.conf
+        # 3. Create qt.conf (Ensuring PlugIns are found)
         if [ ! -f "$APP_PATH/Contents/Resources/qt.conf" ]; then
             mkdir -p "$APP_PATH/Contents/Resources"
             echo "[Paths]" > "$APP_PATH/Contents/Resources/qt.conf"
