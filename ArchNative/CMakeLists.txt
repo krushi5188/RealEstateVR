@@ -14,7 +14,7 @@ endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets PrintSupport)
 find_package(OpenCV REQUIRED)
-find_package(OpenGL REQUIRED) # Required for legacy GL functions
+find_package(OpenGL REQUIRED) # Explicitly find OpenGL
 
 # Dependency Resolution (Hybrid: Config for Windows/Mac(Vcpkg), PkgConfig for Linux)
 if(WIN32 OR APPLE)
@@ -87,7 +87,7 @@ target_link_libraries(ArchNative PRIVATE
     Qt6::Widgets
     Qt6::OpenGLWidgets
     Qt6::PrintSupport
-    OpenGL::GL # Explicitly link OpenGL for legacy functions (glBegin, etc.)
+    OpenGL::GL # Explicitly link OpenGL framework
     ${OpenCV_LIBS}
 )
 

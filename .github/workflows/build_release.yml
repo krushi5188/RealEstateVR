@@ -22,17 +22,14 @@ jobs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.5.0' # Sticking to stable LTS
+        version: '6.5.0'
         host: 'mac'
         target: 'desktop'
-        arch: 'clang_64' # Intel 64-bit architecture
+        arch: 'clang_64'
 
     - name: Install Tools (Homebrew)
       run: |
-        # Only install tools, NOT libraries that link to ARM64 Qt/OpenCV
         brew install cmake pkg-config vulkan-headers dylibbundler
-        # Export paths for dylibbundler
-        # Note: Vcpkg paths will be set later
 
     # Cache Vcpkg to speed up build
     - name: Cache Vcpkg
@@ -40,17 +37,19 @@ jobs:
       uses: actions/cache@v4
       with:
         path: /usr/local/share/vcpkg/installed
-        key: ${{ runner.os }}-vcpkg-opencv-tesseract-openxr-x64-v1
+        key: ${{ runner.os }}-vcpkg-minimal-opencv-x64-v1
 
     - name: Install Dependencies (Vcpkg)
       if: steps.cache-vcpkg-mac.outputs.cache-hit != 'true'
       # Force x64-osx triplet to cross-compile for Intel
+      # Install minimal OpenCV features to speed up build and avoid unused deps (like openexr)
       run: |
         $VCPKG_INSTALLATION_ROOT/vcpkg install \
           openxr-loader:x64-osx \
-          opencv:x64-osx \
+          "opencv[core,imgproc,imgcodecs,highgui,jpeg,png]:x64-osx" \
           tesseract:x64-osx \
-          jsoncpp:x64-osx
+          jsoncpp:x64-osx \
+          --recurse
 
     - name: Configure CMake
       run: |
@@ -74,8 +73,7 @@ jobs:
         echo "Starting Bundling Process..."
         APP_PATH="dist/ArchNative.app"
 
-        # 1. Use macdeployqt from the installed Qt action
-        # It handles Qt frameworks correctly for the installed version
+        # 1. Use macdeployqt
         macdeployqt "$APP_PATH" -verbose=1 -always-overwrite || true
 
         # 2. Bundle External Libs (Vcpkg) using dylibbundler
@@ -85,7 +83,7 @@ jobs:
           -s /usr/local/lib \
           -s $VCPKG_ROOT/installed/x64-osx/lib
 
-        # 3. Create qt.conf (Ensuring PlugIns are found)
+        # 3. Create qt.conf
         if [ ! -f "$APP_PATH/Contents/Resources/qt.conf" ]; then
             mkdir -p "$APP_PATH/Contents/Resources"
             echo "[Paths]" > "$APP_PATH/Contents/Resources/qt.conf"
@@ -142,7 +140,7 @@ jobs:
     - name: Install Dependencies
       shell: pwsh
       run: |
-        vcpkg install opencv:x64-windows
+        vcpkg install "opencv[core,imgproc,imgcodecs,highgui,jpeg,png]:x64-windows"
         vcpkg install tesseract:x64-windows
         vcpkg install openxr-loader:x64-windows
         vcpkg install jsoncpp:x64-windows
