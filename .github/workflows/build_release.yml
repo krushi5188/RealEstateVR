@@ -37,16 +37,16 @@ jobs:
       uses: actions/cache@v4
       with:
         path: /usr/local/share/vcpkg/installed
-        key: ${{ runner.os }}-vcpkg-minimal-opencv-x64-v1
+        key: ${{ runner.os }}-vcpkg-std-opencv-x64-v1
 
     - name: Install Dependencies (Vcpkg)
       if: steps.cache-vcpkg-mac.outputs.cache-hit != 'true'
       # Force x64-osx triplet to cross-compile for Intel
-      # Install minimal OpenCV features to speed up build and avoid unused deps (like openexr)
+      # Reverted to standard opencv package as individual modules are not features
       run: |
         $VCPKG_INSTALLATION_ROOT/vcpkg install \
           openxr-loader:x64-osx \
-          "opencv[core,imgproc,imgcodecs,highgui,jpeg,png]:x64-osx" \
+          opencv:x64-osx \
           tesseract:x64-osx \
           jsoncpp:x64-osx \
           --recurse
@@ -140,7 +140,7 @@ jobs:
     - name: Install Dependencies
       shell: pwsh
       run: |
-        vcpkg install "opencv[core,imgproc,imgcodecs,highgui,jpeg,png]:x64-windows"
+        vcpkg install opencv:x64-windows
         vcpkg install tesseract:x64-windows
         vcpkg install openxr-loader:x64-windows
         vcpkg install jsoncpp:x64-windows
