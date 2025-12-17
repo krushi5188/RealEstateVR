@@ -37,12 +37,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: /usr/local/share/vcpkg/installed
-        key: ${{ runner.os }}-vcpkg-std-opencv-x64-v1
+        key: ${{ runner.os }}-vcpkg-full-opencv-x64-v1
 
     - name: Install Dependencies (Vcpkg)
       if: steps.cache-vcpkg-mac.outputs.cache-hit != 'true'
       # Force x64-osx triplet to cross-compile for Intel
-      # Reverted to standard opencv package as individual modules are not features
+      # Standard opencv package to avoid feature errors
       run: |
         $VCPKG_INSTALLATION_ROOT/vcpkg install \
           openxr-loader:x64-osx \
@@ -68,29 +68,106 @@ jobs:
         cmake --build build --config Release
         cmake --install build
 
-    - name: Bundle & Deploy
+    - name: Manual Bundle & Deploy (Nuclear Option)
       run: |
-        echo "Starting Bundling Process..."
+        echo "Starting Manual Bundling Process..."
+
         APP_PATH="dist/ArchNative.app"
+        CONTENTS="$APP_PATH/Contents"
+        FRAMEWORKS="$CONTENTS/Frameworks"
+        PLUGINS="$CONTENTS/PlugIns"
+        RESOURCES="$CONTENTS/Resources"
+        MACOS="$CONTENTS/MacOS"
+        EXECUTABLE="$MACOS/ArchNative"
 
-        # 1. Use macdeployqt
-        macdeployqt "$APP_PATH" -verbose=1 -always-overwrite || true
+        # Ensure directories exist
+        mkdir -p "$FRAMEWORKS" "$PLUGINS" "$RESOURCES"
 
-        # 2. Bundle External Libs (Vcpkg) using dylibbundler
-        dylibbundler -of -b -x "$APP_PATH/Contents/MacOS/ArchNative" \
-          -d "$APP_PATH/Contents/Frameworks" \
+        # 1. Copy Qt Frameworks
+        echo "Copying Qt Frameworks..."
+        # Note: jurplel/install-qt-action installs to $QT_ROOT_DIR (e.g. /Users/runner/work/.../Qt/6.5.0/...)
+        # We need to find where QT_ROOT_DIR points. It's usually exported by the action.
+        # But we can assume standard frameworks are needed.
+
+        # We need to get the Qt Lib dir.
+        # The action usually sets QT_ROOT_DIR env var or we can find it.
+        # Let's trust cmake found it, so it's likely available.
+        # We'll use a find command to locate them if env var is missing, or rely on the fact that we can infer it.
+        # Actually, let's use the explicit path if possible, or assume it's in the environment.
+        # The install-qt-action sets IQTA_TOOLS, but let's try to locate via qmake.
+
+        QT_BIN_DIR=$(dirname $(which qmake))
+        QT_LIB_DIR="$QT_BIN_DIR/../lib"
+        QT_PLUGINS_DIR="$QT_BIN_DIR/../plugins"
+
+        echo "Qt Lib Dir: $QT_LIB_DIR"
+
+        FRAMEWORK_LIST="QtCore QtGui QtWidgets QtOpenGL QtOpenGLWidgets QtPrintSupport QtDBus"
+        for fw in $FRAMEWORK_LIST; do
+            cp -R "$QT_LIB_DIR/$fw.framework" "$FRAMEWORKS/"
+            # Clean headers to save space/confusion
+            find "$FRAMEWORKS/$fw.framework" -name "Headers" -depth -exec rm -rf {} \;
+        done
+
+        # 2. Copy Qt Plugins
+        echo "Copying Qt Plugins..."
+        mkdir -p "$PLUGINS/platforms" "$PLUGINS/imageformats" "$PLUGINS/styles"
+        cp "$QT_PLUGINS_DIR/platforms/libqcocoa.dylib" "$PLUGINS/platforms/"
+        # Copy basic image formats
+        cp "$QT_PLUGINS_DIR/imageformats/libqjpeg.dylib" "$PLUGINS/imageformats/" || true
+        cp "$QT_PLUGINS_DIR/imageformats/libqgif.dylib" "$PLUGINS/imageformats/" || true
+        cp "$QT_PLUGINS_DIR/styles/libqmacstyle.dylib" "$PLUGINS/styles/" || true
+
+        # 3. Bundle External Libs (Vcpkg) using dylibbundler
+        # This bundles OpenCV, Tesseract, OpenXR and fixes the main executable to point to them
+        echo "Running dylibbundler..."
+        dylibbundler -of -b -x "$EXECUTABLE" \
+          -d "$FRAMEWORKS" \
           -p "@executable_path/../Frameworks/" \
           -s /usr/local/lib \
           -s $VCPKG_ROOT/installed/x64-osx/lib
 
-        # 3. Create qt.conf
-        if [ ! -f "$APP_PATH/Contents/Resources/qt.conf" ]; then
-            mkdir -p "$APP_PATH/Contents/Resources"
-            echo "[Paths]" > "$APP_PATH/Contents/Resources/qt.conf"
-            echo "Plugins = PlugIns" >> "$APP_PATH/Contents/Resources/qt.conf"
+        # 4. Patch Qt Framework IDs & RPATHs
+        # This is the critical step macdeployqt often messes up with custom paths
+        echo "Patching Qt RPATHs..."
+
+        # Helper function to change RPATHs in a binary
+        fix_qt_refs() {
+            local BINARY="$1"
+            for fw in $FRAMEWORK_LIST; do
+                install_name_tool -change "@rpath/$fw.framework/Versions/A/$fw" "@rpath/$fw.framework/Versions/A/$fw" "$BINARY" || true
+                # Also try absolute paths just in case
+                install_name_tool -change "$QT_LIB_DIR/$fw.framework/Versions/A/$fw" "@rpath/$fw.framework/Versions/A/$fw" "$BINARY" || true
+            done
+        }
+
+        # Fix Frameworks themselves
+        for fw in $FRAMEWORK_LIST; do
+            TARGET="$FRAMEWORKS/$fw.framework/Versions/A/$fw"
+            # Set ID
+            install_name_tool -id "@rpath/$fw.framework/Versions/A/$fw" "$TARGET"
+            # Fix internal links (e.g. QtGui linking to QtCore)
+            fix_qt_refs "$TARGET"
+        done
+
+        # Fix Plugins
+        for plugin in $(find "$PLUGINS" -name "*.dylib"); do
+            install_name_tool -add_rpath "@executable_path/../../Frameworks" "$plugin" || true
+            fix_qt_refs "$plugin"
+        done
+
+        # 5. Create qt.conf
+        echo "Creating qt.conf..."
+        echo "[Paths]" > "$RESOURCES/qt.conf"
+        echo "Plugins = PlugIns" >> "$RESOURCES/qt.conf"
+
+        # 6. Verify Info.plist (CMake should have generated it, but we double check)
+        if [ ! -f "$CONTENTS/Info.plist" ]; then
+            echo "Error: Info.plist missing!"
+            exit 1
         fi
 
-        # 4. Create Entitlements
+        # 7. Create Entitlements
         cat <<EOF > entitlements.plist
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -104,10 +181,15 @@ jobs:
         </plist>
         EOF
 
-        # 5. Sign Everything
+        # 8. Sign Everything (Deep)
+        echo "Signing..."
         codesign --force --deep --sign - --entitlements entitlements.plist "$APP_PATH"
 
-        # 6. Create DMG
+        # 9. Verify Architecture
+        echo "Verifying Architecture..."
+        lipo -info "$EXECUTABLE"
+
+        # 10. Create DMG
         hdiutil create -volname "ArchNative" -srcfolder "$APP_PATH" -ov -format UDZO "ArchNative.dmg"
 
     - name: Upload Artifact
