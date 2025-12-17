@@ -1,136 +1,113 @@
 # HANDOVER PROTOCOL: Operation Native Pivot
 
 **Date:** 2025-11-20
-**Status:** REFERENCE IMPLEMENTATION COMPLETE - READY FOR PORTING
+**Status:** COMPLETED (Phases 1N-6N Active)
 **From:** Jules (Web Architect)
 **To:** Native Systems Engineer
+
+## ⚠️ CRITICAL WARNING: FILE SAFETY ⚠️
+*   **WORKING DIRECTORY:** You must ONLY work inside the `ArchNative/` directory.
+*   **DO NOT TOUCH:** The `client/` and `server/` directories are the **Gold Master Reference**. They contain the legacy WebApp code which must remain **pristine** and **unmodified**.
+*   **DO NOT DELETE:** Never delete the legacy code. We need it to reverse-engineer the simulation logic.
 
 ## 1. Executive Summary
 The project stakeholders have mandated a complete architectural pivot. The existing Web Stack (React/Node.js/Three.js) is to be **abandoned** in favor of a high-performance, 100% offline, **Native C++ Application**.
 
-**Core Directive:** "I need nothing web based. Not even frontend."
+**Core Directive:** "Turn 2D Floorplans into 3D VR/AR Experiences (Native Desktop)."
 
-The current JS codebase has been finalized to serve as a "Gold Master" reference implementation. All logic described below exists and is functional in the JS prototype.
+**Strategic Requirements:**
+1.  **Universal AR:** Support **Any AR Glasses** via **OpenXR**.
+2.  **Proprietary Format:** All project files must be saved as **`.anvr`** to ensure lock-in.
+3.  **Android Companion:** Future standalone Android app for mobile AR glasses.
+4.  **Apple-like GUI:** The interface must be modern, minimalist, and beautiful.
 
-## 2. The New Architecture (C++ Stack)
+## 2. Work Completed
+The following files have been created/modified in this session. **All work is contained in `ArchNative/`.**
 
-You are building a desktop application for Windows and macOS.
+*   **Build System:**
+    *   `ArchNative/CMakeLists.txt`: Configured for Qt6, OpenCV, Tesseract, OpenXR, and Asset Copying.
+*   **Core Logic:**
+    *   `ArchNative/src/main.cpp`: Entry point. Sets OpenGL Compatibility Profile. Handles CLI args. Loads QSS.
+    *   `ArchNative/src/Core/Camera.h` & `.cpp`: Implements **Orbit** (CAD) and **First-Person** (VR) camera modes.
+    *   `ArchNative/src/Core/ImageProcessor.h` & `.cpp`: Implements `extractWallsFromBitmap` (HoughLines), OCR (Tesseract), and **Gap Detection** (Windows).
+    *   `ArchNative/src/Core/Project.h` & `.cpp`: Manages multi-floor projects. Handles **PDF Import** (via conversion).
+    *   `ArchNative/src/Core/Floor.h`: Data model for a single floor level (Walls, Rooms, Windows, Doors).
+    *   `ArchNative/src/Core/MeshGenerator.h` & `.cpp`: Converts Project data to 3D Mesh geometry. Advanced window hole cutting logic.
+    *   `ArchNative/src/Core/Serializer.h` & `.cpp`: Saves/Loads `.anvr` proprietary binary files.
+    *   `ArchNative/src/Core/Sun.h` & `.cpp`: Simulates Sun position.
+    *   `ArchNative/src/Core/VirtualAgent.h` & `.cpp`: AI Agent for circulation simulation.
+    *   `ArchNative/src/Core/OpenXRManager.h` & `.cpp`: OpenXR Runtime Interface (Skeleton & Android Prep).
+    *   `ArchNative/src/Core/FurnitureLibrary.h` & `.cpp`: Catalog of furniture items.
+    *   `ArchNative/src/Core/VRInput.h`: VR Input structures.
+    *   `ArchNative/src/Core/PDFConverter.h` & `.cpp`: **(NEW)** Wrapper for `pdftoppm` to convert PDFs to Images.
+*   **Analysis Modules:**
+    *   `ArchNative/src/Analysis/LightAnalyzer.h` & `.cpp`: 2D Raycasting for light heatmaps.
+    *   `ArchNative/src/Analysis/PathFinder.h` & `.cpp`: A* Pathfinding algorithm.
+    *   `ArchNative/src/Analysis/AcousticAnalyzer.h` & `.cpp`: Acoustic scoring logic.
+    *   `ArchNative/src/Analysis/BiophilicAnalyzer.h` & `.cpp`: Window-to-Wall ratio analysis.
+    *   `ArchNative/src/Analysis/CostEstimator.h` & `.cpp`: BOM Calculator (Walls/Windows/Doors/**Furniture**).
+    *   `ArchNative/src/Analysis/BlueprintGenerator.h` & `.cpp`: PDF Export logic.
+*   **User Interface:**
+    *   `ArchNative/src/UI/MainWindow.h` & `.cpp`: Main application window with Toolbar and Apple-like styling.
+    *   `ArchNative/src/UI/ViewportWidget.h` & `.cpp`: The 3D OpenGL drawing surface. Handles Mouse/Keyboard/Mesh rendering. Stereo Rendering support.
+    *   `ArchNative/assets/styles/macos.qss`: The Stylesheet defining the "Apple-like" look.
+*   **Android Porting:**
+    *   `ArchNative/android/AndroidManifest.xml`: Template for future Android build.
+
+## 3. The New Architecture (C++ Stack)
 
 | Component | Old Stack (JS) | New Stack (C++) | Rationale |
 | :--- | :--- | :--- | :--- |
 | **Application Shell** | Electron / Browser | **Qt 6 (Widgets)** | Native OS integration, zero-latency GUI. |
-| **Rendering Engine** | Three.js (WebGL) | **OpenGL (via QOpenGLWidget)** | Direct GPU access, industry standard. |
+| **Rendering Engine** | Three.js (WebGL) | **OpenGL (via QOpenGLWidget)** | Direct GPU access. |
+| **AR/VR** | WebXR | **OpenXR (Desktop & Mobile)** | Hardware-agnostic AR/VR support. |
+| **Interaction** | OrbitControls | **Custom Camera (Orbit + FPS)** | "Desktop VR" experience without browser limits. |
 | **Image Processing** | node-canvas | **OpenCV (C++)** | 50x faster, robust computer vision tools. |
-| **OCR** | Tesseract.js | **Tesseract API (libtesseract)** | Native linking, no WASM overhead. |
-| **Geometry Math** | Three.js Math | **GLM (OpenGL Mathematics)** | Standard C++ graphics math library. |
-| **Geometry Logic** | three-csg-ts | **OpenCSG / CGAL** | Professional-grade mesh boolean ops. |
-| **Build System** | npm / Webpack | **CMake** | Cross-platform native build management. |
+| **OCR** | Tesseract.js | **Tesseract API (libtesseract)** | Native linking. |
+| **Analysis Logic** | JS Utils (Light, Sound) | **C++ Simulation Engines** | High-performance raycasting/pathfinding. |
+| **File Format** | JSON / GLTF | **Binary Serialization (`.anvr`)** | Proprietary format. Must be binary compatible with ARM64 (Android). |
 
-## 3. Logic Migration Map
+## 4. Build & Verification
+We use **CMake** for building.
+
+### Headless Verification
+A script `verify_headless.sh` is provided in the root. It compiles the `ArchNative` project and runs:
+1.  `./ArchNative --test-screenshot`: Verifies the OpenGL context works (draws a grid).
+2.  `./ArchNative --test-camera`: Verifies the Camera rotation logic.
+3.  `./ArchNative --test-project`: Verifies Multi-Floor, Mesh Gen, Serialization, Light Analysis, Pathfinding, Reports, Cost Estimation, PDF Export, and **PDF Import**.
+4.  `./ArchNative --test-vr`: Verifies OpenXR initialization.
+5.  `./ArchNative --test-stereo`: Verifies Stereo (Side-by-Side) rendering for VR.
+
+**Artifacts:** `test_output.png`, `test_cam_*.png`, `test_floor_*.png`, `test_project.anvr`, `test_blueprint.pdf`.
+**Note:** These artifacts are intentionally committed to the repo per user request.
+
+## 5. Logic Migration Map (Future Phases)
 
 You must port the logic from the current JS files to C++ classes.
 
-### A. Image Processor (The "Eye")
+### A. Image Processor (Phase 2N)
 *   **Source:** `server/image-processor.js`
 *   **Target:** `src/core/ImageProcessor.cpp`
-*   **Key Algorithms:**
-    *   **`extractWallsFromBitmap`:**
-        *   *Input:* Image File Path.
-        *   *Logic:*
-            1.  Load image via `cv::imread`.
-            2.  Thresholding: `cv::inRange` to find black pixels (walls).
-            3.  Line Detection: `cv::HoughLinesP` or custom scanline iterator (as implemented in JS) to find wall segments.
-            4.  Room Detection: `cv::connectedComponents` or flood fill to find enclosed white spaces.
-    *   **`detectNorthArrow`:**
-        *   *Logic:* OCR scan for 'N' character. ROI analysis around 'N' to find triangle shape.
-    *   **`labelRoomsWithOCR`:**
-        *   *Logic:* `tesseract::TessBaseAPI` on room ROIs.
-        *   *Scale Calibration:* Parse regex `(\d+)x(\d+)` from label. `scale = (pixel_width / real_width + pixel_height / real_height) / 2`.
+*   **Key Logic:** `extractWallsFromBitmap`, `labelRoomsWithOCR`.
+*   **Note:** PDF Import is handled by `PDFConverter` converting to PNG first.
 
-### B. Mesh Generation (The "Builder")
+### B. Mesh Generation & Serialization (Phase 3N)
 *   **Source:** `server/model-generator.js`
 *   **Target:** `src/core/MeshGenerator.cpp`
-*   **Key Algorithms:**
-    *   **`generateModel`:**
-        *   *Input:* Vector of `Floor` objects (containing walls, rooms).
-        *   *Logic:* Iterate walls. For each wall, generate 8 vertices (cuboid). Push to `std::vector<float> vertices` and `std::vector<unsigned int> indices`.
-        *   *Stacking:* Apply `yOffset = floorIndex * (WALL_HEIGHT + slab_thickness)` to vertices.
+*   **Key Logic:** Wall extrusion, Multi-floor stacking, `OpenCSG`.
+*   **Serialization:** Implement `Project::saveToANVR(filename)` and `Project::loadFromANVR(filename)`.
 
-### C. Scene Logic & CSG (The "Visualizer")
+### C. Scene & Interaction (Phase 3N/4N/6N)
 *   **Source:** `client/src/components/VRScene.js`
 *   **Target:** `src/visual/SceneManager.cpp`
-*   **Key Algorithms:**
-    *   **Auto-Placement:**
-        *   Iterate `wallData.rooms`.
-        *   If `type == 'staircase'`, instantiate `StaircaseMesh`.
-        *   If `type == 'elevator'`, instantiate `ElevatorMesh`.
-    *   **Boolean Operations (CSG):**
-        *   *Logic:* `FloorMesh - StaircaseHoleMesh - ElevatorShaftMesh`.
-        *   *Lib:* Use `OpenCSG` or `CGAL` to subtract the hole geometry from the floor slab.
+*   **Key Logic:** Staircase/Elevator holes, Sun Cycle, Teleportation.
+*   **New Logic:** **OpenXR Integration** for AR Glasses support.
 
-### D. Simulation & Analysis (The "Brain")
-*   **Source:** `client/src/utils/cost-estimator.js`
-*   **Target:** `src/analysis/CostEstimator.cpp`
-*   **Key Algorithms:**
-    *   **`calculateProjectCost`:**
-        *   `WallCost = Sum(WallLength) * Height * PricePerSqFt`
-        *   `StructureCost = (NumStairs * UnitCost) + (NumElevators * UnitCost)`
-        *   `FixtureCost = (NumWindows * UnitCost) + (NumDoors * UnitCost)`
-
-## 4. Proposed C++ Project Structure
-
-```
-ArchNative/
-├── CMakeLists.txt              # Master build script
-├── src/
-│   ├── main.cpp                # QApplication entry point
-│   ├── Core/
-│   │   ├── Project.h           # Data model (Walls, Floors)
-│   │   ├── ImageProcessor.h    # OpenCV wrapper
-│   │   └── MeshGenerator.h     # VBO generator
-│   ├── UI/
-│   │   ├── MainWindow.h        # Main Window (Qt Designer or C++)
-│   │   ├── ViewportWidget.h    # QOpenGLWidget subclass
-│   │   └── PropertiesDock.h    # QDockWidget for Inspector
-│   └── Analysis/
-│       └── CostEstimator.h     # Pricing logic
-├── assets/
-│   └── shaders/                # GLSL shaders
-└── tests/                      # GoogleTest
-```
-
-## 5. CMakeLists.txt Template
-
-```cmake
-cmake_minimum_required(VERSION 3.16)
-project(ArchNative VERSION 1.0 LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-
-find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets)
-find_package(OpenCV REQUIRED)
-find_package(Tesseract REQUIRED)
-
-add_executable(ArchNative
-    src/main.cpp
-    src/Core/ImageProcessor.cpp
-    src/UI/MainWindow.cpp
-    # ... add other sources
-)
-
-target_link_libraries(ArchNative PRIVATE
-    Qt6::Widgets
-    Qt6::OpenGLWidgets
-    ${OpenCV_LIBS}
-    libtesseract
-)
-```
+### D. Simulation & Analysis (Phase 4N - "The Brain")
+*   **Source:** `client/src/analysis/*.js` & `client/src/components/*.js`
+*   **Target:** `src/analysis/`
+*   **Key Logic:** Natural Light (Raycasting), Circulation (Pathfinding), Acoustic/Biophilic Reports.
 
 ## 6. Immediate Next Steps
-
-1.  **Initialize Repo:** Create the folder structure above.
-2.  **Hello World:** Render a simple window with `Qt6`.
-3.  **Port Phase 1 (Image Loading):** Implement `ImageProcessor::load()` using `cv::imread` and display it in a `QLabel`.
+1.  **Phase 6N Completion:** Map OpenXR input to `Camera`.
+2.  **Phase 7N:** Android porting investigation.

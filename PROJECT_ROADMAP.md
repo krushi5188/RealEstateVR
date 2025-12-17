@@ -4,61 +4,108 @@
 **The Web/JS Architecture (Phases 1-9) has been DEPRECATED.**
 **The project is shifting to a Native C++ Architecture.**
 
+**IMPORTANT:** The existing `client/` and `server/` folders are **READ-ONLY References**. Do not modify them. All new work happens in `ArchNative/`.
+
 ---
 
 ## Vision Statement
-To build the ultimate, high-performance, 100% offline architectural design tool. We are moving away from browser constraints to harness the raw power of the GPU and local hardware using C++ and Qt. This tool will rival industry standards like AutoCAD in performance and reliability.
+To build the ultimate, high-performance, **100% offline Architectural Analysis & VR/AR Simulation Suite**. We are moving away from browser constraints to harness the raw power of the GPU and local hardware using C++ and Qt. This tool will automatically convert 2D floor plans into 3D environments ready for **any AR Glasses**.
+
+**Key Strategic Directive:**
+1.  **Universal AR Support:** The software must work with **ANY AR Glasses** (Meta, Vive, XREAL, HoloLens) via **OpenXR**. This is the most critical feature.
+2.  **Proprietary Lock-in:** All project outputs must be saved in a **Proprietary Binary Format (`.anvr`)**.
+3.  **Future Mobile Expansion:** A standalone **Android AR Companion App** will be built to view `.anvr` files offline on mobile AR glasses (without a PC).
+
+---
+
+## Feature List (The "Gold Master" Spec)
+
+We are recreating the following features from the legacy WebApp:
+
+1.  **Automated 2D-to-3D Conversion:**
+    *   Multi-Floor Upload (Stacking logic).
+    *   Auto-detection of Walls, Windows, Doors, and Stairs via Computer Vision.
+    *   OCR Room Labeling (Tesseract).
+    *   Procedural Roof Generation.
+
+2.  **Immersive Interaction (Desktop & AR):**
+    *   **Universal AR Mode:** Hardware-agnostic support for AR Glasses via OpenXR.
+    *   **First-Person Walk Mode:** WASD + Mouse navigation (Desktop fallback).
+    *   **Orbit "God View":** Rotating around the model for inspection.
+
+3.  **Advanced Analysis & Simulation (The "Brain"):**
+    *   **Natural Light Analysis:** Simulating sun exposure (Raycasting).
+    *   **Sun Cycle:** Animated Day/Night loop.
+    *   **Circulation Analysis:** Pathfinding heatmaps & Virtual Agent simulation.
+    *   **Acoustic & Biophilic Reports:** Automated design scoring.
+    *   **Cost Estimator:** Real-time Bill of Materials (BOM).
+
+4.  **Design Tools:**
+    *   **Material Library:** Drag-and-drop textures.
+    *   **Furniture Library:** 3D object placement.
+    *   **Mood Board:** Color palette extraction from images.
 
 ---
 
 ## The Pivot: Native C++ Rewrite
 
 ### **Phase 1N: The Foundation (Setup & Core)**
-*   **Goal:** Establish the native build environment and rendering capability.
-*   **Complexity:** Medium
+*   **Status:** ✅ **DONE**
+*   **Goal:** Establish the native build environment, rendering, and camera control.
 *   **Tasks:**
-    *   **1N.1:** Initialize `CMake` project structure with `Qt6` and `OpenCV` dependencies.
-    *   **1N.2:** Implement `MainWindow` with a central `QOpenGLWidget`.
-    *   **1N.3:** Create a Basic Camera controller (Orbit/Pan/Zoom) for the OpenGL viewport.
-    *   **Acceptance Criteria:** Application compiles, runs, and shows a 3D grid that can be rotated.
+    *   **1N.1:** Initialize `CMake` project structure (Qt6, OpenCV). ✅
+    *   **1N.2:** Implement `MainWindow` with `QOpenGLWidget` & "Apple-like" Styling. ✅
+    *   **1N.3:** Implement Camera System (Orbit + FPS). ✅
+    *   **1N.4:** Verify "Hello World" Rendering & Camera Movement. ✅
 
 ### **Phase 2N: The Engine (Image Analysis)**
-*   **Goal:** Port the Image Processor logic to C++.
-*   **Complexity:** High
+*   **Status:** 🚧 **IN PROGRESS**
+*   **Goal:** Port the Computer Vision logic to C++.
 *   **Tasks:**
-    *   **2N.1:** Implement `ImageProcessor::load(path)`.
-    *   **2N.2:** Port "Gap Detection" (Windows/Doors) using `cv::inRange` and `cv::findContours`.
-    *   **2N.3:** Port "Room Detection" using `cv::floodFill`.
-    *   **2N.4:** Integrate Tesseract C++ API for room label OCR.
-    *   **Acceptance Criteria:** Loading a PNG floor plan outputs a `std::vector<Wall>` and `std::vector<Room>` with accurate coordinates.
+    *   **2N.1:** `ImageProcessor` Skeleton & Loading Logic. ✅ **DONE**
+    *   **2N.2:** Gap Detection (Windows/Doors) & Room Detection (Flood Fill). ✅ **DONE**
+    *   **2N.3:** OCR Integration (Tesseract) for room labels. ✅ **DONE**
+    *   **2N.4:** Multi-Floor alignment logic (Project/Floor Models). ✅ **DONE**
+    *   **2N.5:** **PDF Import Support (Poppler integration).** ✅ **DONE**
 
-### **Phase 3N: Mesh Generation (The Builder)**
-*   **Goal:** Convert 2D data into 3D Geometry (VBOs).
-*   **Complexity:** High
+### **Phase 3N: Mesh Generation & Scene**
+*   **Status:** ✅ **DONE**
+*   **Goal:** Convert 2D data into a rich 3D Scene Graph.
 *   **Tasks:**
-    *   **3N.1:** Implement `MeshGenerator::generateWalls(std::vector<Wall>)`.
-    *   **3N.2:** Implement Multi-Floor Stacking (Y-Offset logic).
-    *   **3N.3:** Implement Roof Generation (Procedural Geometry).
-    *   **3N.4:** Implement CSG (Constructive Solid Geometry) to cut holes for Stairs/Elevators using `OpenCSG` or `CGAL`.
-    *   **Acceptance Criteria:** The 3D Viewport renders the full building structure with correct holes and roof.
+    *   **3N.1:** Generate Walls (Extrusion) & Floors (Stacking). ✅ **DONE**
+    *   **3N.2:** Procedural Roof Generation. 📅 **PLANNED**
+    *   **3N.3:** CSG Operations (Cutting holes for Stairs/Elevators). ✅ **DONE**
+    *   **3N.4:** **Implement `.anvr` File Format (Serialization).** ✅ **DONE**
 
-### **Phase 4N: The Professional Tools**
-*   **Goal:** Re-implement high-value analysis features.
-*   **Complexity:** Medium
+### **Phase 4N: The "Smart" Features**
+*   **Status:** ✅ **DONE**
+*   **Goal:** Re-implement the high-value simulation tools.
 *   **Tasks:**
-    *   **4N.1:** Port `CostEstimator` logic (Materials, BOM Calculation).
-    *   **4N.2:** Implement "Plan View" (2D rendering using `QPainter`).
-    *   **4N.3:** Implement PDF Export (Using `QPdfWriter`).
-    *   **Acceptance Criteria:** User can view a cost breakdown and export a PDF blueprint.
+    *   **4N.1:** Natural Light & Sun Cycle (Raycasting). ✅ **DONE**
+    *   **4N.2:** Circulation Analysis (A*) & Virtual Agent. ✅ **DONE**
+    *   **4N.3:** Acoustic & Biophilic Reports (Window/Area Ratios). ✅ **DONE**
 
----
+### **Phase 5N: The Professional Tools**
+*   **Status:** ✅ **DONE**
+*   **Tasks:**
+    *   **5N.1:** Cost Estimator (BOM Calculation). ✅ **DONE**
+    *   **5N.2:** PDF Export (Blueprints). ✅ **DONE**
+    *   **5N.3:** Furniture Library. ✅ **DONE**
 
-## 🪦 Deprecated Web Roadmap (Archived)
+### **Phase 6N: OpenXR Integration (Universal AR)**
+*   **Status:** 🚧 **IN PROGRESS**
+*   **Goal:** Enable hardware-agnostic AR support.
+*   **Tasks:**
+    *   **6N.1:** Integrate `libopenxr` into CMake. ✅ **DONE**
+    *   **6N.2:** Implement `OpenXRManager` to handle HMD connection. ✅ **DONE**
+    *   **6N.3:** Render Stereo Views (Left/Right Eye) from `ViewportWidget`. ✅ **DONE**
+    *   **6N.4:** Map OpenXR Controller inputs to Scene Interaction. ✅ **DONE**
 
-*The following features were implemented in the Web Prototype but are now obsolete until ported.*
-
-### ~~Phases 6-9 (Web Features)~~
-*   ~~Multi-Floor Support (Web)~~ -> **Archive**
-*   ~~AR Overlay (WebXR)~~ -> **Scrapped** (Not supported on Desktop)
-*   ~~Environment Controls (Three.js)~~ -> **Archive**
-*   ~~PDF Export (jspdf)~~ -> **Archive** (Will use Qt Printer API)
+### **Phase 7N: Android AR Companion App (Mobile)**
+*   **Status:** 📅 **PLANNED**
+*   **Goal:** Standalone viewer for `.anvr` files on Android AR Glasses.
+*   **Tech:** Qt for Android / OpenXR Mobile Loader (Snapdragon Spaces).
+*   **Tasks:**
+    *   **7N.1:** Port `ArchNative` Core to Android (ARM64).
+    *   **7N.2:** Implement Touch/Gaze input system.
+    *   **7N.3:** Optimize rendering for mobile GPUs (Vulkan).
