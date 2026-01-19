@@ -1,111 +1,44 @@
-# PROJECT ROADMAP: The Grand Plan 7.0 (Native Pivot Edition)
+# PROJECT ROADMAP: Grand Plan 8.0 (The Return to Web)
 
-## 🚨 PIVOT ALERT 🚨
-**The Web/JS Architecture (Phases 1-9) has been DEPRECATED.**
-**The project is shifting to a Native C++ Architecture.**
+## 🔄 STRATEGIC PIVOT
+**The Native C++ Architecture (Phases 1N-7N) has been CANCELLED.**
+**We are returning to the original WebApp Architecture (React + Node.js).**
 
-**IMPORTANT:** The existing `client/` and `server/` folders are **READ-ONLY References**. Do not modify them. All new work happens in `ArchNative/`.
+The `ArchNative/` directory and associated native build tools have been removed.
+The project is now a pure Web Application again, located in `client/` and `server/`.
 
 ---
 
 ## Vision Statement
-To build the ultimate, high-performance, **100% offline Architectural Analysis & VR/AR Simulation Suite**. We are moving away from browser constraints to harness the raw power of the GPU and local hardware using C++ and Qt. This tool will automatically convert 2D floor plans into 3D environments ready for **any AR Glasses**.
-
-**Key Strategic Directive:**
-1.  **Universal AR Support:** The software must work with **ANY AR Glasses** (Meta, Vive, XREAL, HoloLens) via **OpenXR**. This is the most critical feature.
-2.  **Proprietary Lock-in:** All project outputs must be saved in a **Proprietary Binary Format (`.anvr`)**.
-3.  **Future Mobile Expansion:** A standalone **Android AR Companion App** will be built to view `.anvr` files offline on mobile AR glasses (without a PC).
+To build a accessible, browser-based **Architectural Analysis & VR/AR Simulation Suite**.
+We are leveraging modern Web Standards (WebXR, WebGL, React Three Fiber) to deliver floor plan conversion and VR experiences directly in the browser, with no installation required.
 
 ---
 
-## Feature List (The "Gold Master" Spec)
+## Architecture
 
-We are recreating the following features from the legacy WebApp:
-
-1.  **Automated 2D-to-3D Conversion:**
-    *   Multi-Floor Upload (Stacking logic).
-    *   Auto-detection of Walls, Windows, Doors, and Stairs via Computer Vision.
-    *   OCR Room Labeling (Tesseract).
-    *   Procedural Roof Generation.
-
-2.  **Immersive Interaction (Desktop & AR):**
-    *   **Universal AR Mode:** Hardware-agnostic support for AR Glasses via OpenXR.
-    *   **First-Person Walk Mode:** WASD + Mouse navigation (Desktop fallback).
-    *   **Orbit "God View":** Rotating around the model for inspection.
-
-3.  **Advanced Analysis & Simulation (The "Brain"):**
-    *   **Natural Light Analysis:** Simulating sun exposure (Raycasting).
-    *   **Sun Cycle:** Animated Day/Night loop.
-    *   **Circulation Analysis:** Pathfinding heatmaps & Virtual Agent simulation.
-    *   **Acoustic & Biophilic Reports:** Automated design scoring.
-    *   **Cost Estimator:** Real-time Bill of Materials (BOM).
-
-4.  **Design Tools:**
-    *   **Material Library:** Drag-and-drop textures.
-    *   **Furniture Library:** 3D object placement.
-    *   **Mood Board:** Color palette extraction from images.
+*   **Frontend:** React, React Three Fiber (R3F), WebXR.
+*   **Backend:** Node.js, Express.
+*   **Computer Vision:** Tesseract.js, OpenCV.js (or server-side processing).
 
 ---
 
-## The Pivot: Native C++ Rewrite
+## Immediate Goals (Restoration)
 
-### **Phase 1N: The Foundation (Setup & Core)**
-*   **Status:** ✅ **DONE**
-*   **Goal:** Establish the native build environment, rendering, and camera control.
-*   **Tasks:**
-    *   **1N.1:** Initialize `CMake` project structure (Qt6, OpenCV). ✅
-    *   **1N.2:** Implement `MainWindow` with `QOpenGLWidget` & "Apple-like" Styling. ✅
-    *   **1N.3:** Implement Camera System (Orbit + FPS). ✅
-    *   **1N.4:** Verify "Hello World" Rendering & Camera Movement. ✅
+1.  **Stabilize WebApp:** Ensure the React Client and Node Server are fully functional.
+2.  **Clean Slate:** Verify all native C++ artifacts are removed. (✅ DONE)
+3.  **Feature Parity:** Continue developing features in the WebApp context.
 
-### **Phase 2N: The Engine (Image Analysis)**
-*   **Status:** 🚧 **IN PROGRESS**
-*   **Goal:** Port the Computer Vision logic to C++.
-*   **Tasks:**
-    *   **2N.1:** `ImageProcessor` Skeleton & Loading Logic. ✅ **DONE**
-    *   **2N.2:** Gap Detection (Windows/Doors) & Room Detection (Flood Fill). ✅ **DONE**
-    *   **2N.3:** OCR Integration (Tesseract) for room labels. ✅ **DONE**
-    *   **2N.4:** Multi-Floor alignment logic (Project/Floor Models). ✅ **DONE**
-    *   **2N.5:** **PDF Import Support (Poppler integration).** ✅ **DONE**
+## Feature Roadmap (Web)
 
-### **Phase 3N: Mesh Generation & Scene**
-*   **Status:** ✅ **DONE**
-*   **Goal:** Convert 2D data into a rich 3D Scene Graph.
-*   **Tasks:**
-    *   **3N.1:** Generate Walls (Extrusion) & Floors (Stacking). ✅ **DONE**
-    *   **3N.2:** Procedural Roof Generation. 📅 **PLANNED**
-    *   **3N.3:** CSG Operations (Cutting holes for Stairs/Elevators). ✅ **DONE**
-    *   **3N.4:** **Implement `.anvr` File Format (Serialization).** ✅ **DONE**
+### Phase 1: Core Experience (Restored)
+*   [ ] Multi-Floor Management.
+*   [ ] 2D-to-3D Conversion (Web-based).
+*   [ ] VR/AR Mode via WebXR.
 
-### **Phase 4N: The "Smart" Features**
-*   **Status:** ✅ **DONE**
-*   **Goal:** Re-implement the high-value simulation tools.
-*   **Tasks:**
-    *   **4N.1:** Natural Light & Sun Cycle (Raycasting). ✅ **DONE**
-    *   **4N.2:** Circulation Analysis (A*) & Virtual Agent. ✅ **DONE**
-    *   **4N.3:** Acoustic & Biophilic Reports (Window/Area Ratios). ✅ **DONE**
+### Phase 2: Advanced Analysis
+*   [ ] Sun/Light Analysis (Browser-based raycasting).
+*   [ ] Pathfinding/Circulation.
 
-### **Phase 5N: The Professional Tools**
-*   **Status:** ✅ **DONE**
-*   **Tasks:**
-    *   **5N.1:** Cost Estimator (BOM Calculation). ✅ **DONE**
-    *   **5N.2:** PDF Export (Blueprints). ✅ **DONE**
-    *   **5N.3:** Furniture Library. ✅ **DONE**
-
-### **Phase 6N: OpenXR Integration (Universal AR)**
-*   **Status:** 🚧 **IN PROGRESS**
-*   **Goal:** Enable hardware-agnostic AR support.
-*   **Tasks:**
-    *   **6N.1:** Integrate `libopenxr` into CMake. ✅ **DONE**
-    *   **6N.2:** Implement `OpenXRManager` to handle HMD connection. ✅ **DONE**
-    *   **6N.3:** Render Stereo Views (Left/Right Eye) from `ViewportWidget`. ✅ **DONE**
-    *   **6N.4:** Map OpenXR Controller inputs to Scene Interaction. ✅ **DONE**
-
-### **Phase 7N: Android AR Companion App (Mobile)**
-*   **Status:** 📅 **PLANNED**
-*   **Goal:** Standalone viewer for `.anvr` files on Android AR Glasses.
-*   **Tech:** Qt for Android / OpenXR Mobile Loader (Snapdragon Spaces).
-*   **Tasks:**
-    *   **7N.1:** Port `ArchNative` Core to Android (ARM64).
-    *   **7N.2:** Implement Touch/Gaze input system.
-    *   **7N.3:** Optimize rendering for mobile GPUs (Vulkan).
+### Phase 3: Mobile Companion
+*   [ ] Optimize WebXR for Mobile Browsers (Android/iOS).

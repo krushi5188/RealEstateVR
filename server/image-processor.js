@@ -116,12 +116,12 @@ async function extractWallsFromBitmap(filePath) {
             }
         }
     }
-    let { rooms, windows } = identifyRoomsAndWindows(walls, width, height);
+    let { rooms, windows, doors } = identifyRoomsAndWindows(walls, width, height);
     rooms = await labelRoomsWithOCR(rooms, filePath);
 
     const detectedNorthVector = await detectNorthArrow(filePath);
 
-    return { width, height, walls, rooms, windows, detectedNorthVector };
+    return { width, height, walls, rooms, windows, doors, detectedNorthVector };
 }
 
 // --- North Arrow Detection ---
