@@ -225,7 +225,8 @@ function Sun({ isCycling }) {
 
 function SceneContent({
     modelData, material, sunCycle, heldFurniture, handlePlaceFurniture, allFurniture, children, onTeleportReady,
-    isStaircaseMode, staircasePoints, handleStaircasePointSelect, staircases, elevators, roofProps, environmentMode
+    isStaircaseMode, staircasePoints, handleStaircasePointSelect, staircases, elevators, roofProps, environmentMode,
+    windows, doors
 }) {
     const { camera, raycaster, scene } = useThree();
 
@@ -461,6 +462,8 @@ export default function VRScene({
                             elevators={elevators}
                             roofProps={roofProps}
                             environmentMode={environmentMode}
+                            windows={windows}
+                            doors={doors}
                         >
                             {children}
                         </SceneContent>
